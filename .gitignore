@@ -1,0 +1,30 @@
+# Credentials, private identity state and local deployment bindings
+.env
+.env.*
+!.env.example
+!.env.*.example
+.boris/
+.local/
+.state/
+secrets/
+credentials/
+*.private.json
+*.key
+*.pem
+
+# Generated WSL diagnostics (may contain account metadata)
+tools/wsl/*.out.txt
+
+# Dependencies, build output and runtime artifacts
+node_modules/
+dist/
+build/
+coverage/
+.venv/
+__pycache__/
+*.py[cod]
+*.log
+
+# Operating-system artifacts
+.DS_Store
+Thumbs.db
