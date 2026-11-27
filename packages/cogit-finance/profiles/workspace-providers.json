@@ -1,0 +1,16 @@
+[
+  {"id": "files", "provider": "filesystem"},
+  {"id": "processes", "provider": "execution"},
+  {"id": "shell", "provider": "shell", "dependencies": {"execution": "processes"}},
+  {"id": "memory", "provider": "memory"},
+  {
+    "id": "browser",
+    "provider": "browser",
+    "settings": {
+      "mode": "persistent",
+      "profile_id": "workspace",
+      "headless": true,
+      "scripts_enabled": true
+    }
+  }
+]

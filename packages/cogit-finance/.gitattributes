@@ -1,0 +1,2 @@
+src/**/database/** text eol=lf
+*.sh text eol=lf

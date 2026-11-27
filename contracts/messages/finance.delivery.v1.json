@@ -1,0 +1,48 @@
+{
+  "description": "seller -> E. One delivery attempt.",
+  "type": "object",
+  "properties": {
+    "attempt": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "artifact": {
+      "type": "object",
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "sha256": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "description": "Lower-case hex SHA-256"
+        },
+        "byte_length": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "artifact_id",
+        "sha256",
+        "byte_length",
+        "media_type"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "attempt",
+    "artifact"
+  ],
+  "additionalProperties": false
+}

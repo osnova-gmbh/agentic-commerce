@@ -1,0 +1,855 @@
+{
+  "deal": {
+    "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+    "buyer_org_id": "buyer-co",
+    "seller_org_id": "seller-co",
+    "offer_id": "offer-1",
+    "state": "SETTLED",
+    "head_seq": 22,
+    "head_hash": "e1d38ff2cabad5c7d6e87b8adb7d9e17ddc82a0d843f96ba9082a14e981cdee6",
+    "terms": {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "buyer_org_id": "buyer-co",
+      "seller_org_id": "seller-co",
+      "buyer_did": "did:key:z6MkrQSe1pBb4X7tw6KLbWCVhEHo6qDhg95QMSCdCDuN24BK",
+      "seller_did": "did:key:z6MksT93Y7QMYZ1HB6f1VySQ9jpCnXHfCiz12tphYKV5FsLW",
+      "escrow_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "offer_id": "offer-1",
+      "inputs": {
+        "topic": "Agent escrow services"
+      },
+      "price_minor": 50000,
+      "currency": "EUR",
+      "fee_bps": 100,
+      "delivery_deadline": "2026-11-27T10:06:02Z",
+      "acceptance": {
+        "policy": "all",
+        "max_attempts": 2,
+        "evaluators": [
+          {
+            "evaluator_id": "integrity",
+            "version": 1,
+            "params": {}
+          },
+          {
+            "evaluator_id": "required-files",
+            "version": 1,
+            "params": {
+              "required_files": [
+                "report.md",
+                "data.csv",
+                "summary.json"
+              ]
+            }
+          },
+          {
+            "evaluator_id": "deadline",
+            "version": 1,
+            "params": {
+              "delivery_deadline": "2026-11-27T10:06:02Z"
+            }
+          }
+        ]
+      },
+      "timers": {
+        "quote_ttl_s": 600,
+        "funding_due_s": 900,
+        "delivery_time_s": 60,
+        "rework_window_s": 600,
+        "dispute_window_s": 3600,
+        "evaluator_respond_s": 60
+      }
+    },
+    "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e",
+    "created_at": "2026-11-27T10:05:00Z",
+    "updated_at": "2026-11-27T10:05:41Z"
+  },
+  "events": [
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "event_type": "service_request",
+      "source_message_id": "77a78b05-d764-56ed-aae7-13c425a27a0e",
+      "actor_did": "did:key:z6MkrQSe1pBb4X7tw6KLbWCVhEHo6qDhg95QMSCdCDuN24BK",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "77a78b05-d764-56ed-aae7-13c425a27a0e",
+          "type_key": "finance.service_request",
+          "type_version": 1,
+          "sender_did": "did:key:z6MkrQSe1pBb4X7tw6KLbWCVhEHo6qDhg95QMSCdCDuN24BK",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": null,
+          "created_at": "2026-11-27T10:05:00Z",
+          "body": {
+            "seller_org_id": "seller-co",
+            "offer_id": "offer-1",
+            "inputs": {
+              "topic": "Agent escrow services"
+            },
+            "max_price_minor": 60000,
+            "currency": "EUR"
+          },
+          "signature": "BGB9pAjHpoiLPhXfWdJWqPCxIoqE0jp-PM-yquHUoXTLAyyA0r2cdKxVaeEPslYPPyVgLx1a40gS4kkrK31zBw"
+        }
+      },
+      "state_after": "REQUESTED",
+      "hash": "da001935f57b9b6aa9b4f439695a59b3a30045564b94622aa339c5c3175444bc",
+      "recorded_at": "2026-11-27T10:05:00Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 2,
+      "prev_hash": "da001935f57b9b6aa9b4f439695a59b3a30045564b94622aa339c5c3175444bc",
+      "event_type": "quote",
+      "source_message_id": "f673c19e-81a0-58ae-ba5f-d4b8093e79ae",
+      "actor_did": "did:key:z6MksT93Y7QMYZ1HB6f1VySQ9jpCnXHfCiz12tphYKV5FsLW",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "f673c19e-81a0-58ae-ba5f-d4b8093e79ae",
+          "type_key": "finance.quote",
+          "type_version": 1,
+          "sender_did": "did:key:z6MksT93Y7QMYZ1HB6f1VySQ9jpCnXHfCiz12tphYKV5FsLW",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": "fe7d98c1-2a7d-5243-a107-57d0ac5b95e2",
+          "created_at": "2026-11-27T10:05:01Z",
+          "body": {
+            "price_minor": 50000,
+            "currency": "EUR",
+            "delivery_deadline": "2026-11-27T10:06:02Z",
+            "valid_until": "2026-11-27T10:15:02Z",
+            "acceptance": {
+              "policy": "all",
+              "max_attempts": 2,
+              "evaluators": [
+                {
+                  "evaluator_id": "integrity",
+                  "version": 1,
+                  "params": {}
+                },
+                {
+                  "evaluator_id": "required-files",
+                  "version": 1,
+                  "params": {
+                    "required_files": [
+                      "report.md",
+                      "data.csv",
+                      "summary.json"
+                    ]
+                  }
+                },
+                {
+                  "evaluator_id": "deadline",
+                  "version": 1,
+                  "params": {
+                    "delivery_deadline": "2026-11-27T10:06:02Z"
+                  }
+                }
+              ]
+            }
+          },
+          "signature": "_pfVPFpYYWfXa-2SG-m6Du6l7u1VTJSTN9pfSWpNdC1mq8aAhdpYRNa1CedOntxHbbO6-Iy1WBH7zR6QYrRTCg"
+        }
+      },
+      "state_after": "QUOTED",
+      "hash": "1dcf07a3836513507f4aa62f8c70702640a6c52642bf0c1be6ea7cefbd301667",
+      "recorded_at": "2026-11-27T10:05:02Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 3,
+      "prev_hash": "1dcf07a3836513507f4aa62f8c70702640a6c52642bf0c1be6ea7cefbd301667",
+      "event_type": "terms_proposed",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "terms": {
+          "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "buyer_org_id": "buyer-co",
+          "seller_org_id": "seller-co",
+          "buyer_did": "did:key:z6MkrQSe1pBb4X7tw6KLbWCVhEHo6qDhg95QMSCdCDuN24BK",
+          "seller_did": "did:key:z6MksT93Y7QMYZ1HB6f1VySQ9jpCnXHfCiz12tphYKV5FsLW",
+          "escrow_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "offer_id": "offer-1",
+          "inputs": {
+            "topic": "Agent escrow services"
+          },
+          "price_minor": 50000,
+          "currency": "EUR",
+          "fee_bps": 100,
+          "delivery_deadline": "2026-11-27T10:06:02Z",
+          "acceptance": {
+            "policy": "all",
+            "max_attempts": 2,
+            "evaluators": [
+              {
+                "evaluator_id": "integrity",
+                "version": 1,
+                "params": {}
+              },
+              {
+                "evaluator_id": "required-files",
+                "version": 1,
+                "params": {
+                  "required_files": [
+                    "report.md",
+                    "data.csv",
+                    "summary.json"
+                  ]
+                }
+              },
+              {
+                "evaluator_id": "deadline",
+                "version": 1,
+                "params": {
+                  "delivery_deadline": "2026-11-27T10:06:02Z"
+                }
+              }
+            ]
+          },
+          "timers": {
+            "quote_ttl_s": 600,
+            "funding_due_s": 900,
+            "delivery_time_s": 60,
+            "rework_window_s": 600,
+            "dispute_window_s": 3600,
+            "evaluator_respond_s": 60
+          }
+        },
+        "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e"
+      },
+      "state_after": "QUOTED",
+      "hash": "abebb582a40134f07cd47845bb5419600d9069a1178eefd3343eb32f82431ec4",
+      "recorded_at": "2026-11-27T10:05:03Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 4,
+      "prev_hash": "abebb582a40134f07cd47845bb5419600d9069a1178eefd3343eb32f82431ec4",
+      "event_type": "accept_terms",
+      "source_message_id": "304c59f0-5380-51f7-81c0-05ea5e77bd11",
+      "actor_did": "did:key:z6MkrQSe1pBb4X7tw6KLbWCVhEHo6qDhg95QMSCdCDuN24BK",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "304c59f0-5380-51f7-81c0-05ea5e77bd11",
+          "type_key": "finance.accept_terms",
+          "type_version": 1,
+          "sender_did": "did:key:z6MkrQSe1pBb4X7tw6KLbWCVhEHo6qDhg95QMSCdCDuN24BK",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": "56fe6e22-6c7b-551c-ba4c-bd23b0df155b",
+          "created_at": "2026-11-27T10:05:04Z",
+          "body": {
+            "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e"
+          },
+          "signature": "Xt-nZtiJ44sQUtRfuVdn8TaeTdqwyT5LIwu0Mi2L9haRVToL-q9oCfnraU3mK_jGDD557kTDlNBTJ3GsWroMAQ"
+        }
+      },
+      "state_after": "QUOTED",
+      "hash": "b5c40edd685daf882c5cd378ae14d9027c130f778d8eaf217b97ec95d39b7c2b",
+      "recorded_at": "2026-11-27T10:05:05Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 5,
+      "prev_hash": "b5c40edd685daf882c5cd378ae14d9027c130f778d8eaf217b97ec95d39b7c2b",
+      "event_type": "accept_terms",
+      "source_message_id": "f90c3780-5df8-5af3-86c0-c5e1560e4aeb",
+      "actor_did": "did:key:z6MksT93Y7QMYZ1HB6f1VySQ9jpCnXHfCiz12tphYKV5FsLW",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "f90c3780-5df8-5af3-86c0-c5e1560e4aeb",
+          "type_key": "finance.accept_terms",
+          "type_version": 1,
+          "sender_did": "did:key:z6MksT93Y7QMYZ1HB6f1VySQ9jpCnXHfCiz12tphYKV5FsLW",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": "729ca714-6437-5426-b7ce-3b1c422a2516",
+          "created_at": "2026-11-27T10:05:06Z",
+          "body": {
+            "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e"
+          },
+          "signature": "NBInWv8Xb3nurrqiywXx0tWPbNX_4gRMweWxD57wC8OewmbAUbRXXxRRbbgl_xtQy77jlm_PpCHLku4nYeP9Dw"
+        }
+      },
+      "state_after": "QUOTED",
+      "hash": "4f66aac9b13114774d7b6fccf66e48583d1e29fa528ae1bd35c12abe867b379b",
+      "recorded_at": "2026-11-27T10:05:07Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 6,
+      "prev_hash": "4f66aac9b13114774d7b6fccf66e48583d1e29fa528ae1bd35c12abe867b379b",
+      "event_type": "terms_countersigned",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e",
+        "accepted_by": [
+          "304c59f0-5380-51f7-81c0-05ea5e77bd11",
+          "f90c3780-5df8-5af3-86c0-c5e1560e4aeb"
+        ]
+      },
+      "state_after": "ACCEPTED",
+      "hash": "9e7f04de601341a4cf761d3cb0aa092486b42d246532f36812b176766e8df6fd",
+      "recorded_at": "2026-11-27T10:05:08Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 7,
+      "prev_hash": "9e7f04de601341a4cf761d3cb0aa092486b42d246532f36812b176766e8df6fd",
+      "event_type": "payment_request",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "to_iban": "DE00EXAMPLE0000000001",
+        "amount_minor": 50000,
+        "currency": "EUR",
+        "reference": "ESCROW-9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+        "funding_due_by": "2026-11-27T10:20:08Z"
+      },
+      "state_after": "FUNDING_REQUESTED",
+      "hash": "96ab2ede7d5a1bc1efdc8488c1ee05513c169cbc13b49afbbf760d47674b32e0",
+      "recorded_at": "2026-11-27T10:05:08Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 8,
+      "prev_hash": "96ab2ede7d5a1bc1efdc8488c1ee05513c169cbc13b49afbbf760d47674b32e0",
+      "event_type": "funding_received",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "bank_event_id": "1",
+        "reference": "ESCROW-9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+        "amount_minor": 50000,
+        "from_iban": "DE00EXAMPLE0000000010",
+        "currency": "EUR"
+      },
+      "state_after": "FUNDED",
+      "hash": "71beab8b23b9664228ce462a2a667ae9b05b2ed8fcd450e95bbb170007282e48",
+      "recorded_at": "2026-11-27T10:05:12Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 9,
+      "prev_hash": "71beab8b23b9664228ce462a2a667ae9b05b2ed8fcd450e95bbb170007282e48",
+      "event_type": "delivery",
+      "source_message_id": "d81f0d55-7fdd-50d0-b9d9-c8bf87664f72",
+      "actor_did": "did:key:z6MksT93Y7QMYZ1HB6f1VySQ9jpCnXHfCiz12tphYKV5FsLW",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "d81f0d55-7fdd-50d0-b9d9-c8bf87664f72",
+          "type_key": "finance.delivery",
+          "type_version": 1,
+          "sender_did": "did:key:z6MksT93Y7QMYZ1HB6f1VySQ9jpCnXHfCiz12tphYKV5FsLW",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": "335b9198-038b-51ac-95db-81a72904d160",
+          "created_at": "2026-11-27T10:05:19Z",
+          "body": {
+            "attempt": 1,
+            "artifact": {
+              "artifact_id": "art_85c84f50ee9116b9b82cc538",
+              "sha256": "85c84f50ee9116b9b82cc538c9e8778f41cf5011ffb325b337f9d062cb30570e",
+              "byte_length": 259,
+              "media_type": "application/zip"
+            }
+          },
+          "signature": "ojn4evxA_8pXF6d53QzcXeFvu40StfypzlmJjdgt5g6hwa95-KKtsp0Z2TODSmgognjobninevsKtPXkr49LBA"
+        }
+      },
+      "state_after": "DELIVERED",
+      "hash": "339a6da9ca1869324df30b442e5f6fb4c204b5cf31cc77e46c515e04bb2edfa1",
+      "recorded_at": "2026-11-27T10:05:20Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 10,
+      "prev_hash": "339a6da9ca1869324df30b442e5f6fb4c204b5cf31cc77e46c515e04bb2edfa1",
+      "event_type": "evaluation_requested",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1",
+        "evaluation_request_ids": [
+          "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1:integrity@1",
+          "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1:required-files@1",
+          "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1:deadline@1"
+        ]
+      },
+      "state_after": "EVALUATING",
+      "hash": "4487dfaa2d15d188de30c62ebe92d78b937b9f64ffac56cef092e80a4fa49c91",
+      "recorded_at": "2026-11-27T10:05:21Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 11,
+      "prev_hash": "4487dfaa2d15d188de30c62ebe92d78b937b9f64ffac56cef092e80a4fa49c91",
+      "event_type": "verdict",
+      "source_message_id": "2f65a7ce-4045-5c91-9a01-ff747f86f7c3",
+      "actor_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "2f65a7ce-4045-5c91-9a01-ff747f86f7c3",
+          "type_key": "finance.verdict",
+          "type_version": 1,
+          "sender_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": "2e1d32e5-8e2f-585d-8463-61ea58dfbf90",
+          "created_at": "2026-11-27T10:05:21Z",
+          "body": {
+            "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1:integrity@1",
+            "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e",
+            "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1",
+            "artifact_sha256": "85c84f50ee9116b9b82cc538c9e8778f41cf5011ffb325b337f9d062cb30570e",
+            "evaluator_id": "integrity",
+            "evaluator_version": 1,
+            "outcome": "pass",
+            "reasons": []
+          },
+          "signature": "9q2U_f854j8slhvNGbMBllbwc9UBlwKhzZ980u1J9tHEv9c1LmXUfPhi_6_JeXuukiTPDs9OAQw8Rib_Nc7FCA"
+        }
+      },
+      "state_after": "EVALUATING",
+      "hash": "18d477142366ea60bc42952b0014783382c72c26fa63f5b8c0d9dbe9e8758e28",
+      "recorded_at": "2026-11-27T10:05:22Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 12,
+      "prev_hash": "18d477142366ea60bc42952b0014783382c72c26fa63f5b8c0d9dbe9e8758e28",
+      "event_type": "verdict",
+      "source_message_id": "d85a1185-c9b4-5984-a2ec-702d36762484",
+      "actor_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "d85a1185-c9b4-5984-a2ec-702d36762484",
+          "type_key": "finance.verdict",
+          "type_version": 1,
+          "sender_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": "c276a409-8673-5948-ac59-07db606f0236",
+          "created_at": "2026-11-27T10:05:22Z",
+          "body": {
+            "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1:required-files@1",
+            "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e",
+            "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1",
+            "artifact_sha256": "85c84f50ee9116b9b82cc538c9e8778f41cf5011ffb325b337f9d062cb30570e",
+            "evaluator_id": "required-files",
+            "evaluator_version": 1,
+            "outcome": "fail",
+            "reasons": [
+              "missing file: summary.json"
+            ]
+          },
+          "signature": "6VsFhMfaztKLyhHtDHjkDzfdEwZqgo3G4QRKVn9cDq-hYI826xGarpFJUB50yebxJ8RnRxQCdXnJyx07ygYJAg"
+        }
+      },
+      "state_after": "EVALUATING",
+      "hash": "9c2a5b25b50a80cdf5f8be47a4239657270d5ca1242acb81976b7157b6cee287",
+      "recorded_at": "2026-11-27T10:05:23Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 13,
+      "prev_hash": "9c2a5b25b50a80cdf5f8be47a4239657270d5ca1242acb81976b7157b6cee287",
+      "event_type": "decision",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1",
+        "outcome": "reject",
+        "attempts_left": 1,
+        "rework_deadline": "2026-11-27T10:06:02Z",
+        "reasons": [
+          "required-files@1: missing file: summary.json"
+        ]
+      },
+      "state_after": "REJECTED",
+      "hash": "f6742b623fbd9ca5a674da420a1246d1e449c53f8ac7763621fcff601d5642f3",
+      "recorded_at": "2026-11-27T10:05:24Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 14,
+      "prev_hash": "f6742b623fbd9ca5a674da420a1246d1e449c53f8ac7763621fcff601d5642f3",
+      "event_type": "delivery",
+      "source_message_id": "7eba1972-ecef-56e3-b8e4-0b650e4e5452",
+      "actor_did": "did:key:z6MksT93Y7QMYZ1HB6f1VySQ9jpCnXHfCiz12tphYKV5FsLW",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "7eba1972-ecef-56e3-b8e4-0b650e4e5452",
+          "type_key": "finance.delivery",
+          "type_version": 1,
+          "sender_did": "did:key:z6MksT93Y7QMYZ1HB6f1VySQ9jpCnXHfCiz12tphYKV5FsLW",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": "562db3b6-2ab0-51c5-a35c-7a5dd5164353",
+          "created_at": "2026-11-27T10:05:31Z",
+          "body": {
+            "attempt": 2,
+            "artifact": {
+              "artifact_id": "art_9282acbd5de75f472d432480",
+              "sha256": "9282acbd5de75f472d4324804047aded92bd10f8d3553dcf3bf04022135776b4",
+              "byte_length": 388,
+              "media_type": "application/zip"
+            }
+          },
+          "signature": "HaT-b4rltI-11E_UvTuWqyspxnjZj6ekEOXSHbYuR2OQnmlDL5i65ScOhtWBBKPGTvrBl0smwna9Bgbw2SaKAQ"
+        }
+      },
+      "state_after": "DELIVERED",
+      "hash": "23f20736445482636e129aaefec7581890cd0c3071c926d4f07f2ba9b021313a",
+      "recorded_at": "2026-11-27T10:05:32Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 15,
+      "prev_hash": "23f20736445482636e129aaefec7581890cd0c3071c926d4f07f2ba9b021313a",
+      "event_type": "evaluation_requested",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2",
+        "evaluation_request_ids": [
+          "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2:integrity@1",
+          "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2:required-files@1",
+          "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2:deadline@1"
+        ]
+      },
+      "state_after": "EVALUATING",
+      "hash": "3463b8c9d999f29528407669357a90eed7f3b432960e1e2328493a7efa4b80e3",
+      "recorded_at": "2026-11-27T10:05:33Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 16,
+      "prev_hash": "3463b8c9d999f29528407669357a90eed7f3b432960e1e2328493a7efa4b80e3",
+      "event_type": "verdict",
+      "source_message_id": "ea376fba-62ab-5118-aa34-f0cfd6163337",
+      "actor_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "ea376fba-62ab-5118-aa34-f0cfd6163337",
+          "type_key": "finance.verdict",
+          "type_version": 1,
+          "sender_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": "b9cfb446-d90d-5858-a73b-5721b8c197e6",
+          "created_at": "2026-11-27T10:05:33Z",
+          "body": {
+            "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2:integrity@1",
+            "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e",
+            "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2",
+            "artifact_sha256": "9282acbd5de75f472d4324804047aded92bd10f8d3553dcf3bf04022135776b4",
+            "evaluator_id": "integrity",
+            "evaluator_version": 1,
+            "outcome": "pass",
+            "reasons": []
+          },
+          "signature": "DIj2n3omhklAVAI3pu-VtsqXv5AUWVEJJnpp7-WqAk3YYx0htNZGYKzugR9UJo9sI7uxexE8rBGVem7mo_6dAQ"
+        }
+      },
+      "state_after": "EVALUATING",
+      "hash": "e90904e1f4c102fa7adf959795136b4c972519fb484efaca689108b9a91f5adf",
+      "recorded_at": "2026-11-27T10:05:34Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 17,
+      "prev_hash": "e90904e1f4c102fa7adf959795136b4c972519fb484efaca689108b9a91f5adf",
+      "event_type": "verdict",
+      "source_message_id": "225c54e0-99b8-5509-a972-5c9c5c1f934a",
+      "actor_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "225c54e0-99b8-5509-a972-5c9c5c1f934a",
+          "type_key": "finance.verdict",
+          "type_version": 1,
+          "sender_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": "9aa6b50e-1255-5e6b-ba41-0228d91b9f06",
+          "created_at": "2026-11-27T10:05:34Z",
+          "body": {
+            "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2:required-files@1",
+            "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e",
+            "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2",
+            "artifact_sha256": "9282acbd5de75f472d4324804047aded92bd10f8d3553dcf3bf04022135776b4",
+            "evaluator_id": "required-files",
+            "evaluator_version": 1,
+            "outcome": "pass",
+            "reasons": []
+          },
+          "signature": "rWXQtxRC0aGmPGrrAVIq2mt3YFABI7kfW9zJrDLcYW-lJiEBSi8E_OTu6EwmVNlzoJqVLzQWB1W4zyxDww5yBw"
+        }
+      },
+      "state_after": "EVALUATING",
+      "hash": "3037019f32f9cd3ab92abd132d05966462d46006f7f28190707efdb85afb3eda",
+      "recorded_at": "2026-11-27T10:05:35Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 18,
+      "prev_hash": "3037019f32f9cd3ab92abd132d05966462d46006f7f28190707efdb85afb3eda",
+      "event_type": "verdict",
+      "source_message_id": "2d40ffe7-94e7-560b-94fe-4a7afbc91f83",
+      "actor_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "body": {
+        "envelope": {
+          "envelope_version": 1,
+          "message_id": "2d40ffe7-94e7-560b-94fe-4a7afbc91f83",
+          "type_key": "finance.verdict",
+          "type_version": 1,
+          "sender_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+          "recipient_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+          "conversation_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+          "causation_id": "90d12df8-ea3f-5409-8092-ec691dc613eb",
+          "created_at": "2026-11-27T10:05:35Z",
+          "body": {
+            "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2:deadline@1",
+            "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e",
+            "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2",
+            "artifact_sha256": "9282acbd5de75f472d4324804047aded92bd10f8d3553dcf3bf04022135776b4",
+            "evaluator_id": "deadline",
+            "evaluator_version": 1,
+            "outcome": "pass",
+            "reasons": []
+          },
+          "signature": "ugklpto6sY_X4Bj2lX3BV1sKbORWHuCjA70OGRtua6OV6n4Qmo-5sXvW_6ds80nRS_TkJCabMbgTW-jXFH6RDQ"
+        }
+      },
+      "state_after": "EVALUATING",
+      "hash": "81b433ac9324476a334c7b6ab43a01edeadf99becde9022bf0d1595c7d38bfe2",
+      "recorded_at": "2026-11-27T10:05:36Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 19,
+      "prev_hash": "81b433ac9324476a334c7b6ab43a01edeadf99becde9022bf0d1595c7d38bfe2",
+      "event_type": "decision",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2",
+        "outcome": "approve",
+        "attempts_left": 0,
+        "rework_deadline": null,
+        "reasons": []
+      },
+      "state_after": "APPROVED",
+      "hash": "516be285d61e67bde0e6493bd4c0e6ca094498c1bcdce570c18479902a8d3ce4",
+      "recorded_at": "2026-11-27T10:05:37Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 20,
+      "prev_hash": "516be285d61e67bde0e6493bd4c0e6ca094498c1bcdce570c18479902a8d3ce4",
+      "event_type": "payout_submitted",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "intents": [
+          {
+            "intent_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:payout",
+            "kind": "payout",
+            "amount_minor": 49500,
+            "to_iban": "DE00EXAMPLE0000000020"
+          },
+          {
+            "intent_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:fee",
+            "kind": "fee",
+            "amount_minor": 500,
+            "to_iban": "DE00EXAMPLE0000000002"
+          }
+        ]
+      },
+      "state_after": "RELEASING",
+      "hash": "88209ff7ba89015f15ce6727b94b67d44a5c9059b641abfd0ac6e5290d745cf5",
+      "recorded_at": "2026-11-27T10:05:38Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 21,
+      "prev_hash": "88209ff7ba89015f15ce6727b94b67d44a5c9059b641abfd0ac6e5290d745cf5",
+      "event_type": "payout_confirmed",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "payout_minor": 49500,
+        "fee_minor": 500,
+        "currency": "EUR",
+        "bank_ref": "tr-000002"
+      },
+      "state_after": "SETTLED",
+      "hash": "efda5b33213a2ead86946acf5ed20d7adf200af23c52474c7190937a6be00cdb",
+      "recorded_at": "2026-11-27T10:05:40Z"
+    },
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "seq": 22,
+      "prev_hash": "efda5b33213a2ead86946acf5ed20d7adf200af23c52474c7190937a6be00cdb",
+      "event_type": "receipt",
+      "source_message_id": null,
+      "actor_did": "did:key:z6MkfkdDuAVEL5FgYbSaaPTKjSMVrbHwvaEb38ZF4wAnZPTM",
+      "body": {
+        "outcome": "settled",
+        "price_minor": 50000,
+        "fee_minor": 500,
+        "payout_minor": 49500,
+        "currency": "EUR",
+        "terms_hash": "514af26f7c4e8353eb417a8013d5df4e0b15599170e3c344f245435c06f96a8e",
+        "head_seq": 21,
+        "head_hash": "efda5b33213a2ead86946acf5ed20d7adf200af23c52474c7190937a6be00cdb"
+      },
+      "state_after": "SETTLED",
+      "hash": "e1d38ff2cabad5c7d6e87b8adb7d9e17ddc82a0d843f96ba9082a14e981cdee6",
+      "recorded_at": "2026-11-27T10:05:41Z"
+    }
+  ],
+  "deliveries": [
+    {
+      "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1",
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "attempt": 1,
+      "artifact_id": "art_85c84f50ee9116b9b82cc538",
+      "sha256": "85c84f50ee9116b9b82cc538c9e8778f41cf5011ffb325b337f9d062cb30570e",
+      "byte_length": 259,
+      "media_type": "application/zip",
+      "delivered_at": "2026-11-27T10:05:20Z",
+      "status": "rejected"
+    },
+    {
+      "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2",
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "attempt": 2,
+      "artifact_id": "art_9282acbd5de75f472d432480",
+      "sha256": "9282acbd5de75f472d4324804047aded92bd10f8d3553dcf3bf04022135776b4",
+      "byte_length": 388,
+      "media_type": "application/zip",
+      "delivered_at": "2026-11-27T10:05:32Z",
+      "status": "approved"
+    }
+  ],
+  "evaluations": [
+    {
+      "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1:integrity@1",
+      "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1",
+      "evaluator_id": "integrity",
+      "evaluator_version": 1,
+      "evaluator_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "respond_by": "2026-11-27T10:06:21Z",
+      "resends": 0,
+      "verdict_message_id": "2f65a7ce-4045-5c91-9a01-ff747f86f7c3",
+      "outcome": "pass"
+    },
+    {
+      "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1:required-files@1",
+      "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1",
+      "evaluator_id": "required-files",
+      "evaluator_version": 1,
+      "evaluator_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "respond_by": "2026-11-27T10:06:21Z",
+      "resends": 0,
+      "verdict_message_id": "d85a1185-c9b4-5984-a2ec-702d36762484",
+      "outcome": "fail"
+    },
+    {
+      "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1:deadline@1",
+      "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d1",
+      "evaluator_id": "deadline",
+      "evaluator_version": 1,
+      "evaluator_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "respond_by": "2026-11-27T10:06:21Z",
+      "resends": 0,
+      "verdict_message_id": null,
+      "outcome": null
+    },
+    {
+      "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2:integrity@1",
+      "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2",
+      "evaluator_id": "integrity",
+      "evaluator_version": 1,
+      "evaluator_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "respond_by": "2026-11-27T10:06:33Z",
+      "resends": 0,
+      "verdict_message_id": "ea376fba-62ab-5118-aa34-f0cfd6163337",
+      "outcome": "pass"
+    },
+    {
+      "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2:required-files@1",
+      "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2",
+      "evaluator_id": "required-files",
+      "evaluator_version": 1,
+      "evaluator_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "respond_by": "2026-11-27T10:06:33Z",
+      "resends": 0,
+      "verdict_message_id": "225c54e0-99b8-5509-a972-5c9c5c1f934a",
+      "outcome": "pass"
+    },
+    {
+      "evaluation_request_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2:deadline@1",
+      "delivery_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:d2",
+      "evaluator_id": "deadline",
+      "evaluator_version": 1,
+      "evaluator_did": "did:key:z6MkrFLgdbZEQS1y5qgXQU1WQADB7MYQrBdbPPbgXokBra2A",
+      "respond_by": "2026-11-27T10:06:33Z",
+      "resends": 0,
+      "verdict_message_id": "2d40ffe7-94e7-560b-94fe-4a7afbc91f83",
+      "outcome": "pass"
+    }
+  ],
+  "intents": [
+    {
+      "intent_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:payout",
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "kind": "payout",
+      "amount_minor": 49500,
+      "currency": "EUR",
+      "to_iban": "DE00EXAMPLE0000000020",
+      "status": "confirmed",
+      "bank_ref": "tr-000002",
+      "created_at": "2026-11-27T10:05:38Z",
+      "updated_at": "2026-11-27T10:05:40Z"
+    },
+    {
+      "intent_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02:fee",
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "kind": "fee",
+      "amount_minor": 500,
+      "currency": "EUR",
+      "to_iban": "DE00EXAMPLE0000000002",
+      "status": "confirmed",
+      "bank_ref": "tr-000003",
+      "created_at": "2026-11-27T10:05:38Z",
+      "updated_at": "2026-11-27T10:05:40Z"
+    }
+  ],
+  "credits": [
+    {
+      "bank_event_id": "1",
+      "reference": "ESCROW-9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "amount_minor": 50000,
+      "from_iban": "DE00EXAMPLE0000000010",
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "received_at": "2026-11-27T10:05:12Z",
+      "disposition": "funded"
+    }
+  ]
+}

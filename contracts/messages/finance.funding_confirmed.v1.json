@@ -1,0 +1,35 @@
+{
+  "description": "E -> buyer, seller. The money is held; the seller can start.",
+  "type": "object",
+  "properties": {
+    "amount_minor": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9000000000000
+    },
+    "currency": {
+      "type": "string",
+      "enum": [
+        "EUR"
+      ]
+    },
+    "bank_event_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "delivery_deadline": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "description": "UTC timestamp, YYYY-MM-DDTHH:MM:SSZ"
+    }
+  },
+  "required": [
+    "amount_minor",
+    "currency",
+    "bank_event_id",
+    "delivery_deadline"
+  ],
+  "additionalProperties": false
+}

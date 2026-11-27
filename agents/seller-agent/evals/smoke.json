@@ -1,0 +1,102 @@
+{
+  "name": "smoke",
+  "description": "Black-box health, action, pipeline, and approval checks.",
+  "threshold": 1.0,
+  "items": [
+    {
+      "id": "health",
+      "input": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "checks": [
+        {"type": "status", "expected": 200},
+        {"type": "json_schema", "expected": {"status": "str"}}
+      ]
+    },
+    {
+      "id": "lookup-action",
+      "input": {
+        "method": "POST",
+        "path": "/actions/lookup_record",
+        "body": {
+          "record_id": "record-open"
+        }
+      },
+      "checks": [
+        {"type": "status", "expected": 200},
+        {
+          "type": "json_schema",
+          "expected": {"record_id": "str", "status": "str"}
+        }
+      ]
+    },
+    {
+      "id": "manifest-pipeline",
+      "input": {
+        "method": "POST",
+        "path": "/runs",
+        "body": {
+          "instruction": "Resolve this synthetic case.",
+          "pipeline": "resolve-case",
+          "input": {
+            "request_id": "request-eval",
+            "description": "Synthetic request requiring validation."
+          }
+        }
+      },
+      "checks": [
+        {"type": "status", "expected": 200},
+        {
+          "type": "json_schema",
+          "expected": {"executionRecord": "dict", "status": "str"}
+        }
+      ]
+    },
+    {
+      "id": "gated-write-parks",
+      "input": {
+        "method": "POST",
+        "path": "/actions/apply_resolution",
+        "headers": {
+          "X-Cogit-Context": "{\"permissions\":[\"records.write\"]}",
+          "Idempotency-Key": "smoke-approval-request"
+        },
+        "body": {
+          "case_id": "case-eval",
+          "resolution": "close after synthetic verification"
+        }
+      },
+      "checks": [
+        {"type": "status", "expected": 200},
+        {
+          "type": "json_schema",
+          "expected": {"status": "str", "attention_item_id": "str"}
+        }
+      ]
+    },
+    {
+      "id": "gated-write-capability-denied",
+      "input": {
+        "method": "POST",
+        "path": "/actions/apply_resolution",
+        "headers": {"Idempotency-Key": "smoke-denied-request"},
+        "body": {"case_id": "case-eval-denied", "resolution": "must not apply"}
+      },
+      "checks": [{"type": "status", "expected": 403}]
+    },
+    {
+      "id": "resolution-module-readback",
+      "input": {
+        "method": "POST",
+        "path": "/actions/lookup_resolution",
+        "headers": {"X-Cogit-Context": "{\"permissions\":[\"records.read\"]}"},
+        "body": {"case_id": "case-eval-denied"}
+      },
+      "checks": [
+        {"type": "status", "expected": 200},
+        {"type": "json_schema", "expected": {"case_id": "str", "resolutions": "list"}}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+# Deterministic demo evaluators, run by the operator. All three use the evaluator
+# agent's DID; the seed script fills `did` from that agent's key.
+evaluators:
+  - evaluator_id: integrity
+    version: 1
+    org_id: operator-co
+    description: The artifact's SHA-256 and size match the delivery.
+    deterministic: true
+    accepts: [application/zip]
+    params_schema: {type: object, properties: {}, additionalProperties: false}
+  - evaluator_id: required-files
+    version: 1
+    org_id: operator-co
+    description: Every required file is present in the archive.
+    deterministic: true
+    accepts: [application/zip]
+    params_schema:
+      type: object
+      properties:
+        required_files: {type: array, items: {type: string, minLength: 1}, minItems: 1}
+      required: [required_files]
+      additionalProperties: false
+  - evaluator_id: deadline
+    version: 1
+    org_id: operator-co
+    description: The delivery arrived before the delivery deadline.
+    deterministic: true
+    accepts: [application/zip]
+    params_schema:
+      type: object
+      properties:
+        delivery_deadline: {type: string, minLength: 20, maxLength: 20}
+      required: [delivery_deadline]
+      additionalProperties: false

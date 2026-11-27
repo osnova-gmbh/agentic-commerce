@@ -1,0 +1,194 @@
+{
+  "description": "E -> buyer, seller. The deal terms to accept.",
+  "type": "object",
+  "properties": {
+    "terms": {
+      "type": "object",
+      "properties": {
+        "deal_id": {
+          "type": "string",
+          "minLength": 36,
+          "maxLength": 36,
+          "description": "UUID"
+        },
+        "buyer_org_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "seller_org_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "buyer_did": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 256,
+          "description": "Agent DID"
+        },
+        "seller_did": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 256,
+          "description": "Agent DID"
+        },
+        "escrow_did": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 256,
+          "description": "Agent DID"
+        },
+        "offer_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "inputs": {
+          "type": "object",
+          "description": "Free-form JSON object"
+        },
+        "price_minor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9000000000000
+        },
+        "currency": {
+          "type": "string",
+          "enum": [
+            "EUR"
+          ]
+        },
+        "fee_bps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "delivery_deadline": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 20,
+          "description": "UTC timestamp, YYYY-MM-DDTHH:MM:SSZ"
+        },
+        "acceptance": {
+          "type": "object",
+          "properties": {
+            "evaluators": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "evaluator_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "params": {
+                    "type": "object",
+                    "description": "Free-form JSON object"
+                  }
+                },
+                "required": [
+                  "evaluator_id",
+                  "version",
+                  "params"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 1,
+              "maxItems": 16
+            },
+            "policy": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            },
+            "max_attempts": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            }
+          },
+          "required": [
+            "evaluators",
+            "policy",
+            "max_attempts"
+          ],
+          "additionalProperties": false
+        },
+        "timers": {
+          "type": "object",
+          "properties": {
+            "quote_ttl_s": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "funding_due_s": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "delivery_time_s": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "rework_window_s": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "dispute_window_s": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "evaluator_respond_s": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "quote_ttl_s",
+            "funding_due_s",
+            "delivery_time_s",
+            "rework_window_s",
+            "dispute_window_s",
+            "evaluator_respond_s"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "deal_id",
+        "buyer_org_id",
+        "seller_org_id",
+        "buyer_did",
+        "seller_did",
+        "escrow_did",
+        "offer_id",
+        "inputs",
+        "price_minor",
+        "currency",
+        "fee_bps",
+        "delivery_deadline",
+        "acceptance",
+        "timers"
+      ],
+      "additionalProperties": false
+    },
+    "terms_hash": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "description": "Lower-case hex SHA-256"
+    }
+  },
+  "required": [
+    "terms",
+    "terms_hash"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,172 @@
+'use strict';
+
+// Exact message names come from SPEC.md and contracts/. This is a deterministic
+// explanation of the demo protocol, not a recording of a live bank transaction.
+const CF_NODES = [
+  { id: 'buyer', name: 'Buyer agent', detail: 'buyer-co', color: '#2e6599' },
+  { id: 'catalog', name: 'Shared AgentDb', detail: 'Catalog · artifacts', color: '#7161a1' },
+  { id: 'escrow', name: 'Escrow agent', detail: 'Delta Campus', color: '#24634a' },
+  { id: 'seller', name: 'Seller agent', detail: 'seller-co', color: '#2e6599' },
+  { id: 'checks', name: 'Evaluators', detail: 'Independent checks', color: '#7161a1' },
+  { id: 'bank', name: 'Simulated bank', detail: 'Payment rail', color: '#9b7129' },
+];
+const CF_PHASES = [
+  {
+    id: 'discovery', title: 'Discover an offer.', label: 'Discovery', duration: 8,
+    subtitle: 'The buyer queries the directory before a deal exists.',
+    state: 'DISCOVERY', balances: [0, 0, 0, 0],
+    events: [
+      { from: 'seller', to: 'catalog', label: 'Publish offer', type: 'catalog.publish', kind: 'query',
+        body: ['offer_id: offer-1', 'title: Market report', 'price_minor: 50000', 'currency: EUR'],
+        note: 'The seller publishes its offer before buyers search the catalog.' },
+      { from: 'buyer', to: 'catalog', label: 'Find sellers', type: 'sellers.list', kind: 'query',
+        body: ['category: reports'], note: 'Find companies that sell the required service.' },
+      { from: 'catalog', to: 'buyer', label: 'Matching sellers', type: 'sellers.list → result', kind: 'reply',
+        body: ['org_id: seller-co'], note: 'The directory returns matching registered sellers.' },
+      { from: 'buyer', to: 'catalog', label: 'Read catalog', type: 'catalog.read', kind: 'query',
+        body: ['seller_org_id: seller-co'], note: 'Read the seller’s offers, prices and delivery conditions.' },
+      { from: 'catalog', to: 'buyer', label: 'Report · €500', type: 'catalog.read → offers', kind: 'reply',
+        body: ['offer: Market report', 'price: €500.00', 'delivery: 60 seconds', 'budget ceiling: €600.00'],
+        note: 'The buyer selects an active offer within its budget.' },
+    ],
+  },
+  {
+    id: 'request', title: 'Request the product.', label: 'Request', duration: 7,
+    subtitle: 'The escrow agent records the request and relays it to the seller.',
+    state: 'REQUESTED', balances: [0, 0, 0, 0],
+    events: [
+      { from: 'buyer', to: 'escrow', label: 'Service request', type: 'finance.service_request', kind: 'message',
+        body: ['offer_id: offer-1', 'inputs: research topic', 'max_price_minor: 60000'],
+        note: 'A signed request opens a new deal.', state: 'REQUESTED' },
+      { from: 'escrow', to: 'seller', label: 'Relay request', type: 'finance.relay', kind: 'message',
+        body: ['relayed: signed service_request', 'deal: id + sequence + state'],
+        note: 'Delta signs its own relay and preserves the buyer’s original signature.' },
+      { from: 'seller', to: 'escrow', label: 'Quote · €500', type: 'finance.quote', kind: 'message',
+        body: ['price: €500.00', 'delivery deadline', '3 evaluators · all must pass'],
+        note: 'The seller proposes a price, deadline and acceptance checks.', state: 'QUOTED' },
+      { from: 'escrow', to: 'buyer', label: 'Relay quote', type: 'finance.relay', kind: 'message',
+        body: ['relayed: signed finance.quote', 'deal: id + sequence + state'],
+        note: 'The buyer receives the original signed quote inside a relay signed by Delta.' },
+    ],
+  },
+  {
+    id: 'agreement', title: 'Agree the same terms.', label: 'Agreement', duration: 8,
+    subtitle: 'Both parties accept the same terms hash before payment is requested.',
+    state: 'QUOTED', balances: [0, 0, 0, 0],
+    events: [
+      { from: 'escrow', to: ['buyer', 'seller'], label: 'Propose terms', type: 'finance.terms_proposed', kind: 'message',
+        body: ['price + delivery deadline', 'acceptance checks + 1% fee', 'one shared terms_hash'],
+        note: 'Delta sends the complete proposed terms to both agents.' },
+      { from: 'buyer', to: 'escrow', label: 'Buyer accepts', type: 'finance.accept_terms', kind: 'reply',
+        body: ['terms_hash: agreed hash', 'envelope signed by buyer'],
+        note: 'The buyer accepts those exact terms.' },
+      { from: 'seller', to: 'escrow', label: 'Seller accepts', type: 'finance.accept_terms', kind: 'reply',
+        body: ['terms_hash: same agreed hash', 'envelope signed by seller'],
+        note: 'The seller independently accepts the same hash.' },
+      { from: 'escrow', to: ['buyer', 'seller'], label: 'Countersigned', type: 'finance.terms_countersigned', kind: 'reply',
+        body: ['terms_hash: agreed hash', 'accepted_by: buyer + seller'],
+        note: 'Agreement is complete. Funding is a separate next step.', state: 'ACCEPTED' },
+    ],
+  },
+  {
+    id: 'funding', title: 'Fund. Confirm. Start work.', label: 'Funding', duration: 9,
+    subtitle: 'The bank confirms the credit; only then does the seller start.',
+    state: 'FUNDING_REQUESTED', balances: [0, 0, 0, 0],
+    events: [
+      { from: 'escrow', to: 'buyer', label: 'Payment request', type: 'finance.payment_request', kind: 'message',
+        body: ['to: escrow bank account', 'amount: €500.00', 'reference: unique deal ID'],
+        note: 'The payment reference ties the bank credit to this deal.', state: 'FUNDING_REQUESTED' },
+      { from: 'buyer', to: 'bank', label: 'Pay €500', type: 'POST /transfers', kind: 'money',
+        body: ['buyer → escrow account', 'amount: €500.00', 'idempotency key: pay:<deal>'],
+        note: 'The buyer funds its own deal. The seller has not been paid.',
+        },
+      { from: 'bank', to: 'escrow', label: 'Bank credit', type: 'GET /events → credit', kind: 'reply',
+        body: ['stable bank event ID', 'matching deal reference', 'exact amount: €500.00'],
+        note: 'Delta polls the bank and records the matched credit once.', state: 'FUNDED',
+        balances: [-500, 500, 0, 0] },
+      { from: 'escrow', to: ['buyer', 'seller'], label: 'Funding confirmed', type: 'finance.funding_confirmed', kind: 'reply',
+        body: ['amount: €500.00', 'bank_event_id', 'delivery_deadline'],
+        note: 'Both agents receive confirmation. Funds remain held in escrow.' },
+    ],
+  },
+  {
+    id: 'delivery', title: 'Deliver verifiable work.', label: 'Delivery', duration: 6,
+    subtitle: 'The seller uploads the artifact and sends a signed delivery message.',
+    state: 'FUNDED', balances: [-500, 500, 0, 0],
+    events: [
+      { from: 'seller', to: 'catalog', label: 'Upload artifact', type: 'AgentDb artifact upload', kind: 'artifact',
+        body: ['report.md + data.csv', 'summary.json', 'artifact_id + SHA-256 + bytes'],
+        note: 'The completed ZIP is stored as an artifact, ready to inspect.' },
+      { from: 'seller', to: 'escrow', label: 'Delivery', type: 'finance.delivery', kind: 'message',
+        body: ['attempt: 1', 'artifact_id + SHA-256', 'byte_length + media_type'],
+        note: 'Delta checks the artifact exists and matches the signed reference.', state: 'DELIVERED' },
+      { from: 'escrow', to: 'buyer', label: 'Relay delivery', type: 'finance.relay', kind: 'message',
+        body: ['relayed: signed finance.delivery', 'deal: id + sequence + state'],
+        note: 'The buyer receives the delivery record while independent evaluation is requested.' },
+      { from: 'escrow', to: 'checks', label: 'Request checks', type: 'finance.evaluation_request', kind: 'message',
+        body: ['one request per evaluator', 'terms_hash + delivery_id', 'artifact reference + respond_by'],
+        note: 'The evaluators receive the current delivery and agreed check parameters.', state: 'EVALUATING' },
+    ],
+  },
+  {
+    id: 'evaluation', title: 'Independent checks decide.', label: 'Evaluation', duration: 8,
+    subtitle: 'Only verdicts for this delivery count. Funds stay held while checks run.',
+    state: 'EVALUATING', balances: [-500, 500, 0, 0],
+    events: [
+      { from: 'checks', to: 'escrow', label: 'Integrity · PASS', type: 'finance.verdict', kind: 'reply',
+        body: ['check: integrity', 'SHA-256 + size match', 'delivery_id + terms_hash'],
+        note: 'The first signed verdict confirms artifact integrity.' },
+      { from: 'checks', to: 'escrow', label: 'Files · PASS', type: 'finance.verdict', kind: 'reply',
+        body: ['check: required-files', 'all 3 files present', 'same delivery_id + terms_hash'],
+        note: 'The second verdict confirms all required files are present.' },
+      { from: 'checks', to: 'escrow', label: 'Deadline · PASS', type: 'finance.verdict', kind: 'reply',
+        body: ['check: deadline', 'delivered before deadline', 'same delivery_id + terms_hash'],
+        note: 'The third verdict confirms on-time delivery.' },
+      { from: 'escrow', to: ['buyer', 'seller'], label: 'Approved', type: 'finance.decision', kind: 'reply',
+        body: ['policy: all', '3 of 3 checks passed', 'outcome: approve'],
+        note: 'Only now can Delta prepare the seller’s payout.', state: 'APPROVED' },
+    ],
+  },
+  {
+    id: 'settlement', title: 'Release and confirm payment.', label: 'Settlement', duration: 11,
+    subtitle: 'The fee comes from the seller’s payout. The buyer paid exactly €500.',
+    state: 'RELEASING', balances: [-500, 500, 0, 0],
+    events: [
+      { from: 'escrow', to: 'bank', label: 'Submit transfers', type: 'POST /transfers × 2', kind: 'money',
+        body: ['payout intent: €495.00', 'fee intent: €5.00', 'one idempotency key per intent'],
+        note: 'Durable intents are prepared before the bank is called.', state: 'RELEASING' },
+      { from: 'bank', to: 'seller-account', label: 'Seller +€495', type: 'Bank payout transfer', kind: 'money',
+        body: ['escrow → seller account', 'amount: €495.00'],
+        note: 'The bank transfers the approved payout to the seller’s account.',
+        balances: [-500, 5, 495, 0] },
+      { from: 'bank', to: 'fee-account', label: 'Operator +€5', type: 'Bank fee transfer', kind: 'money',
+        body: ['escrow → operator fee account', 'amount: €5.00'],
+        note: 'The fee goes to the operator’s separate bank account.',
+        balances: [-500, 0, 495, 5] },
+      { from: 'bank', to: 'escrow', label: 'Bank confirms', type: 'Bank transfer confirmations', kind: 'reply',
+        body: ['payout: booked', 'fee: booked', 'bank transfer references'],
+        note: 'Delta records the confirmed transfers and settles the deal.', state: 'SETTLED' },
+      { from: 'escrow', to: ['buyer', 'seller'], label: 'Payout confirmed', type: 'finance.payout_confirmed', kind: 'reply',
+        body: ['seller: €495.00', 'operator: €5.00', 'bank reference'],
+        note: 'Both agents receive the payout confirmation.' },
+      { from: 'escrow', to: ['buyer', 'seller'], label: 'Signed receipt', type: 'finance.receipt', kind: 'reply',
+        body: ['terms_hash', 'event-log head + hash', 'settlement amounts'],
+        note: 'A signed receipt closes the shared, auditable transaction.' },
+    ],
+  },
+  {
+    id: 'complete', title: 'One deal. Every step on record.', label: 'Complete', duration: 5,
+    subtitle: 'Discovery → agreement → funding → delivery → independent checks → settlement.',
+    state: 'SETTLED', balances: [-500, 0, 495, 5], events: [],
+  },
+];
+let cfOffset = 0;
+for (const phase of CF_PHASES) {
+  phase.offset = cfOffset;
+  phase.events.forEach((event, index) => {
+    event.at = .6 + index * ((phase.duration - 2) / Math.max(1, phase.events.length - 1));
+    event.arrive = event.at + .8;
+  });
+  cfOffset += phase.duration;
+}
+window.COMMERCE_FLOW = { nodes: CF_NODES, phases: CF_PHASES, duration: cfOffset };

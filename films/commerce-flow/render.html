@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Render the commerce flow</title>
+  <link rel="stylesheet" href="/assets/font.css">
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#122b24;color:#f4f7f3;font:15px Manrope,Arial,sans-serif}header{padding:20px 28px;display:flex;gap:20px;align-items:center;flex-wrap:wrap}h1{font-size:20px;margin:0}button,a{font:inherit;color:#173e2c;background:#edf4e4;border:0;border-radius:6px;padding:10px 18px;text-decoration:none}button{cursor:pointer}button:disabled{opacity:.5;cursor:wait}#status{flex:1;min-width:250px}canvas{display:block;width:min(100vw,1440px);height:auto;margin:auto}.bar{display:none!important}progress{width:100%;height:8px;accent-color:#a6cb90}#download[hidden]{display:none}
+  </style>
+</head>
+<body>
+  <header><h1>Commerce flow · local export</h1><button id="render" disabled>Render MP4</button><span id="status" role="status">Loading the Vidder film.</span><a id="download" href="/video.mp4" download="commerce-flow-final.mp4" hidden>Download MP4</a><progress id="progress" max="1488" value="0"></progress></header>
+  <canvas id="c"></canvas>
+  <script src="/engine/core.js"></script>
+  <script src="/flow-data.js"></script>
+  <script src="/film.js"></script>
+  <script>
+    'use strict';
+    const renderButton=document.getElementById('render');
+    const renderStatus=document.getElementById('status');
+    const renderProgress=document.getElementById('progress');
+    const renderDownload=document.getElementById('download');
+    let renderSession;
+    async function call(path,body){
+      const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Render-Session':renderSession||''},body:JSON.stringify(body)});
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.error||'The render request failed.');
+      return data;
+    }
+    async function ready(){
+      while(!window.__ready&&!window.__error)await new Promise(resolve=>setTimeout(resolve,50));
+      if(window.__error){renderStatus.textContent=window.__error;return;}
+      renderProgress.max=window.__NDRAW;
+      renderStatus.textContent=window.__NDRAW+' frames · 1920 × 1080 · 24 fps · 62 seconds';
+      renderButton.disabled=false;
+    }
+    renderButton.addEventListener('click',async()=>{
+      renderButton.disabled=true;renderDownload.hidden=true;
+      try{
+        const started=await call('/api/start',{frames:window.__NDRAW,fps:window.__fps,size:window.__size});
+        renderSession=started.session;
+        const count=window.__NDRAW,batchSize=8;
+        for(let index=0;index<count;index+=batchSize){
+          const frames=[];
+          for(let at=index;at<Math.min(index+batchSize,count);at++)frames.push(window.__frame(at).split(',')[1]);
+          await call('/api/frames',{start:index,frames});
+          renderProgress.value=index+frames.length;
+          renderStatus.textContent='Rendering frame '+(index+frames.length)+' / '+count;
+          await new Promise(resolve=>setTimeout(resolve,0));
+        }
+        if(window.__wav){
+          renderStatus.textContent='Rendering the local soundtrack.';
+          await call('/api/audio',{wav:await window.__wav()});
+        }
+        renderStatus.textContent='Encoding the 1080p MP4.';
+        const result=await call('/api/finish',{});
+        renderStatus.textContent='Complete: '+result.frames+' frames, '+result.duration+' seconds. MP4 ready.';
+        renderDownload.hidden=false;
+      }catch(error){
+        renderStatus.textContent='Render stopped: '+error.message;
+        try{await call('/api/fail',{error:String(error.message)});}catch{}
+        renderButton.disabled=false;
+      }
+    });
+    ready();
+  </script>
+</body>
+</html>

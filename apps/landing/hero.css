@@ -1,0 +1,58 @@
+.hero { display: grid; grid-template-columns: 1fr 1.1fr; gap: 28px; padding-block: 66px 59px; align-items: center; }
+.hero-copy { position: relative; z-index: 1; }
+.hero-copy > .eyebrow { font-size: 9px; letter-spacing: 1.05px; color: var(--green); margin-bottom: 24px; }
+.hero h1 { font-size: clamp(57px, 5.6vw, 78px); font-weight: 550; line-height: 1.035; letter-spacing: -4.3px; }
+.hero h1 > span { color: var(--green); }
+.hero-description { font-size: 14px; line-height: 1.9; color: #606d63; margin-top: 25px; max-width: 385px; }
+.hero-actions { display: flex; align-items: center; gap: 24px; margin-top: 27px; }
+.play-icon { border: 1px solid #cdd7c7; border-radius: 50%; width: 28px; height: 28px; display: grid; place-items: center; }
+.play-icon .icon { width: 14px; height: 14px; margin-left: 2px; }
+.hero-note { display: flex; align-items: center; gap: 7px; margin-top: 23px; font-size: 10px; color: var(--muted); }
+.hero-note .icon { width: 13px; height: 13px; }
+.hero-visual { position: relative; width: 100%; aspect-ratio: 580/590; border-radius: 13px; background: radial-gradient(ellipse at 50% 48%, #dce8c8 0, #e9efdf 42%, #edf1e7 73%); border: 1px solid #e0e6d7; overflow: hidden; }
+.visual-grid { position: absolute; inset: 0; opacity: .45; background-image: radial-gradient(#889879 1px, transparent 1px); background-size: 21px 21px; mask-image: radial-gradient(ellipse, #0008, transparent 75%); }
+.visual-topline { position: absolute; top: 24px; left: 25px; right: 25px; display: flex; justify-content: space-between; align-items: center; gap: 10px; color: #67765b; font: 400 7px var(--mono); letter-spacing: 1.3px; }
+.tiny-cross { font-size: 15px; line-height: 1; color: #7a8f69; }
+.orbit { position: absolute; border: 1px solid #a4b78a35; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.orbit-one { width: 72%; aspect-ratio: 1; }
+.orbit-two { width: 94%; aspect-ratio: 1; }
+.connection-lines { width: 100%; height: 100%; position: absolute; inset: 0; fill: none; }
+.connection-lines path { stroke: #8c9e7a; stroke-width: 1.3; stroke-dasharray: 4 5; }
+.connection-lines circle { fill: #617c47; stroke: #e9efdf; stroke-width: 3; }
+.agent-card { position: absolute; top: 17%; display: flex; align-items: center; gap: 9px; background: #fffffff5; border: 1px solid #dee4d5; box-shadow: 0 5px 8px #38502505, 0 14px 30px #38502507; border-radius: 9px; width: 40%; padding: 15px 12px 31px; }
+.buyer-card { left: 5.8%; transform: rotate(-4deg); }
+.seller-card { right: 5.8%; top: 19%; transform: rotate(4deg); }
+.agent-avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+.agent-avatar .icon { width: 19px; height: 19px; }
+.lavender { background: #eeeafa; color: #71618b; }
+.peach { background: #f9eadc; color: #9a6c4b; }
+.sage { background: #e7eedd; color: #52703a; }
+.agent-card .mini-label { display: block; color: var(--muted); font-size: 7px; letter-spacing: .9px; margin-bottom: 3px; }
+.agent-card strong { display: block; white-space: nowrap; font-size: clamp(8px, .8vw, 11px); font-weight: 600; letter-spacing: -.15px; }
+.identity-tag { position: absolute; right: 12px; bottom: 8px; display: flex; align-items: center; gap: 4px; color: #57704c; font: 400 7px var(--mono); }
+.identity-tag .icon { width: 11px; height: 11px; }
+.connection-label { position: absolute; top: 38%; background: #eaf0e1; color: #5d6e50; padding: 2px 5px; font: 400 7px var(--mono); letter-spacing: 1px; }
+.funds-label { left: 10%; }
+.delivery-label { right: 9%; top: 39%; }
+.escrow-card { position: absolute; top: 38%; left: 25%; width: 50%; border: 1px solid #30553d; border-radius: 11px; background: #1c412e; color: #fff; box-shadow: 0 21px 36px -15px #213a2c60, 0 0 0 6px #ffffff35; transform: rotate(-2deg); }
+.escrow-top { display: flex; justify-content: space-between; align-items: center; padding: 15px 17px 0; }
+.escrow-top > span { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: -.3px; }
+.escrow-top .brand-mark { width: 22px; height: 22px; color: #d9e9b0; }
+.escrow-top .brand-mark use { color: #71915e; }
+.escrow-top > .icon { width: 14px; height: 14px; color: #c9d6bb; }
+.escrow-amount { margin: 22px 19px 6px; font-size: clamp(27px, 3vw, 42px); line-height: 1.1; font-weight: 500; letter-spacing: -1.7px; }
+.escrow-amount > span { color: #b8caaa; }
+.escrow-status { display: flex; align-items: center; gap: 6px; margin: 0 20px 21px; color: #e0e8cf; font-size: 8px; }
+.escrow-status .status-dot { width: 5px; height: 5px; background: #c6dd94; }
+.escrow-bottom { border-top: 1px solid #ffffff1f; display: flex; justify-content: space-between; padding: 10px 18px; color: #b9caaa; font: 400 6px var(--mono); letter-spacing: 1px; }
+.verification-card { position: absolute; left: 13%; right: 13%; top: 75%; padding: 18px 16px; display: flex; align-items: center; gap: 12px; background: #fffffff2; border: 1px solid #d8e2ce; border-radius: 9px; box-shadow: 0 10px 20px #38502505; transform: rotate(1.5deg); }
+.verification-icon { width: 37px; height: 42px; display: grid; place-items: center; color: var(--green); background: #ecf1e3; border: 1px solid #dce6ce; border-radius: 7px; flex-shrink: 0; }
+.verification-icon .icon { width: 23px; height: 23px; }
+.verification-card .mini-label { display: block; font-size: 6px; color: #677d56; letter-spacing: .7px; margin-bottom: 4px; }
+.verification-card strong { display: block; font-size: 13px; font-weight: 650; letter-spacing: -.25px; }
+.verification-detail { display: block; font-size: 8px; color: var(--muted); margin-top: 3px; }
+.verified-check { display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; color: var(--green); background: #e8efd9; margin-left: auto; flex-shrink: 0; }
+.verified-check .icon { width: 12px; height: 12px; }
+.visual-bottomline { position: absolute; bottom: 23px; left: 25px; right: 25px; display: flex; align-items: center; gap: 6px; font: 400 6px var(--mono); letter-spacing: .7px; color: #617353; }
+.visual-bottomline .status-dot { width: 4px; height: 4px; }
+.visual-bottomline > span:last-child { margin-left: auto; font-size: 5px; }

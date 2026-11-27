@@ -1,0 +1,379 @@
+{
+  "formatVersion": 1,
+  "moduleKey": "cogit-messaging",
+  "version": "1.0.0",
+  "platform": {
+    "minSchema": 179,
+    "maxSchema": 216
+  },
+  "upgradeFrom": [],
+  "retention": "preserve",
+  "migrations": [
+    {
+      "id": "000001__native",
+      "path": "migrations/000001__native.sql",
+      "sha256": "f2e38b4a3def8a42af45b39e254a9be1060fbe11773d89791913e870d3b6fb57"
+    },
+    {
+      "id": "000099__exports",
+      "path": "migrations/000099__exports.sql",
+      "sha256": "fbd628fd1523184f0ac923ae925743674bee692abac071c06817cbba00e944f3"
+    }
+  ],
+  "files": [],
+  "exports": [
+    {
+      "key": "identity.resolve",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-messaging.identity.resolve.v1",
+      "functionName": "ac_msg_identity_resolve",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_msg.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "conversation.read",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-messaging.conversation.read.v1",
+      "functionName": "ac_msg_conversation_read",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_msg.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "identity.register",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-messaging.identity.register.v1",
+      "functionName": "ac_msg_identity_register",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_msg.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "type.register",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-messaging.type.register.v1",
+      "functionName": "ac_msg_type_register",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_msg.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "message.send",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-messaging.message.send.v1",
+      "functionName": "ac_msg_message_send",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_msg.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "message.claim",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-messaging.message.claim.v1",
+      "functionName": "ac_msg_message_claim",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_msg.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "message.ack",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-messaging.message.ack.v1",
+      "functionName": "ac_msg_message_ack",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_msg.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "message.release",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-messaging.message.release.v1",
+      "functionName": "ac_msg_message_release",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_msg.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    }
+  ],
+  "resources": [],
+  "settings": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "escrow_installation_id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "operator_principal_id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "redeliver_after_s": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_delivery_attempts": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "defaults": {
+      "escrow_installation_id": "cogit-finance",
+      "operator_principal_id": "",
+      "redeliver_after_s": 30,
+      "max_delivery_attempts": 5
+    }
+  },
+  "policies": [],
+  "evidence": []
+}

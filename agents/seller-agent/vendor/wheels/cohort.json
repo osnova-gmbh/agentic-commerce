@@ -1,0 +1,32 @@
+{
+  "status": "reviewed_agentdb_only_template_0.1.24",
+  "sourceCommits": {
+    "cogit-agent-sdk": "7dc11fd500427a1d27fd477e4fac2322c5cff6b5",
+    "cogit-tools": "2f52218d84d7f58afe1a87241b1bdccb30cc895e",
+    "cogit-runtime": "55bce909fdafdf8d796f12bf4434c91c961227a9",
+    "agentdb-client": "2f37f53bf262fa8e6f1f74d14a10b016b6ac8dbf",
+    "cogit-tool-shell": "b654e46b0da0bb43e1524ce8ede56118c9f334a7",
+    "cogit-tool-browser": "b654e46b0da0bb43e1524ce8ede56118c9f334a7"
+  },
+  "sourceStatus": {
+    "cogit-agent-sdk": "Reviewed producer 7dc11fd500427a1d27fd477e4fac2322c5cff6b5; built from the committed source archive.",
+    "agentdb-client": "Generated client0.2.13 from committed producer2f37f53bf262fa8e6f1f74d14a10b016b6ac8dbf; embedded generator inputeb1a29e1d825046fa7dba8a282e45b386adc35ff and OpenAPI SHA2569b22d950ec81cd7c46b5eed70c1d23ac4a405d031b8a4084fed1bc0d913b1d6b. Exact archive SHA256 recorded; no package-index publication or deployment claimed.",
+    "cogit-runtime": "Built from the exact merged Runtime PR 52 commit 55bce909fdafdf8d796f12bf4434c91c961227a9 with the pinned build constraints. Exact archive SHA256 recorded.",
+    "cogit-tools": "Reviewed committed tool-core0.1.3 producer2f52218d84d7f58afe1a87241b1bdccb30cc895e; exact archive SHA256 recorded. No package-index publication or deployment claimed.",
+    "cogit-tool-shell": "Reviewed library PR84 merged producer b654e46b0da0bb43e1524ce8ede56118c9f334a7; cogit-tool-shell0.1.2. Exact archive SHA256 recorded; no package-index publication or deployment claimed.",
+    "cogit-tool-browser": "Reviewed library PR84 merged producer b654e46b0da0bb43e1524ce8ede56118c9f334a7; cogit-tool-browser0.1.2. Exact archive SHA256 recorded; no package-index publication or deployment claimed."
+  },
+  "wheelSha256": {
+    "cogit_tool_execution-0.1.1-py3-none-any.whl": "4ac293043345a362226467dcccc70a34ab6a51c360707585237728aef93fec2c",
+    "cogit_tool_filesystem-0.1.1-py3-none-any.whl": "3ef283b96e29ab4294b18d5c5b38924b505149935f65d161251fca8b71f964bd",
+    "cogit_transport_browser_session-0.1.0-py3-none-any.whl": "9ce9373b07bf8b45a4008ff9cdf9b3fbee502daf5451e24c67370f1315773f70",
+    "cogit_agent_sdk-0.5.16-py3-none-any.whl": "16f2c46e3b4648bdd6d784fdbec5cc8ce79a62d50b80eaa2c962bc0185c1a3b6",
+    "cogit_tool_core-0.1.3-py3-none-any.whl": "2c4eae7441256515b55cb383626681823732038110c1ccd1e88fc2f493656c2e",
+    "agentdb_client-0.2.13-py3-none-any.whl": "a85a1257374f4be432d7bffcfc51625fa87ee59e23ca7793ba35a423c601603e",
+    "cogit_tool_shell-0.1.2-py3-none-any.whl": "a71cca62c9042eab74dd17b2f367ff2d89ebbde7af0558530d3cfe8657c844a4",
+    "cogit_tool_browser-0.1.2-py3-none-any.whl": "92b5bf62c193d56437d586ff3de183cff0d60e0bc5117e0e2865f239fea9c4d1",
+    "cogit_runtime-0.3.31-py3-none-any.whl": "5d81546f43a910a78860ff5c6bdb244ca00c338c3ebb5ccc1827034b8bd3fb7b",
+    "cogit_finance_seams-0.1.0-py3-none-any.whl": "92c7bf2059f3e76b8a40a442c7beb5055105f50f5831d5d9db057119c5982f9e",
+    "cogit_messaging_shim-0.1.0-py3-none-any.whl": "6cb278edec8d37635413f6accb4b0f3492a6ebde36c960441015a38f2ca9c260"
+  }
+}

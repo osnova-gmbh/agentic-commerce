@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.11.28"
+          python-version: "3.11.16"
+          enable-cache: false
+      - name: Install pinned Python interpreter
+        run: >-
+          uv python install 3.11.16 --no-bin --no-registry
+          --python-downloads-json-url
+          https://raw.githubusercontent.com/astral-sh/uv/802a9162a1153ddee799a0080c80a38d96009d91/crates/uv-python/download-metadata.json
+      - name: Complete installed-package gate (Linux)
+        if: runner.os == 'Linux'
+        run: bash scripts/check.sh --skip-image
+      - name: Complete installed-package gate (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/check.ps1 -SkipImage
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate Compose configuration
+        env:
+          COGIT_AGENTDB_URL: https://agentdb.example.invalid
+          COGIT_AGENTDB_API_VERSION: "0.1.0"
+          COGIT_AGENTDB_INSTALLATION_ID: 00000000-0000-0000-0000-000000000001
+          COGIT_AGENTDB_POOL_ID: 00000000-0000-0000-0000-000000000002
+          COGIT_AGENTDB_WORKER_TOKEN: config-only-placeholder
+          COGIT_AGENTDB_APPROVAL_DECIDER_ID: 00000000-0000-0000-0000-000000000003
+          COGIT_AGENTDB_COHORT_RECEIPT: ./receipt.json
+        run: docker compose config --quiet
+      - name: Build the default production image
+        run: bash scripts/build_image.sh cogit-finance:ci
+      - name: Verify installed image closure and assets
+        run: |
+          docker run --rm --network none --read-only \
+            --mount "type=bind,source=$PWD,target=/verification,readonly" \
+            --entrypoint python cogit-finance:ci \
+            -I /verification/scripts/verify_installed_packages.py --root /verification
+          docker image inspect cogit-finance:ci --format '{{.Id}}'

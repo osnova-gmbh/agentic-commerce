@@ -1,0 +1,382 @@
+{
+  "exports": [
+    {
+      "key": "requests.list",
+      "kind": "query",
+      "version": "1.1.0",
+      "contractId": "cogit.buyer-agent.requests.list.v2",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "after": {
+            "type": "string",
+            "maxLength": 36
+          }
+        },
+        "required": [
+          "limit"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "objectId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 36
+                },
+                "requestId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "closed"
+                  ],
+                  "maxLength": 6
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2147483647
+                }
+              },
+              "required": [
+                "objectId"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 100
+          },
+          "after": {
+            "type": "string",
+            "maxLength": 36
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "buyer_agent_list_v2",
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "buyer_agent.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "requests.get",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit.buyer-agent.requests.get.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          }
+        },
+        "required": [
+          "objectId"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "maxLength": 6
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "objectId",
+          "requestId",
+          "description",
+          "status",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "buyer_agent_get",
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "buyer_agent.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "requests.create",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit.buyer-agent.requests.create.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "requestId",
+          "description"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "maxLength": 6
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "objectId",
+          "requestId",
+          "description",
+          "status",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "buyer_agent_create",
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "buyer_agent.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "requests.close",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit.buyer-agent.requests.close.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "objectId",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "maxLength": 6
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "objectId",
+          "requestId",
+          "description",
+          "status",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "buyer_agent_close",
+      "callerKinds": [
+        "tenant_client"
+      ],
+      "capability": "buyer_agent.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "requests.put",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit.buyer-agent.requests.put.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "requestId",
+          "description"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "maxLength": 6
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "objectId",
+          "requestId",
+          "description",
+          "status",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "buyer_agent_put",
+      "callerKinds": [
+        "fenced_worker"
+      ],
+      "capability": "buyer_agent.write",
+      "policyScope": "installation",
+      "requiredPolicies": []
+    }
+  ]
+}

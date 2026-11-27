@@ -1,0 +1,19 @@
+[project]
+name = "cogit-messaging-module"
+version = "0.1.0"
+description = "Reference implementation of the cogit-messaging AgentDb module: agent identities, message type registry and the message queue."
+requires-python = ">=3.10"
+dependencies = ["cogit-finance-seams", "jsonschema>=4.18"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cogit_messaging_module"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"migrations" = "cogit_messaging_module/migrations"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
