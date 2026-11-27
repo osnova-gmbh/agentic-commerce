@@ -55,6 +55,88 @@
       "metadata": null
     },
     {
+      "name": "bootstrap",
+      "description": "Seed configured local demo identities, companies and evaluators once.",
+      "input_schema": {
+        "properties": {},
+        "title": "BootstrapInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "companies": {
+            "title": "Companies",
+            "type": "integer"
+          },
+          "identities": {
+            "title": "Identities",
+            "type": "integer"
+          },
+          "evaluators": {
+            "title": "Evaluators",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "companies",
+          "identities",
+          "evaluators"
+        ],
+        "title": "BootstrapOutput",
+        "type": "object"
+      },
+      "risk": "write",
+      "requires_approval": false,
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
+    },
+    {
+      "name": "drain_inbox",
+      "description": "Process a bounded batch of signed messages under the worker's AgentDb context.",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "default": 10,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "DrainInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "handled": {
+            "title": "Handled",
+            "type": "integer"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "integer"
+          },
+          "released": {
+            "title": "Released",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "handled",
+          "rejected",
+          "released"
+        ],
+        "title": "DrainOutput",
+        "type": "object"
+      },
+      "risk": "write",
+      "requires_approval": false,
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
+    },
+    {
       "name": "handle_message",
       "description": "Process one signed finance.* message addressed to E.",
       "input_schema": {

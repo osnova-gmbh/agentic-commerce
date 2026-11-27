@@ -19,15 +19,31 @@ from seller_agent.deliverable import build_service_deliverable
 from seller_agent.seller import SellerCore
 
 from .demo import AGENTS, DemoEngine, create_demo_app
+from .boris import BorisConnectionError
+from .provider_checkout import provider_delivery, provider_services
 from .view import deal_view, format_minor
 
 log = logging.getLogger(__name__)
 TERMINAL = {"SETTLED", "REFUNDED", "CANCELLED", "DECLINED", "EXPIRED"}
 
 
+class CheckoutDeliveryLoop(DeliveryLoop):
+    """Leave other purchases paused until their own next explicit action."""
+
+    def __init__(self, *args, deal_id: str, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.deal_id = deal_id
+
+    def _command(self, export: str, args: dict, idempotency_key: str) -> dict:
+        if export == "message.claim":
+            args = {**args, "conversation_id": self.deal_id}
+        return super()._command(export, args, idempotency_key)
+
+
 class CatalogDemoEngine(DemoEngine):
     def __init__(self, root: Path, *, history_file: Path | None = None, **kwargs):
         self.orders: dict[str, dict] = {}
+        self.order_progress: dict[str, dict] = {}
         self.release_permissions: set[str] = set()
         self.history_file = history_file
         self.archived_views: dict[str, dict] = {}
@@ -38,8 +54,13 @@ class CatalogDemoEngine(DemoEngine):
             "cogit-finance-catalog", "company.read", {"org_id": self.buyer.settings.org_id},
         )["company"]
         self.buyer.settings = replace(self.buyer.settings, max_price_minor=company["spending_limit_minor"])
+        self.provider_metadata, simulated_offers = provider_services(
+            self.source.companies(), self.buyer.settings.max_price_minor,
+        )
+        self.offers.extend(simulated_offers)
+        self._set_seller("happy")
         self.escrow = EscrowCore(
-            self.bus.host.port("cogit-finance"), self.bank, self.bus.artifacts,
+            self._modules("cogit-finance"), self._bank("cogit-finance"), self.bus.artifacts,
             self.keys["cogit-finance"], settings.load_operator_config(), settings.PACKAGED_CONTRACTS_DIR,
             release_authorized=lambda deal_id: deal_id in self.release_permissions,
         )
@@ -47,8 +68,8 @@ class CatalogDemoEngine(DemoEngine):
 
     def _set_seller(self, scenario: str) -> None:
         seller = SellerCore(
-            modules=self.bus.host.port("seller-agent"), artifacts=self.bus.artifacts,
-            messaging=self.bus.messaging("seller-agent"), escrow_did=self.keys["cogit-finance"].did,
+            modules=self._modules("seller-agent"), artifacts=self.bus.artifacts,
+            messaging=self._messaging("seller-agent"), escrow_did=self.keys["cogit-finance"].did,
             seller_org_id="seller-co", offers=self.offers, mode="broken" if scenario == "rework" else "ok",
             build_delivery=self._build_delivery,
         )
@@ -59,6 +80,9 @@ class CatalogDemoEngine(DemoEngine):
         read = self.source.deal(deal_id)
         terms = read["deal"]["terms"]
         offer = self._offer(terms["seller_org_id"], terms["offer_id"])
+        provider = self.provider_metadata.get(offer["offer_id"])
+        if provider:
+            return provider_delivery(deal_id, {**offer, **provider}, terms["inputs"], complete=complete)
         return build_service_deliverable(deal_id, offer, terms["inputs"], include_summary=complete)
 
     def _offer(self, seller_org_id: str, offer_id: str) -> dict:
@@ -84,12 +108,20 @@ class CatalogDemoEngine(DemoEngine):
                 if not offer["active"] or offer["currency"] != "EUR":
                     continue
                 payout, fee = split(offer["price_minor"], fee_bps)
-                rows.append({
+                row = {
                     **offer, "seller_name": seller["legal_name"], "demo": True,
                     "price": format_minor(offer["price_minor"]), "payout_minor": payout,
                     "fee_minor": fee, "fee_bps": fee_bps,
                     "payout": format_minor(payout), "fee": format_minor(fee),
-                })
+                }
+                provider = self.provider_metadata.get(offer["offer_id"])
+                if provider:
+                    row.update(provider)
+                    # Public price is reference information, not an authorized
+                    # transaction total; prepare() records the explicit demo quote.
+                    if provider["requires_demo_amount"]:
+                        row.update(price_minor=None, price="Set demo amount", payout_minor=None, fee_minor=None)
+                rows.append(row)
         return sorted(rows, key=lambda row: (row["title"].casefold(), row["seller_org_id"], row["offer_id"]))
 
     def start(self, *args, **kwargs):
@@ -105,6 +137,7 @@ class CatalogDemoEngine(DemoEngine):
 
     def _launch(self, action: str, request_key: str, fingerprint: dict, deal_id: str, targets: set[str], background: bool) -> dict:
         self.current = {"running": True, "deal_id": deal_id, "scenario": self.orders[deal_id]["scenario"], "error": None, "action": action}
+        self.order_progress[deal_id] = self.current
         result = {"deal_id": deal_id, "action": action, "status": "processing"}
         self.requests[f"{action}:{request_key}"] = {"fingerprint": fingerprint, "result": result}
         if background:
@@ -112,24 +145,47 @@ class CatalogDemoEngine(DemoEngine):
             self.worker.start()
         return result
 
-    def prepare(self, seller_org_id: str, offer_id: str, inputs: dict, request_key: str, *, background: bool = True) -> dict:
-        fingerprint = {"seller_org_id": seller_org_id, "offer_id": offer_id, "inputs": inputs}
+    def prepare(self, seller_org_id: str, offer_id: str, inputs: dict, request_key: str, *, demo_price_minor: int | None = None, background: bool = True) -> dict:
+        fingerprint = {"seller_org_id": seller_org_id, "offer_id": offer_id, "inputs": inputs, "demo_price_minor": demo_price_minor}
         with self.lock:
             repeated = self._replay("prepare", request_key, fingerprint)
             if repeated:
                 return repeated
             if self.current["running"]:
                 raise RuntimeError("The agents are still processing the current step")
-            if self.current["deal_id"] and self.status()["state"] not in TERMINAL:
-                raise RuntimeError("Complete the current checkout before choosing another service")
             service = next((row for row in self.services() if row["seller_org_id"] == seller_org_id and row["offer_id"] == offer_id), None)
             if service is None:
                 raise ValueError("Choose an available service from the catalog")
             errors = list(Draft202012Validator(service["input_schema"]).iter_errors(inputs))
             if errors:
                 raise ValueError(errors[0].message)
+            provider = self.provider_metadata.get(offer_id)
+            if provider:
+                if demo_price_minor is None and provider["requires_demo_amount"]:
+                    raise ValueError("Enter a positive simulated escrow amount for this provider offering")
+                amount = demo_price_minor if demo_price_minor is not None else service["price_minor"]
+                if type(amount) is not int or not 1 <= amount <= self.buyer.settings.max_price_minor:
+                    raise ValueError(f"Simulated escrow amount must be from EUR 0.01 to EUR {self.buyer.settings.max_price_minor / 100:,.2f}")
+                for offer in self.offers:
+                    if offer["offer_id"] == offer_id:
+                        offer["price_minor"] = amount
+                        break
+                payout, fee = split(amount, self.escrow.config["escrow"]["fee_bps"])
+                service.update(price_minor=amount, price=format_minor(amount),
+                               payout_minor=payout, payout=format_minor(payout),
+                               fee_minor=fee, fee=format_minor(fee), quoted_demo_price_minor=amount)
+            elif demo_price_minor is not None:
+                raise ValueError("A custom demo amount is only supported for provider simulations")
             self._set_seller("happy")
-            purchase = self.buyer.request_offer(seller_org_id, offer_id, inputs)
+            try:
+                purchase = self.buyer.request_offer(seller_org_id, offer_id, inputs)
+            except BorisConnectionError as error:
+                if error.deal_id:
+                    self.orders[error.deal_id] = {"service": service, "inputs": dict(inputs), "scenario": "happy"}
+                    self.current = {"running": False, "deal_id": error.deal_id, "scenario": "happy",
+                                    "error": str(error), "action": "prepare"}
+                    self.order_progress[error.deal_id] = self.current
+                raise
             deal_id = purchase.deal_id
             self.orders[deal_id] = {"service": service, "inputs": dict(inputs), "scenario": "happy"}
             return self._launch("prepare", request_key, fingerprint, deal_id, {"QUOTED"}, background)
@@ -152,7 +208,14 @@ class CatalogDemoEngine(DemoEngine):
             if action == "deliver":
                 if state != "REJECTED":
                     self.orders[deal_id]["scenario"] = scenario
-                self._set_seller(self.orders[deal_id]["scenario"])
+            # Different purchases may quote this same service at different demo
+            # amounts. Restore this order's accepted offer before processing it.
+            service = self.orders[deal_id]["service"]
+            for offer in self.offers:
+                if offer["offer_id"] == service["offer_id"]:
+                    offer["price_minor"] = service["price_minor"]
+                    break
+            self._set_seller(self.orders[deal_id]["scenario"])
             if action == "release":
                 self.release_permissions.add(deal_id)
             return self._launch(action, request_key, fingerprint, deal_id, targets[action], background)
@@ -168,7 +231,8 @@ class CatalogDemoEngine(DemoEngine):
                     raise RuntimeError("Checkout stopped")
                 handled = 0
                 for name, _, _ in AGENTS:
-                    handled += DeliveryLoop(name, self.bus.host.port(name), self.bus.runtime, limit=1).run_once()
+                    handled += CheckoutDeliveryLoop(name, self.bus.host.port(name), self.bus.runtime,
+                                                    limit=1, deal_id=deal_id).run_once()
                     self.escrow.tick()
                     runs = [run for run in self.bus.runtime.runs.values() if run.input.get("envelope", {}).get("conversation_id") == deal_id]
                     failures = [run for run in runs if run.status == "failed"]
@@ -193,8 +257,17 @@ class CatalogDemoEngine(DemoEngine):
             with self.lock:
                 self.current["running"] = False
 
-    def status(self) -> dict:
-        result = super().status()
+    def status(self, deal_id: str | None = None) -> dict:
+        with self.lock:
+            if deal_id is not None and deal_id not in self.orders:
+                raise ValueError("Unknown checkout")
+            progress = self.current if deal_id is None else self.order_progress[deal_id]
+            result = {**progress, "mode": "local-simulation",
+                      "server_busy": self.current["running"],
+                      "active_deal_id": self.current["deal_id"] if self.current["running"] else None}
+            result["state"] = None
+            if result["deal_id"]:
+                result["state"] = (self.source.deal(result["deal_id"]).get("deal") or {}).get("state")
         order = self.orders.get(result["deal_id"])
         result["order"] = order
         result["allowed_actions"] = []
@@ -214,6 +287,7 @@ class CatalogDemoEngine(DemoEngine):
                     "QUOTED": ["fund"], "FUNDING_REQUESTED": ["fund"], "FUNDED": ["deliver"],
                     "REJECTED": ["deliver"], "APPROVED": ["release"], "SETTLED": ["browse"],
                 }.get(result["state"], [])
+        result["boris"] = self.boris_report(result["deal_id"])
         return result
 
     def archived_delivery(self, deal_id: str) -> bytes | None:
@@ -242,6 +316,7 @@ class OrderRequest(BaseModel):
     seller_org_id: str = Field(min_length=1, max_length=128)
     offer_id: str = Field(min_length=1, max_length=128)
     inputs: dict = Field(default_factory=dict)
+    demo_price_minor: int | None = Field(default=None, strict=True, ge=1)
 
 
 class DeliveryRequest(BaseModel):
@@ -268,7 +343,14 @@ def create_checkout_app(engine: CatalogDemoEngine):
 
     @app.post("/api/demo/orders", status_code=202)
     def prepare(request: OrderRequest, idempotency_key: str = Header(min_length=1, max_length=200)):
-        return execute(engine.prepare, request.seller_org_id, request.offer_id, request.inputs, idempotency_key)
+        return execute(engine.prepare, request.seller_org_id, request.offer_id, request.inputs, idempotency_key,
+                       demo_price_minor=request.demo_price_minor)
+
+    @app.get("/api/demo/orders/{deal_id}")
+    def order_status(deal_id: str):
+        if deal_id not in engine.orders:
+            raise HTTPException(404, "Unknown checkout")
+        return engine.status(deal_id)
 
     @app.post("/api/demo/orders/{deal_id}/fund", status_code=202)
     def fund(deal_id: str, idempotency_key: str = Header(min_length=1, max_length=200)):

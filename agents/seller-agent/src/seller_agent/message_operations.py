@@ -25,6 +25,7 @@ from cogit_finance_seams.cogit_host import HandleArtifacts, HandleModules
 from cogit_messaging_shim import MESSAGING_MODULE, AgentKey, ShimMessaging
 
 from seller_agent.offers import load_catalog
+from seller_agent.identity import identity
 from seller_agent.schemas import (
     HandleMessageInput,
     HandleMessageOutput,
@@ -32,6 +33,7 @@ from seller_agent.schemas import (
     PublishCatalogOutput,
 )
 from seller_agent.seller import SellerCore, publish_offers
+from seller_agent.service_delivery import build_agreed_delivery
 
 AGENT_ID = "seller-agent"
 DEFAULT_ORG_ID = "seller-co"
@@ -39,8 +41,7 @@ DEFAULT_ORG_ID = "seller-co"
 
 def load_key() -> AgentKey:
     """The agent's signing key; the file is created on first use."""
-    path = os.environ.get("AGENT_KEY_FILE") or f".state/keys/{AGENT_ID}.key"
-    return AgentKey.load_or_create(path)
+    return identity.load_key()
 
 
 def resolve_escrow_did(modules: ModulePort) -> str:
@@ -68,15 +69,21 @@ def build_core(handle: Any) -> SellerCore:
     """Build the seller core over the run handle's module and artifact seams."""
     modules = HandleModules(handle)
     seller_org_id, offers = load_offers()
+    key = load_key()
+    escrow_did = resolve_escrow_did(modules)
     return SellerCore(
         modules=modules,
         artifacts=HandleArtifacts(handle),
-        messaging=ShimMessaging(load_key(), modules),
-        escrow_did=resolve_escrow_did(modules),
+        messaging=ShimMessaging(key, modules),
+        escrow_did=escrow_did,
         seller_org_id=seller_org_id,
         offers=offers,
         mode=(os.environ.get("SELLER_MODE") or "ok").strip().lower(),
         delay_s=float(os.environ.get("SELLER_DELAY_S") or 0),
+        build_delivery=lambda deal_id, complete: build_agreed_delivery(
+            modules, deal_id, complete, escrow_did=escrow_did,
+            seller_did=key.did, seller_org_id=seller_org_id, offers=offers,
+        ),
     )
 
 

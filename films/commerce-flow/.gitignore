@@ -1,1 +1,4 @@
-out/
+out/*
+!out/commerce-flow-final.mp4
+!out/commerce-flow.mp4
+!out/commerce-flow-poster.png

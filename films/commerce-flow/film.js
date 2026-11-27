@@ -1,5 +1,13 @@
 'use strict';
 
+// Shared renderer: the film export and landing page use the same drawing code.
+(() => {
+const cfLerp = (a, b, t) => a + (b - a) * t;
+const cfSmooth = (a, b, t) => {
+  const x = Math.max(0, Math.min(1, (t - a) / (b - a)));
+  return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+};
+
 const CF = {
   paper: '#f4f7f3', ink: '#193c30', muted: '#63776e', line: '#d9e4dc',
   blue: '#3678b0', green: '#2d7c58', purple: '#8263b1', gold: '#a87828',
@@ -74,7 +82,7 @@ function cfNodes(c, event) {
   CF_NODES.forEach((node, index) => {
     const x = CF_X[index], lit = active.has(node.id);
     cfBox(c, x - 99, 262, 198, 117, lit ? '#f7faf6' : '#fafbf9', lit ? node.color : CF.line, 9);
-    c.fillStyle = lit ? node.color : '#a0b1a6'; c.beginPath(); c.arc(x, 282, 4, 0, TAU); c.fill();
+    c.fillStyle = lit ? node.color : '#a0b1a6'; c.beginPath(); c.arc(x, 282, 4, 0, Math.PI * 2); c.fill();
     cfFit(c, node.name, x, 320, 174, 22, lit ? CF.ink : CF.muted, 'center', 650);
     cfFit(c, node.detail, x, 349, 174, 16, CF.muted, 'center');
     c.strokeStyle = '#dae5dd'; c.lineWidth = 1; c.setLineDash([5, 8]);
@@ -89,7 +97,7 @@ function cfPoint(path, progress) {
   for (let i = 0; i < lengths.length; i++) {
     if (distance <= lengths[i] || i === lengths.length - 1) {
       const ratio = lengths[i] ? distance / lengths[i] : 0;
-      return [lerp(path[i][0], path[i + 1][0], ratio), lerp(path[i][1], path[i + 1][1], ratio), i];
+      return [cfLerp(path[i][0], path[i + 1][0], ratio), cfLerp(path[i][1], path[i + 1][1], ratio), i];
     }
     distance -= lengths[i];
   }
@@ -137,7 +145,7 @@ function cfSequence(c, phase, time, activeIndex) {
     const y = 435 + index * (phase.events.length > 5 ? 79 : 93);
     const current = index === activeIndex;
     if (current) cfBox(c, 78, y-36, 1280, event.from === event.to ? 77 : 69, '#eff5f0', null, 7);
-    const progress = sm(event.at, event.arrive, time);
+    const progress = cfSmooth(event.at, event.arrive, time);
     const ids = [event.from, ...cfTargets(event)].map(cfNodeId);
     const min = Math.min(...ids.map(id => CF_X[CF_IDX[id]]));
     const max = Math.max(...ids.map(id => CF_X[CF_IDX[id]]));
@@ -152,7 +160,7 @@ function cfSequence(c, phase, time, activeIndex) {
   });
   const legend = [['#3678b0','Deal message'],['#8263b1','Catalog / artifact'],['#a87828','Bank transfer'],['#2d7c58','Confirmation']];
   legend.forEach(([color,label], index) => {
-    const x = 91 + index*321; c.fillStyle=color; c.beginPath(); c.arc(x,889,4,0,TAU); c.fill();
+    const x = 91 + index*321; c.fillStyle=color; c.beginPath(); c.arc(x,889,4,0,Math.PI * 2); c.fill();
     cfText(c,label,x+14,894,14,500,CF.muted);
   });
 }
@@ -200,7 +208,7 @@ function cfBalances(c, values) {
 }
 
 function cfComplete(c, phase, time, index) {
-  const opacity = sm(0, .7, time);
+  const opacity = cfSmooth(0, .7, time);
   c.save(); c.globalAlpha = opacity;
   cfBox(c,60,243,1798,674,'#e7f0e5', '#cbdacb', 18);
   c.strokeStyle=CF.green;c.lineWidth=9;c.lineCap='round';c.lineJoin='round';
@@ -214,7 +222,7 @@ function cfComplete(c, phase, time, index) {
 }
 
 function cfDraw(phase, index, c, time) {
-  c.fillStyle=CF.paper;c.fillRect(0,0,W,H);
+  c.fillStyle=CF.paper;c.fillRect(0,0,1920,1080);
   cfHeader(c,phase,index,time);
   let values=[...phase.balances], state=phase.state, activeIndex=-1;
   phase.events.forEach((event,n) => {
@@ -243,7 +251,17 @@ function cfScore(ac,t0,destination) {
   }
 }
 
-Promise.all([document.fonts.load('500 24px Manrope'),document.fonts.load('750 53px Manrope')]).then(() => {
+window.CommerceFlowRenderer = Object.freeze({
+  width: 1920, height: 1080, fps: 24, duration: window.COMMERCE_FLOW.duration,
+  renderFrame(c, frame) {
+    const seconds = Math.max(0, Math.min(window.COMMERCE_FLOW.duration * 24 - 1, Math.floor(frame))) / 24;
+    const index = Math.max(0, CF_PHASES.findLastIndex(phase => seconds >= phase.offset));
+    cfDraw(CF_PHASES[index], index, c, seconds - CF_PHASES[index].offset);
+  },
+});
+
+// Keep the original Vidder export entry point unchanged when its engine is loaded.
+if (typeof defineFilm === 'function') Promise.all([document.fonts.load('500 24px Manrope'),document.fonts.load('750 53px Manrope')]).then(() => {
   defineFilm({
     palette:{...PALETTES.pencilMinimal,paper:CF.paper,finish:'flat'},
     format:{ar:'16:9',width:1920},fps:24,
@@ -251,3 +269,5 @@ Promise.all([document.fonts.load('500 24px Manrope'),document.fonts.load('750 53
     score:cfScore,
   });
 });
+
+})();

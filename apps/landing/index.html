@@ -12,7 +12,11 @@
   <link rel="stylesheet" href="hero.css">
   <link rel="stylesheet" href="workspace.css">
   <link rel="stylesheet" href="responsive.css">
+  <link rel="stylesheet" href="flow-player.css">
   <script src="demo.js" defer></script>
+  <script src="../../films/commerce-flow/flow-data.js" defer></script>
+  <script src="../../films/commerce-flow/film.js" defer></script>
+  <script src="flow-player.js" defer></script>
 </head>
 <body>
   <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -68,7 +72,7 @@
         <div class="workspace-chrome"><div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div><span>cogit finance <span class="chrome-slash">/</span> operator workspace</span><span class="preview-label"><span class="status-dot"></span> DEAL WALKTHROUGH</span></div>
         <div class="workspace-layout">
           <aside class="workspace-sidebar" aria-label="Workspace context">
-            <div class="campus"><span class="campus-icon">E</span><div><strong>Example Campus</strong><span>Operator workspace</span></div></div>
+            <div class="campus"><span class="campus-icon">E</span><div><strong>Delta Campus</strong><span>Operator workspace</span></div></div>
             <div class="sidebar-selection"><svg class="icon" aria-hidden="true"><use href="#grid"/></svg> Deal overview <span>01</span></div>
             <p class="sidebar-label">DEAL PARTICIPANTS</p>
             <div class="participant"><span class="participant-dot lavender">N</span><div><strong>Northstar Studio</strong><span>Buyer agent</span></div></div>
@@ -102,7 +106,23 @@
     </section>
     <section id="operators" class="operator-section wrap" aria-labelledby="operator-heading">
       <div class="operator-copy"><p class="eyebrow">FOR THE PEOPLE BUILDING THE NETWORK</p><h2 id="operator-heading">Your ecosystem.<br>Your rules.<br><span>A shared layer of trust.</span></h2><p>Give the companies in your campus or business network a way to trade through their agents—with you as the operator.</p><ul class="operator-benefits"><li><svg class="icon" aria-hidden="true"><use href="#check"/></svg> Set fees, time windows, and company spending limits</li><li><svg class="icon" aria-hidden="true"><use href="#check"/></svg> Connect independent evaluators</li><li><svg class="icon" aria-hidden="true"><use href="#check"/></svg> Rule on disputes, with every deal on record</li></ul><a class="button light" href="../../SPEC.md" target="_blank" rel="noopener">Explore the specification <svg class="icon" aria-hidden="true"><use href="#up-right"/></svg></a></div>
-      <div class="operator-visual"><div class="config-header"><span><span class="config-dot"></span> operator.yaml</span><span>YOUR NETWORK, CONFIGURED</span></div><div class="config-code"><p><span>operator:</span></p><p>&nbsp; name: <b>Example Campus</b></p><p class="code-gap"><span>escrow:</span></p><p>&nbsp; currency: <b>EUR</b></p><p>&nbsp; fee_bps: <b>100</b> <i># 1% seller fee</i></p><p class="code-gap"><span>rail:</span></p><p>&nbsp; kind: <b>sim</b> <i># payment adapter</i></p></div><div class="rail-roadmap"><span class="mini-label">PAYMENT RAIL ROADMAP</span><div><span class="rail-current"><span class="status-dot"></span> Demo bank <small>FIRST RELEASE</small></span><svg class="icon" aria-hidden="true"><use href="#arrow"/></svg><span>SEPA <small>PLANNED</small></span><svg class="icon" aria-hidden="true"><use href="#arrow"/></svg><span>Cards <small>LATER</small></span></div></div></div>
+      <div class="operator-visual"><div class="config-header"><span><span class="config-dot"></span> operator.yaml</span><span>YOUR NETWORK, CONFIGURED</span></div><div class="config-code"><p><span>operator:</span></p><p>&nbsp; name: <b>Delta Campus</b></p><p class="code-gap"><span>escrow:</span></p><p>&nbsp; currency: <b>EUR</b></p><p>&nbsp; fee_bps: <b>100</b> <i># 1% seller fee</i></p><p class="code-gap"><span>rail:</span></p><p>&nbsp; kind: <b>sim</b> <i># payment adapter</i></p></div><div class="rail-roadmap"><span class="mini-label">PAYMENT RAIL ROADMAP</span><div><span class="rail-current"><span class="status-dot"></span> Demo bank <small>FIRST RELEASE</small></span><svg class="icon" aria-hidden="true"><use href="#arrow"/></svg><span>SEPA <small>PLANNED</small></span><svg class="icon" aria-hidden="true"><use href="#arrow"/></svg><span>Cards <small>LATER</small></span></div></div></div>
+    </section>
+    <section id="protocol-flow" class="flow-section wrap" aria-labelledby="flow-heading">
+      <div class="section-heading"><div><p class="eyebrow">FOLLOW THE EXCHANGE</p><h2 id="flow-heading">Every request.<br>Every confirmation.</h2></div><p>See how discovery, signed messages, delivery checks<br>and payment fit together in one deal.</p></div>
+      <div class="flow-player" id="flow-player">
+        <div class="flow-screen"><canvas id="flow-canvas" width="1920" height="1080" role="img" aria-label="Animated request flow between buyer, catalog, escrow, seller, evaluators and bank" aria-describedby="flow-message">Your browser cannot display this animation. Read the current request details below.</canvas></div>
+        <div class="flow-controls">
+          <button id="flow-play" class="button dark small" type="button" disabled>Play animation</button>
+          <button id="flow-replay" class="flow-text-button" type="button" disabled>Replay</button>
+          <div class="flow-seek"><label class="sr-only" for="flow-position">Animation position</label><input id="flow-position" type="range" min="0" max="1487" value="0" step="1" disabled><output id="flow-time" for="flow-position">0:00 / 1:02</output></div>
+          <button id="flow-expand" class="flow-text-button" type="button">Expand animation</button>
+        </div>
+        <nav class="flow-chapters" aria-label="Animation chapters" id="flow-chapters"></nav>
+        <div class="flow-caption" id="flow-message"><span class="mini-label" id="flow-phase">DISCOVERY</span><h3 id="flow-event">Discover an offer.</h3><p id="flow-description">The buyer queries the directory before a deal exists.</p><details><summary>Current request details</summary><p id="flow-route"></p><code id="flow-type"></code><ul id="flow-payload"></ul></details></div>
+        <p class="sr-only" id="flow-status" role="status"></p>
+      </div>
+      <noscript><p class="flow-fallback">Enable JavaScript to watch the request animation.</p></noscript>
     </section>
     <section id="faq" class="faq-section wrap" aria-labelledby="faq-heading">
       <div><p class="eyebrow">THE IMPORTANT DETAILS</p><h2 id="faq-heading">Good questions.<br>Clear answers.</h2><p>Who it's for. How it works.<br>What happens when things go wrong.</p></div>

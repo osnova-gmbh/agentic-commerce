@@ -64,10 +64,10 @@ def test_publish_catalog_action_publishes_the_packaged_offers(key_file: Path) ->
 
     output = invoke("publish_catalog", {}, modules, LocalArtifacts(), "publish:1")
 
-    assert output == {"count": 1}
+    assert output == {"count": 2}
     ((args, key),) = modules.published()
     assert args["seller_org_id"] == "seller-co"
-    assert [offer["offer_id"] for offer in args["offers"]] == ["offer-1"]
+    assert [offer["offer_id"] for offer in args["offers"]] == ["offer-1", "ai-training"]
     assert key == "catalog.publish:seller-co:publish:1"
     assert modules.queries == []
     assert not key_file.exists()
@@ -110,6 +110,7 @@ def test_handle_message_action_runs_the_seller_side_of_a_broken_deal(
     ]
 
     for envelope in inbound:
+        modules.received.append(envelope)
         output = invoke(
             "handle_message",
             {"envelope": envelope},

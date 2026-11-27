@@ -15,8 +15,8 @@ dependencies = [
     "cogit-tool-core[sdk]==0.1.3",
     "pyyaml>=6.0",
     "pydantic>=2.7,<3",
-    "cogit-finance-seams==0.1.0",
-    "cogit-messaging-shim==0.1.0",
+    "cogit-finance-seams==0.2.0",
+    "cogit-messaging-shim==0.2.1",
     "cryptography>=42",
     "httpx>=0.27",
 ]
@@ -70,8 +70,8 @@ build-constraint-dependencies = [
 ]
 
 [tool.uv.sources]
-cogit-messaging-shim = { path = "vendor/wheels/cogit_messaging_shim-0.1.0-py3-none-any.whl" }
-cogit-finance-seams = { path = "vendor/wheels/cogit_finance_seams-0.1.0-py3-none-any.whl" }
+cogit-messaging-shim = { path = "vendor/wheels/cogit_messaging_shim-0.2.1-py3-none-any.whl" }
+cogit-finance-seams = { path = "vendor/wheels/cogit_finance_seams-0.2.0-py3-none-any.whl" }
 # Source-reviewed local cohort; see vendor/wheels/PROVENANCE.md before promotion.
 agentdb-client = { path = "vendor/wheels/agentdb_client-0.2.13-py3-none-any.whl" }
 cogit-agent-sdk = { path = "vendor/wheels/cogit_agent_sdk-0.5.16-py3-none-any.whl" }

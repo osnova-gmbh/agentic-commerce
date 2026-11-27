@@ -16,9 +16,9 @@ from typing import Any
 from cogit_agent_sdk import ActionBinding, OperationInvocation, bind_action, operation
 from cogit_finance_seams import BankPort, SimBankClient, utcnow
 from cogit_finance_seams.cogit_host import HandleArtifacts, HandleModules
-from cogit_messaging_shim import AgentKey
 
 from cogit_finance.escrow import EscrowCore, settings
+from cogit_finance.identity import identity
 from cogit_finance.schemas import (
     HandleMessageInput,
     HandleMessageOutput,
@@ -53,12 +53,11 @@ clock: Callable[[], datetime] = utcnow
 
 def build_core(invocation: OperationInvocation) -> EscrowCore:
     config = settings.load_operator_config()
-    key_file = os.environ.get(AGENT_KEY_FILE_ENV) or DEFAULT_KEY_FILE
     return EscrowCore(
         HandleModules(invocation.handle),
         bank_factory(config),
         HandleArtifacts(invocation.handle),
-        AgentKey.load_or_create(key_file),
+        identity.load_key(),
         config,
         settings.contracts_dir(),
         clock,

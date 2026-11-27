@@ -1,0 +1,24 @@
+{
+  "name": "commerce-escrow",
+  "status": "active",
+  "agent_did": "<escrow-public-DID>",
+  "access_point": {
+    "listen_address": "127.0.0.1:8443",
+    "route": "/escrow",
+    "protocol": "mcp",
+    "public": false,
+    "caller_authentication": {
+      "methods": [{
+        "type": "did_auth",
+        "extraction": {"source": "http_header", "field": "X-Agent-Session"},
+        "allowed_dids": ["<buyer-public-DID>", "<seller-public-DID>"],
+        "challenge_ttl_seconds": 300,
+        "session_ttl_seconds": 300,
+        "audience": "<gateway-origin>/escrow",
+        "allowed_algorithms": ["EdDSA"]
+      }],
+      "on_failure": "reject"
+    }
+  },
+  "target": {"endpoint": "<private-escrow-MCP-endpoint>"}
+}

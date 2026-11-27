@@ -452,6 +452,7 @@ def test_unconfigured_agent_has_no_bindings() -> None:
 def test_configured_agent_exposes_final_action_and_tool_inventories() -> None:
     agent = configured_seller_agent()
     assert {binding.descriptor.name for binding in agent.action_bindings()} == {
+        "drain_inbox",
         "lookup_record",
         "validate_request",
         "apply_resolution",

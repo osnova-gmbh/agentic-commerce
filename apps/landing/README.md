@@ -21,6 +21,9 @@ Alternatively, open `index.html` directly in a modern browser. All fonts, icons,
 - Clickable lifecycle stages and next-step controls; pausing and playing resumes from the current stage.
 - A receipt dialog and downloadable **unsigned, illustrative** JSON with integer-cent amounts.
 - Responsive mobile navigation and expandable FAQ answers.
+- The original 62-second request-flow animation, immediately before the FAQ,
+  with play/pause, replay, scrubbing, chapter selection, fullscreen and readable
+  message details. It starts still and pauses when offscreen or in a hidden tab.
 
 The fixed example is €1,250.00 with a 1% seller-side operator fee (€12.50). Escrow remains held until the simulated bank confirmation. A refund returns the full price and charges no fee.
 
@@ -48,5 +51,8 @@ The browser suite runs desktop and mobile checks for six-second playback, pause/
 - `index.html` — content and inline SVG illustration
 - `styles.css`, `hero.css`, `workspace.css`, `responsive.css` — visual design
 - `demo.js` — explicitly fictional interaction states
+- `flow-player.js`, `flow-player.css` - landing controls for the shared animation
+- `../../films/commerce-flow/{flow-data.js,film.js}` - the same data and canvas
+  renderer used by the Vidder video, loaded directly without duplicating it
 - `server.mjs` — dependency-free local preview server
 - `tests/` — Playwright and axe checks

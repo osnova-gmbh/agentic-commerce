@@ -90,6 +90,23 @@ def test_claim_is_oldest_first_and_honours_the_limit(bench):
     assert code_of(bench.claim, limit=0) == "invalid_argument"
 
 
+def test_claim_can_pause_other_conversations_without_consuming_attempts(bench):
+    paused = bench.send(conversation_id="paused")
+    active = bench.send(conversation_id="active")
+    outsider = bench.send(recipient="carol-agent", conversation_id="active")
+    assert bench.claim(conversation_id="active") == [
+        {"message_id": active["message_id"], "envelope": active, "attempts": 1}
+    ]
+    assert bench.row(paused["message_id"], "paused")["status"] == "queued"
+    assert bench.row(paused["message_id"], "paused")["attempts"] == 0
+    assert bench.row(outsider["message_id"], "active")["attempts"] == 0
+    bench.clock.advance(30)
+    assert bench.claim(conversation_id="missing") == []
+    assert bench.row(paused["message_id"], "paused")["attempts"] == 0
+    assert [row["message_id"] for row in bench.claim(conversation_id="paused")] == [paused["message_id"]]
+    assert code_of(bench.claim, conversation_id="") == "invalid_argument"
+
+
 def test_an_unacknowledged_claim_is_redelivered_after_redeliver_after_s(bench):
     message_id = bench.send()["message_id"]
     assert bench.claim()[0]["attempts"] == 1

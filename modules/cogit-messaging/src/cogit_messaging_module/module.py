@@ -168,14 +168,18 @@ class MessagingModule(SqliteModule):
         now_ts = to_ts(now)
         stale = to_ts(now - timedelta(seconds=self.settings["redeliver_after_s"]))
         mine = (caller.installation_id, now_ts, stale)
+        claimable = _CLAIMABLE
+        if args.get("conversation_id") is not None:
+            claimable += " AND conversation_id = ?"
+            mine += (text_arg(args, "conversation_id"),)
         # A message that used up its attempts is dead: visible to the operator, never delivered again.
         self.db.execute(
             "UPDATE msg_messages SET status = 'dead', reason = 'max_delivery_attempts', acked_at = ?"
-            f" WHERE attempts >= ? AND {_CLAIMABLE}",
+            f" WHERE attempts >= ? AND {claimable}",
             (now_ts, self.settings["max_delivery_attempts"], *mine),
         )
         rows = self.db.execute(
-            f"SELECT message_id, envelope, attempts FROM msg_messages WHERE {_CLAIMABLE} ORDER BY seq LIMIT ?",
+            f"SELECT message_id, envelope, attempts FROM msg_messages WHERE {claimable} ORDER BY seq LIMIT ?",
             (*mine, limit),
         ).fetchall()
         messages = []

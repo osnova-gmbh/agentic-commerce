@@ -19,6 +19,7 @@ from cogit_finance_catalog_module import CatalogModule
 from cogit_finance_deals_module import DealsModule
 from cogit_finance_seams import SimBankClient
 from cogit_messaging_shim import DeliveryLoop
+from cogit_messaging_shim.seams import ShimMessaging
 from cogit_messaging_shim.testing import LocalBus
 from evaluator_agent.evaluator import EvaluatorCore
 from fastapi import FastAPI, Header, HTTPException
@@ -27,6 +28,7 @@ from pydantic import BaseModel
 from seller_agent.seller import SellerCore
 
 from .app import STATIC, create_app
+from .boris import BorisBankPort, BorisGateway, BorisModulePort, offline_report
 from .sources import ModuleSource
 
 log = logging.getLogger(__name__)
@@ -39,14 +41,18 @@ AGENTS = (
 
 
 class DemoEngine:
-    def __init__(self, root: Path, *, bank_url: str = "http://127.0.0.1:8080", bank=None, step_delay: float = 1.0):
+    def __init__(self, root: Path, *, bank_url: str = "http://127.0.0.1:8080", bank=None,
+                 step_delay: float = 1.0, boris: BorisGateway | None = None):
+        self.boris = boris
         self.bank = bank if bank is not None else SimBankClient.from_url(bank_url)
         self.bank.accounts()  # fail at startup if the bank is unreachable
         self.step_delay = step_delay
         self.bus = LocalBus()
         self.bus.host.install(CatalogModule())
         self.bus.host.install(DealsModule())
-        self.keys = {name: self.bus.add_agent(name, org, role) for name, org, role in AGENTS}
+        self.keys = {name: self.bus.add_agent(name, org, role,
+                                            boris.agent_keys.get(name) if boris else None)
+                     for name, org, role in AGENTS}
         self.lock = threading.RLock()
         self.stop = threading.Event()
         self.worker: threading.Thread | None = None
@@ -67,9 +73,9 @@ class DemoEngine:
                 idempotency_key=f"seed:evaluator:{evaluator['evaluator_id']}",
             )
         self.offers = yaml.safe_load((data / "offers.seller-co.yaml").read_text(encoding="utf-8"))["offers"]
-        self.buyer = BuyerCore(self.bus.host.port("buyer-agent"), self.bus.messaging("buyer-agent"), self.bank)
+        self.buyer = BuyerCore(self._modules("buyer-agent"), self._messaging("buyer-agent"), self._bank("buyer-agent"))
         self.escrow = EscrowCore(
-            self.bus.host.port("cogit-finance"), self.bank, self.bus.artifacts,
+            self._modules("cogit-finance"), self._bank("cogit-finance"), self.bus.artifacts,
             self.keys["cogit-finance"], settings.load_operator_config(), settings.PACKAGED_CONTRACTS_DIR,
         )
         self.bus.runtime.register("buyer-agent", self._invoke_buyer)
@@ -82,13 +88,28 @@ class DemoEngine:
         self.escrow.register_types()
         self.source = ModuleSource(self.bus.host.port("dashboard", "operator_ro"), self.bank)
 
+    def _modules(self, name: str):
+        port = self.bus.host.port(name)
+        if self.boris and name in {"buyer-agent", "seller-agent", "cogit-finance"}:
+            return BorisModulePort(port, self.boris, name, self.keys[name].did)
+        return port
+
+    def _messaging(self, name: str):
+        return ShimMessaging(self.keys[name], self._modules(name))
+
+    def _bank(self, name: str):
+        return BorisBankPort(self.bank, self.boris, name) if self.boris else self.bank
+
+    def boris_report(self, deal_id: str | None = None) -> dict:
+        return self.boris.report(deal_id) if self.boris else offline_report(deal_id)
+
     def _invoke_buyer(self, action: str, payload: dict, request_key: str) -> dict:
         return asdict(getattr(self.buyer, action)(**payload))
 
     def _set_seller(self, scenario: str) -> None:
         seller = SellerCore(
-            modules=self.bus.host.port("seller-agent"), artifacts=self.bus.artifacts,
-            messaging=self.bus.messaging("seller-agent"), escrow_did=self.keys["cogit-finance"].did,
+            modules=self._modules("seller-agent"), artifacts=self.bus.artifacts,
+            messaging=self._messaging("seller-agent"), escrow_did=self.keys["cogit-finance"].did,
             seller_org_id="seller-co", offers=self.offers, mode="broken" if scenario == "rework" else "ok",
         )
         seller.publish_catalog()
@@ -101,6 +122,7 @@ class DemoEngine:
         if result["deal_id"]:
             read = self.source.deal(result["deal_id"])
             result["state"] = (read.get("deal") or {}).get("state")
+        result["boris"] = self.boris_report(result["deal_id"])
         return result
 
     def start(self, scenario: str, request_key: str, *, background: bool = True) -> dict:
@@ -183,6 +205,10 @@ def create_demo_app(engine: DemoEngine) -> FastAPI:
     @app.get("/api/demo/status")
     def status():
         return engine.status()
+
+    @app.get("/api/demo/boris")
+    def boris_evidence(deal_id: str | None = None):
+        return engine.boris_report(deal_id)
 
     @app.post("/api/demo/purchases", status_code=202)
     def purchase(request: PurchaseRequest, idempotency_key: str = Header(min_length=1, max_length=200)):

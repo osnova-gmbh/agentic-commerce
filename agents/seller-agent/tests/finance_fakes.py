@@ -35,11 +35,16 @@ class FakeModules:
         self.escrow_did = escrow_did
         self.queries: list[tuple[str, str, dict[str, Any]]] = []
         self.commands: list[tuple[str, str, dict[str, Any], str]] = []
+        self.received: list[dict[str, Any]] = []
 
     def module_query(
         self, module: str, export: str, args: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         self.queries.append((module, export, args or {}))
+        if (module, export) == ("cogit-messaging", "conversation.read"):
+            messages = self.received + self.sent()
+            return {"messages": [{"envelope": item} for item in messages
+                                 if item["conversation_id"] == (args or {}).get("conversation_id")]}
         if (module, export) == ("cogit-messaging", "identity.resolve"):
             if self.escrow_did is None:
                 return {"identity": None}

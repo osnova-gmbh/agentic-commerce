@@ -51,6 +51,8 @@ def test_manifest_and_code_bindings_have_exact_parity() -> None:
 
     action_bindings = {item.descriptor.name: item for item in agent.action_bindings()}
     assert set(action_bindings) == {
+        "drain_inbox",
+        "bootstrap",
         "lookup_record",
         "validate_request",
         "apply_resolution",
@@ -259,8 +261,15 @@ def test_manifest_selects_agentdb_and_deterministic_queue() -> None:
         "resolve-case",
         "persist-reference-request",
     ]
-    (package,) = manifest.database_packages
-    assert package.module_key == f"cogit.{manifest.id}"
+    packages = {package.module_key: package for package in manifest.database_packages}
+    assert len(packages) == len(manifest.database_packages)
+    assert set(packages) == {
+        f"cogit.{manifest.id}",
+        "cogit-messaging",
+        "cogit-finance-catalog",
+        "cogit-finance-deals",
+    }
+    package = packages[f"cogit.{manifest.id}"]
     assert package.version == "1.1.7"
     assert {export.key for export in package.exports} == {
         "requests.get",

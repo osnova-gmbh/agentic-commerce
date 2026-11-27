@@ -64,6 +64,23 @@ def vendor(project: Path, wheels: dict[str, Path]) -> None:
             pyproject = _add_dependency(pyproject, dependency)
     pyproject_path.write_text(pyproject, encoding="utf-8")
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    # These wheels keep their dependency graph. Refresh their local artifact
+    # identities in the existing lock without resolving unrelated dependencies.
+    lock_path = project / "uv.lock"
+    if lock_path.exists():
+        lock = lock_path.read_text(encoding="utf-8")
+        for name, wheel in wheels.items():
+            prefix = name.replace("-", "_") + "-"
+            version = wheel.name[len(prefix):].split("-")[0]
+            pattern = rf'(\[\[package\]\]\nname = "{re.escape(name)}"\n)(.*?)(?=\n\[\[package\]\]|\Z)'
+            def replace(match, artifact=wheel, version=version):
+                block = re.sub(r'^version = "[^"]+"', f'version = "{version}"', match[2], count=1, flags=re.M)
+                block = re.sub(rf'{re.escape(prefix)}[^"/]+\.whl', artifact.name, block)
+                block = re.sub(r'hash = "sha256:[0-9a-f]+"', f'hash = "sha256:{hashlib.sha256(artifact.read_bytes()).hexdigest()}"', block)
+                return match[1] + block
+            lock = re.sub(pattern, replace, lock, flags=re.S)
+            lock = re.sub(rf'{re.escape(prefix)}[^"/]+\.whl', wheel.name, lock)
+        lock_path.write_text(lock, encoding="utf-8")
     print(f"vendored {', '.join(w.name for w in wheels.values())} into {project}")
 
 

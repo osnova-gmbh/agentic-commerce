@@ -1,6 +1,10 @@
 # Minimal Alice/Bob implementation plan
 
-Status: planning only; no application code or gateway configuration applied.
+Status: three-agent identity support is implemented. The active project uses the
+operator-enabled Boris payload identity use case through its existing endpoint;
+it does not require the native DID Auth gateway experiment below. See
+[implementation and CLI commands](docs/AFFINIDI.md). Native DID Auth remains a
+separate optional client, with live vendor verification outstanding.
 
 ## Goal
 
