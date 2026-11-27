@@ -92,7 +92,7 @@ to follow.
 | `FUNDED` | `delivery_deadline` passes | E timer | none | `REFUNDING` |
 | `DELIVERED` | E sends an `evaluation_request` to each named evaluator | E | none | `EVALUATING` |
 | `EVALUATING` | `verdict` | evaluator | Correlates with the current delivery (§9) | Stays, or `APPROVED` / `REJECTED` once the policy decides |
-| `EVALUATING` | `respond_by` passes after one re-send | E timer | none | `DISPUTED` (reason `evaluator_unavailable`) |
+| `EVALUATING` | An evaluator errors or misses `respond_by` twice (one re-request) | E timer | none | `DISPUTED` (reason `evaluator_unavailable`) |
 | `APPROVED` | E prepares payout and fee intents | E | none | `RELEASING` |
 | `REJECTED` | `delivery` | seller | `attempts_left` > 0 and before `rework_deadline` | `DELIVERED` |
 | `REJECTED` | `dispute` | buyer or seller | Within `dispute_window` | `DISPUTED` |
@@ -194,7 +194,8 @@ AgentDb's own admission and command replay rather than new leases.
    a repeated admission, so a crash between claim and admission creates no duplicate run.
 3. **Process.** E records each accepted message with `deal.commit`, whose idempotency key is
    `evt:<message_id>`. `deal_events.source_message_id` is unique, so a message processed twice
-   yields one event and the original result.
+   yields one event and the original result. Commits caused by a timer or a bank event use
+   keys derived from the deal head and the timer name or bank event ID.
 4. **Outbox.** `deal.commit` writes the deal event and the outgoing envelopes, already signed
    by E, in one transaction (the outbox). E then sends each outbox entry with `message.send`,
    idempotency key `out:<outbox_id>`, and marks it sent. `tick` re-sends pending entries, so a
@@ -235,13 +236,14 @@ deterministic behaviour.
 
 | Policy | Approve when | Reject when |
 | --- | --- | --- |
-| `all` | Every named evaluator passes | Any evaluator fails or returns `error` |
-| `any` | One evaluator passes | Every evaluator has answered without a pass |
-| `quorum k` | k evaluators pass | Enough have answered without a pass that k is unreachable |
+| `all` | Every named evaluator passes | Any evaluator fails |
+| `any` | One evaluator passes | Every evaluator has failed |
+| `quorum k` | k evaluators pass | Enough have failed that k is unreachable |
 
-E decides as soon as the outcome is certain. A missing verdict is re-requested once at
-`respond_by`; if it is still missing, the deal goes to `DISPUTED` with reason
-`evaluator_unavailable`, so infrastructure failure never moves money automatically.
+E decides as soon as the outcome is certain. Only `pass` and `fail` count. An `error`
+verdict, or no verdict by `respond_by`, triggers one re-request; if that also errors or goes
+unanswered, the deal goes to `DISPUTED` with reason `evaluator_unavailable`. Evaluator
+failure therefore never moves money and never uses up one of the seller's attempts.
 Evaluators are free of charge in the demo.
 
 ## 10. Payments
@@ -323,7 +325,7 @@ is imported through `company.upsert`.
 | `evaluations` | `evaluation_request_id` (PK), `delivery_id`, `evaluator_id`, `evaluator_version`, `evaluator_did`, `respond_by`, `resends`, `verdict_message_id`, `outcome` |
 | `payment_intents` | `intent_id` (PK), `deal_id`, `kind`, `amount_minor`, `currency`, `to_iban`, `status` (`prepared`, `submitted`, `unknown`, `confirmed`, `failed`), `bank_ref`, `created_at`, `updated_at` |
 | `bank_credits` | `bank_event_id` (PK), `deal_id`, `reference`, `amount_minor`, `from_iban`, `received_at`, `disposition` (`funded`, `returned`) |
-| `ledger_postings` | `posting_id` (PK), `deal_id`, `source_id` (intent or credit, unique), `account` (`held`, `seller`, `fee`, `buyer_refund`, `returned`), `amount_minor` (signed), `created_at` |
+| `ledger_postings` | `posting_id` (PK), `deal_id`, `source_id` (intent or credit), `account` (`held`, `seller`, `fee`, `buyer_refund`, `returned`), `amount_minor` (signed), `created_at`; `source_id` + `account` unique |
 
 Exports: `deal.commit` (expected head, new event, outbox entries and any delivery,
 evaluation, intent or credit rows, all in one transaction), `outbox.pending`,
@@ -418,7 +420,7 @@ the buyer run's recorded `sellers.list` and `catalog.read` results.
 - [ ] The happy path produces exactly the §13.1 event sequence and reaches `SETTLED`.
 - [ ] Balances: buyer −price; held +price, then 0; seller +(price − fee); fees +fee.
 - [ ] Broken delivery: rejected, redelivered, then settled. A late verdict for the first delivery has no effect.
-- [ ] Evaluator does not answer: one re-request, then `DISPUTED`; no money moves.
+- [ ] Evaluator does not answer or returns `error`: one re-request, then `DISPUTED`; no money moves and no attempt is used.
 - [ ] No delivery by the deadline: refunded.
 - [ ] Authorization: sending as another installation's DID, reading another DID's inbox, publishing another org's catalog and calling a deals command from a non-E installation are all refused.
 - [ ] Duplicates: the same message delivered twice yields one deal event; a duplicate bank credit is returned.
