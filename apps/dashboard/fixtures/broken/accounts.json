@@ -1,0 +1,24 @@
+{
+  "accounts": [
+    {
+      "iban": "DE00EXAMPLE0000000001",
+      "owner": "escrow held",
+      "balance_minor": 0
+    },
+    {
+      "iban": "DE00EXAMPLE0000000002",
+      "owner": "escrow fees",
+      "balance_minor": 500
+    },
+    {
+      "iban": "DE00EXAMPLE0000000010",
+      "owner": "buyer-co",
+      "balance_minor": 950000
+    },
+    {
+      "iban": "DE00EXAMPLE0000000020",
+      "owner": "seller-co",
+      "balance_minor": 49500
+    }
+  ]
+}

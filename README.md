@@ -4,9 +4,35 @@ Exploration and implementation planning for independently owned buyer and seller
 
 ## Current status
 
-This repository contains research, an implementation plan and machine-specific WSL setup notes. The Alice/Bob application has **not** been implemented, and no end-to-end native DID authentication exchange has been executed.
+This repository contains a runnable local escrow demo alongside research, implementation plans and machine-specific WSL setup notes. The demo runs the buyer, seller, evaluator and escrow cores with signed messages, SQLite reference modules and a simulated bank. No end-to-end native Affinidi DID authentication exchange has been executed.
 
-The first proposed demonstration is intentionally small: Alice authenticates with her own DID, requests a quote from Bob through an Affinidi gateway, and verifies Bob's signed response. No LLM calls, purchases or payments are included in that first slice.
+## Run a transaction demo
+
+Install the dependencies from the repository root with Python 3.11+ and `uv`
+(Bash, including Git Bash on Windows):
+
+```bash
+bash scripts/dev-install.sh
+bash scripts/test.sh
+```
+
+Start the demo in PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/run_demo.py --port 8091
+```
+
+On Linux/macOS, use `.venv/bin/python scripts/run_demo.py --port 8091`.
+
+Open **http://127.0.0.1:8091/demo**, choose a scenario and click **Start €500 purchase**.
+The successful run pays EUR 495 to the seller and EUR 5 to the operator. The retry
+scenario rejects a delivery missing `summary.json`, holds the funds, and pays only
+after the corrected delivery passes. Each purchase produces a downloadable report
+and a signed event log. These are simulated funds; the local runtime and reference
+modules do not require a deployed AgentDb worker. See [dashboard setup and details](apps/dashboard/README.md).
+
+The separate planned identity demonstration has Alice authenticate with her own DID,
+request a quote from Bob through an Affinidi gateway, and verify Bob's signed response.
 
 ## Visual product concept
 

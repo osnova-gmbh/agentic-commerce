@@ -1,0 +1,609 @@
+id: cogit-finance
+name: Cogit Finance Escrow
+version: 0.1.25
+description: 'Escrow agent for agent-to-agent commerce: runs deals, holds the buyer''s
+  funding, has evaluators judge the delivery and pays out on a simulated bank.'
+actions:
+- name: apply_resolution
+  description: Apply an approved synthetic case resolution.
+  input_schema:
+    additionalProperties: false
+    properties:
+      case_id:
+        maxLength: 256
+        minLength: 1
+        title: Case Id
+        type: string
+      resolution:
+        maxLength: 4096
+        minLength: 1
+        title: Resolution
+        type: string
+    required:
+    - case_id
+    - resolution
+    title: ApplyResolutionInput
+    type: object
+  output_schema:
+    additionalProperties: false
+    properties:
+      applied:
+        title: Applied
+        type: boolean
+      already_applied:
+        title: Already Applied
+        type: boolean
+    required:
+    - applied
+    - already_applied
+    title: ApplyResolutionOutput
+    type: object
+  risk: write
+  requires_approval: true
+  idempotency: keyed
+  required_capabilities:
+  - records.write
+  metadata: null
+- name: handle_message
+  description: Process one signed finance.* message addressed to E.
+  input_schema:
+    additionalProperties: false
+    description: One signed message envelope, as the delivery loop claimed it.
+    properties:
+      envelope:
+        additionalProperties: true
+        title: Envelope
+        type: object
+    required:
+    - envelope
+    title: HandleMessageInput
+    type: object
+  output_schema:
+    additionalProperties: false
+    description: A rejected message carries the reason; the loop maps the status to
+      the ack.
+    properties:
+      status:
+        enum:
+        - processed
+        - rejected
+        title: Status
+        type: string
+      reason:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Reason
+    required:
+    - status
+    title: HandleMessageOutput
+    type: object
+  risk: write
+  requires_approval: false
+  idempotency: inherent
+  required_capabilities: []
+  metadata: null
+- name: lookup_record
+  description: Look up a synthetic service record.
+  input_schema:
+    additionalProperties: false
+    properties:
+      record_id:
+        minLength: 1
+        title: Record Id
+        type: string
+    required:
+    - record_id
+    title: LookupRecordInput
+    type: object
+  output_schema:
+    additionalProperties: false
+    properties:
+      record_id:
+        title: Record Id
+        type: string
+      status:
+        title: Status
+        type: string
+    required:
+    - record_id
+    - status
+    title: LookupRecordOutput
+    type: object
+  risk: read
+  requires_approval: false
+  idempotency: inherent
+  required_capabilities: []
+  metadata: null
+- name: lookup_resolution
+  description: Read committed synthetic case resolutions.
+  input_schema:
+    additionalProperties: false
+    properties:
+      case_id:
+        maxLength: 256
+        minLength: 1
+        title: Case Id
+        type: string
+    required:
+    - case_id
+    title: LookupResolutionInput
+    type: object
+  output_schema:
+    additionalProperties: false
+    properties:
+      case_id:
+        title: Case Id
+        type: string
+      resolutions:
+        items:
+          type: string
+        title: Resolutions
+        type: array
+    required:
+    - case_id
+    - resolutions
+    title: LookupResolutionOutput
+    type: object
+  risk: read
+  requires_approval: false
+  idempotency: inherent
+  required_capabilities:
+  - records.read
+  metadata: null
+- name: persist_reference_request
+  description: Persist and read a reference request through AgentDb.
+  input_schema:
+    additionalProperties: false
+    description: Existing typed request or one bounded canonical plain-text instruction.
+    oneOf:
+    - not:
+        required:
+        - instruction
+      required:
+      - request_id
+      - description
+    - not:
+        anyOf:
+        - required:
+          - request_id
+        - required:
+          - description
+      required:
+      - instruction
+    properties:
+      request_id:
+        anyOf:
+        - maxLength: 128
+          minLength: 1
+          type: string
+        - type: 'null'
+        default: null
+        title: Request Id
+      description:
+        anyOf:
+        - maxLength: 2000
+          minLength: 1
+          type: string
+        - type: 'null'
+        default: null
+        title: Description
+      instruction:
+        anyOf:
+        - maxLength: 2000
+          minLength: 1
+          type: string
+        - type: 'null'
+        default: null
+        title: Instruction
+    title: PersistRequestInput
+    type: object
+  output_schema:
+    additionalProperties: false
+    properties:
+      object_id:
+        title: Object Id
+        type: string
+      request_id:
+        title: Request Id
+        type: string
+      description:
+        title: Description
+        type: string
+      status:
+        title: Status
+        type: string
+      revision:
+        title: Revision
+        type: integer
+      root_artifact_id:
+        title: Root Artifact Id
+        type: string
+      root_sha256:
+        title: Root Sha256
+        type: string
+    required:
+    - object_id
+    - request_id
+    - description
+    - status
+    - revision
+    - root_artifact_id
+    - root_sha256
+    title: PersistRequestOutput
+    type: object
+  risk: write
+  requires_approval: false
+  idempotency: inherent
+  required_capabilities: []
+  metadata: null
+- name: tick
+  description: Register the finance.* message types, fund deals from new bank credits
+    and re-send the pending outbox.
+  input_schema:
+    additionalProperties: false
+    description: The tick action takes no input.
+    properties: {}
+    title: TickInput
+    type: object
+  output_schema:
+    additionalProperties: false
+    properties:
+      types_registered:
+        title: Types Registered
+        type: integer
+      credits_seen:
+        title: Credits Seen
+        type: integer
+      deals_funded:
+        title: Deals Funded
+        type: integer
+      outbox_sent:
+        title: Outbox Sent
+        type: integer
+    required:
+    - types_registered
+    - credits_seen
+    - deals_funded
+    - outbox_sent
+    title: TickOutput
+    type: object
+  risk: write
+  requires_approval: false
+  idempotency: inherent
+  required_capabilities: []
+  metadata: null
+- name: validate_request
+  description: Validate a synthetic service request.
+  input_schema:
+    additionalProperties: false
+    properties:
+      request_id:
+        minLength: 1
+        title: Request Id
+        type: string
+      description:
+        minLength: 1
+        title: Description
+        type: string
+    required:
+    - request_id
+    - description
+    title: ValidateRequestInput
+    type: object
+  output_schema:
+    additionalProperties: false
+    properties:
+      valid:
+        title: Valid
+        type: boolean
+      errors:
+        items:
+          type: string
+        title: Errors
+        type: array
+    required:
+    - valid
+    - errors
+    title: ValidateRequestOutput
+    type: object
+  risk: read
+  requires_approval: false
+  idempotency: inherent
+  required_capabilities: []
+  metadata: null
+tools:
+- name: describe_function
+  description: Describe a registered function by name, including its parameters.
+  input_schema:
+    properties:
+      function_name:
+        title: Function Name
+        type: string
+    required:
+    - function_name
+    title: DescribeFunctionInput
+    type: object
+  output_schema:
+    $defs:
+      FunctionDispatchError:
+        description: Stable failure payload for function-registry operations.
+        properties:
+          code:
+            enum:
+            - FUNCTION_NOT_FOUND
+            - VALIDATION_ERROR
+            - EXECUTION_ERROR
+            - OUTPUT_ERROR
+            - INVALID_INPUT
+            title: Code
+            type: string
+          message:
+            title: Message
+            type: string
+          available_functions:
+            anyOf:
+            - items:
+                type: string
+              type: array
+            - type: 'null'
+            default: null
+            title: Available Functions
+        required:
+        - code
+        - message
+        title: FunctionDispatchError
+        type: object
+    properties:
+      name:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Name
+      description:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Description
+      category:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Category
+      parameters:
+        anyOf:
+        - items:
+            additionalProperties: true
+            type: object
+          type: array
+        - type: 'null'
+        default: null
+        title: Parameters
+      examples:
+        anyOf:
+        - items: {}
+          type: array
+        - type: 'null'
+        default: null
+        title: Examples
+      error:
+        anyOf:
+        - $ref: '#/$defs/FunctionDispatchError'
+        - type: 'null'
+        default: null
+    title: DescribeFunctionOutput
+    type: object
+  risk: read
+  idempotency: inherent
+  required_capabilities: []
+  requires_approval: false
+  execution_mode: parallel
+  timeout_seconds: null
+  metadata: null
+- name: lookup_record
+  description: Look up a synthetic service record.
+  input_schema:
+    additionalProperties: false
+    properties:
+      record_id:
+        minLength: 1
+        title: Record Id
+        type: string
+    required:
+    - record_id
+    title: LookupRecordInput
+    type: object
+  output_schema:
+    additionalProperties: false
+    properties:
+      record_id:
+        title: Record Id
+        type: string
+      status:
+        title: Status
+        type: string
+    required:
+    - record_id
+    - status
+    title: LookupRecordOutput
+    type: object
+  risk: read
+  idempotency: inherent
+  required_capabilities: []
+  requires_approval: false
+  execution_mode: parallel
+  timeout_seconds: null
+  metadata: null
+- name: run_function
+  description: Dispatch a registered function by name with a parameters object.
+  input_schema:
+    properties:
+      function_name:
+        title: Function Name
+        type: string
+      parameters:
+        additionalProperties: true
+        title: Parameters
+        type: object
+    required:
+    - function_name
+    title: RunFunctionInput
+    type: object
+  output_schema:
+    $defs:
+      FunctionDispatchError:
+        description: Stable failure payload for function-registry operations.
+        properties:
+          code:
+            enum:
+            - FUNCTION_NOT_FOUND
+            - VALIDATION_ERROR
+            - EXECUTION_ERROR
+            - OUTPUT_ERROR
+            - INVALID_INPUT
+            title: Code
+            type: string
+          message:
+            title: Message
+            type: string
+          available_functions:
+            anyOf:
+            - items:
+                type: string
+              type: array
+            - type: 'null'
+            default: null
+            title: Available Functions
+        required:
+        - code
+        - message
+        title: FunctionDispatchError
+        type: object
+    properties:
+      result:
+        anyOf:
+        - {}
+        - type: 'null'
+        default: null
+        title: Result
+      error:
+        anyOf:
+        - $ref: '#/$defs/FunctionDispatchError'
+        - type: 'null'
+        default: null
+    title: RunFunctionOutput
+    type: object
+  risk: read
+  idempotency: inherent
+  required_capabilities: []
+  requires_approval: false
+  execution_mode: parallel
+  timeout_seconds: null
+  metadata: null
+- name: validate_request
+  description: Validate a synthetic service request.
+  input_schema:
+    additionalProperties: false
+    properties:
+      request_id:
+        minLength: 1
+        title: Request Id
+        type: string
+      description:
+        minLength: 1
+        title: Description
+        type: string
+    required:
+    - request_id
+    - description
+    title: ValidateRequestInput
+    type: object
+  output_schema:
+    additionalProperties: false
+    properties:
+      valid:
+        title: Valid
+        type: boolean
+      errors:
+        items:
+          type: string
+        title: Errors
+        type: array
+    required:
+    - valid
+    - errors
+    title: ValidateRequestOutput
+    type: object
+  risk: read
+  idempotency: inherent
+  required_capabilities: []
+  requires_approval: false
+  execution_mode: parallel
+  timeout_seconds: null
+  metadata: null
+pipelines:
+- name: resolve-case
+  description: Validate and finish a synthetic case.
+  applies_to:
+  - case_request
+  steps:
+  - id: validate
+    kind: deterministic
+    invoke: validate_request
+  - id: finish
+    kind: terminal
+- name: persist-reference-request
+  description: Persist and read a reference request through AgentDb.
+  applies_to:
+  - queue
+  steps:
+  - id: persist
+    kind: deterministic
+    invoke: persist_reference_request
+  - id: finish
+    kind: terminal
+eval_suites:
+- smoke
+- task
+metadata:
+  entrypoint: cogit_finance.agent:Agent
+  template_version: 0.1.25
+runtime:
+  model:
+    profile: disabled
+  server:
+    host: 127.0.0.1
+    port: 8080
+  worker:
+    concurrency: 1
+    poll_interval_seconds: 2
+    lease_seconds: 120
+  loop:
+    max_turns_default: 8
+  trace:
+    persist_messages: false
+database_packages:
+- module_key: cogit.cogit-finance
+  version: 1.1.7
+  artifact_sha256: 196599525d5555cec61c5a3685f43fc274ecde32fe5bca92c66147d383b300ea
+  exports:
+  - kind: query
+    key: requests.get
+    export_version: 1.0.0
+    contract_id: cogit.cogit-finance.requests.get.v1
+  - kind: command
+    key: requests.put
+    export_version: 1.0.0
+    contract_id: cogit.cogit-finance.requests.put.v1
+  - kind: command
+    key: resolutions.apply
+    export_version: 1.0.0
+    contract_id: cogit.cogit-finance.resolutions.apply.v1
+  - kind: query
+    key: resolutions.list
+    export_version: 1.0.0
+    contract_id: cogit.cogit-finance.resolutions.list.v1

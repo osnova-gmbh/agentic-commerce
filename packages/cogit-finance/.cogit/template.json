@@ -1,0 +1,12 @@
+{
+  "source": "/home/claude/cogit/cogit-agent-template",
+  "commit": "608927972743dc59bd1e9dad0dd4f176bbc41c93",
+  "entrypoint": "cogit_finance.agent:Agent",
+  "compatibility": {
+    "repair": "historical-bundle-exact-receipts",
+    "status": "already-current",
+    "original_sha256": "a526ef2cb605610bdca71119813726281c01585a09d5f00f3b55319d70a55fee",
+    "renamed_sha256": "9a2e000b015a71acbed53d19fb33885f1f534f3c41a31ccc5259cf44ab25df4e",
+    "test_receipts": []
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "name": "task",
+  "description": "Task-fulfilment checks: validation, lookup, and pipeline execution.",
+  "threshold": 1.0,
+  "items": [
+    {
+      "id": "validate-valid-request",
+      "input": {
+        "method": "POST",
+        "path": "/actions/validate_request",
+        "body": {
+          "request_id": "TASK-1",
+          "description": "A valid task request"
+        }
+      },
+      "checks": [
+        {"type": "status", "expected": 200},
+        {
+          "type": "json_schema",
+          "expected": {"valid": "bool", "errors": "list"}
+        },
+        {"type": "output_contains", "expected": "true"}
+      ]
+    },
+    {
+      "id": "validate-invalid-request",
+      "input": {
+        "method": "POST",
+        "path": "/actions/validate_request",
+        "body": {
+          "request_id": "TASK-2",
+          "description": "short"
+        }
+      },
+      "checks": [
+        {"type": "status", "expected": 200},
+        {
+          "type": "json_schema",
+          "expected": {"valid": "bool"}
+        },
+        {"type": "output_contains", "expected": "false"}
+      ]
+    },
+    {
+      "id": "lookup-known-record",
+      "input": {
+        "method": "POST",
+        "path": "/actions/lookup_record",
+        "body": {
+          "record_id": "record-open"
+        }
+      },
+      "checks": [
+        {"type": "status", "expected": 200},
+        {
+          "type": "json_schema",
+          "expected": {"record_id": "str", "status": "str"}
+        },
+        {"type": "output_contains", "expected": "open"}
+      ]
+    },
+    {
+      "id": "pipeline-resolves-case",
+      "input": {
+        "method": "POST",
+        "path": "/runs",
+        "body": {
+          "instruction": "Resolve task case 7",
+          "pipeline": "resolve-case",
+          "input": {"request_id": "TASK-7", "description": "A valid task case to validate."}
+        }
+      },
+      "checks": [
+        {"type": "status", "expected": 200},
+        {
+          "type": "json_schema",
+          "expected": {"status": "str"}
+        },
+        {"type": "output_contains", "expected": "completed"}
+      ]
+    }
+  ]
+}

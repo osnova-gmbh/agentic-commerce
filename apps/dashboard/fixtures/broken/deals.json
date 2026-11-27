@@ -1,0 +1,16 @@
+{
+  "deals": [
+    {
+      "deal_id": "9d1b7e44-2c3a-4f6e-8b21-0a7c5e9d3f02",
+      "state": "SETTLED",
+      "buyer_org_id": "buyer-co",
+      "seller_org_id": "seller-co",
+      "offer_id": "offer-1",
+      "head_seq": 22,
+      "price_minor": 50000,
+      "currency": "EUR",
+      "created_at": "2026-11-27T10:05:00Z",
+      "updated_at": "2026-11-27T10:05:41Z"
+    }
+  ]
+}

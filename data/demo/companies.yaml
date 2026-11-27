@@ -1,0 +1,196 @@
+# Placeholder companies for the demo. Real names are data and are added last (SPEC §2).
+# Company profiles below use the descriptions supplied for the prospect-gifting programme.
+companies:
+  - org_id: buyer-co
+    legal_name: Example Buyer GmbH
+    register_id: HRB 000001
+    address: Example Street 10, 10115 Berlin
+    roles: [buyer]
+    categories: []
+    iban: DE00EXAMPLE0000000010
+    kyb_verified: true
+    kyb_verified_by: operator-co
+    spending_limit_minor: 200000
+    profile: {}
+  - org_id: seller-co
+    legal_name: Example Seller GmbH
+    register_id: HRB 000002
+    address: Example Street 20, 10115 Berlin
+    roles: [seller]
+    categories: [reports]
+    iban: DE00EXAMPLE0000000020
+    kyb_verified: true
+    kyb_verified_by: operator-co
+    spending_limit_minor: 0
+    profile: {}
+  - org_id: operator-co
+    legal_name: Example Campus GmbH
+    register_id: HRB 000003
+    address: Example Street 1, 10115 Berlin
+    roles: []
+    categories: []
+    iban: DE00EXAMPLE0000000001
+    kyb_verified: true
+    kyb_verified_by: operator-co
+    spending_limit_minor: 0
+    profile: {}
+
+  - org_id: elephant-technologies
+    legal_name: Elephant Technologies
+    roles: [buyer]
+    categories: [ai-training, knowledge-management]
+    profile:
+      display_name: Elephant Technologies
+      website: https://www.elephantcompany.com/
+      products_and_services: "AI training and knowledge software: employee onboarding, training courses, digital work instructions and AI assistants for frontline staff."
+      target_customers: "Industrial companies, manufacturers and service organizations with technicians, installers or other operational teams."
+      campus: The Delta Campus
+      programme: prospect-gifting
+      status: prospective_buyer
+      outreach_priority: 1
+      recommended: true
+      source: user-provided
+
+  - org_id: base-baselinker
+    legal_name: Base / BaseLinker
+    roles: [buyer]
+    categories: [ecommerce-operations]
+    profile:
+      display_name: Base / BaseLinker
+      website: https://enterprise.base.com/
+      products_and_services: "Ecommerce operations software: manages product listings, inventory, orders, shipping, returns and connections between marketplaces, warehouses and ERP systems."
+      target_customers: "Retailers, consumer brands and ecommerce businesses, including large enterprises."
+      campus: The Delta Campus
+      programme: prospect-gifting
+      status: prospective_buyer
+      outreach_priority: 2
+      recommended: true
+      source: user-provided
+
+  - org_id: meingpt-selectcode
+    legal_name: MeinGPT / SelectCode
+    roles: [buyer]
+    categories: [enterprise-ai, workflow-automation]
+    profile:
+      display_name: MeinGPT / SelectCode
+      website: https://meingpt.com/
+      products_and_services: "Enterprise AI platform and implementation: AI chat, company assistants, meeting tools, workflow automation and integrations with business systems."
+      target_customers: "German-speaking midmarket and industrial companies introducing AI across their organizations."
+      campus: The Delta Campus
+      programme: prospect-gifting
+      status: prospective_buyer
+      outreach_priority: 3
+      recommended: true
+      source: user-provided
+
+  - org_id: kenjo
+    legal_name: Kenjo
+    roles: [buyer]
+    categories: [hr, workforce-management]
+    profile:
+      display_name: Kenjo
+      website: https://www.kenjo.io/
+      products_and_services: "HR and workforce-management software: shift scheduling, time tracking, absence management, employee records, recruitment and payroll preparation."
+      target_customers: "Employers with deskless teams, particularly in manufacturing, retail, healthcare, transport and logistics."
+      campus: The Delta Campus
+      programme: prospect-gifting
+      status: prospective_buyer
+      outreach_priority: 4
+      recommended: false
+      source: user-provided
+
+  - org_id: formation
+    legal_name: FORMATION
+    roles: [buyer]
+    categories: [asset-tracking, location-intelligence]
+    profile:
+      display_name: FORMATION
+      website: https://tryformation.com/
+      products_and_services: "Asset tracking and location intelligence: tracks tools, vehicles, parcels and equipment; maps movements and connects location events to operational workflows."
+      target_customers: "Factories, warehouses, logistics operators, depots and other organizations managing physical assets."
+      campus: The Delta Campus
+      programme: prospect-gifting
+      status: prospective_buyer
+      outreach_priority: 5
+      recommended: false
+      source: user-provided
+
+  - org_id: nala-earth
+    legal_name: Nala Earth
+    roles: [buyer]
+    categories: [procurement-intelligence, environmental-risk]
+    profile:
+      display_name: Nala Earth
+      website: https://nala.earth/
+      products_and_services: "Procurement and environmental-risk intelligence: monitors crop and weather risks, provides commodity-market outlooks, and analyzes biodiversity and nature dependencies."
+      target_customers: "Food-and-beverage manufacturers, ingredient buyers and corporate procurement or sustainability teams."
+      campus: The Delta Campus
+      programme: prospect-gifting
+      status: prospective_buyer
+      outreach_priority: 6
+      recommended: false
+      source: user-provided
+
+  - org_id: tilla
+    legal_name: Tilla
+    roles: [buyer]
+    categories: [maritime, crew-management]
+    profile:
+      display_name: Tilla
+      website: https://www.tilla.tech/
+      products_and_services: "Maritime crew-change software: coordinates crew rotations, port selection, flights, travel arrangements, collaboration and cost reporting."
+      target_customers: "Shipping companies, ship managers and maritime crewing organizations."
+      campus: The Delta Campus
+      programme: prospect-gifting
+      status: prospective_buyer
+      outreach_priority: 7
+      recommended: false
+      source: user-provided
+
+  - org_id: dealspec
+    legal_name: dealspec
+    roles: [buyer]
+    categories: [mergers-and-acquisitions, deal-management]
+    profile:
+      display_name: dealspec
+      website: https://www.dealspec.de/
+      products_and_services: "AI-assisted M&A software: supports transaction projects, company and investor searches, data organization and automated deal workflows."
+      target_customers: "M&A advisory firms, private-equity investors and search funds."
+      campus: The Delta Campus
+      programme: prospect-gifting
+      status: prospective_buyer
+      outreach_priority: 8
+      recommended: false
+      source: user-provided
+
+  - org_id: overfly
+    legal_name: Overfly
+    roles: [buyer]
+    categories: [ai-engineering, software-development]
+    profile:
+      display_name: Overfly
+      website: https://www.overfly.ai/
+      products_and_services: "Applied AI engineering: identifies business use cases, builds AI agents and custom software, integrates enterprise systems and deploys solutions into everyday operations."
+      target_customers: "Enterprises and software companies implementing AI in business processes."
+      campus: The Delta Campus
+      programme: prospect-gifting
+      status: prospective_buyer
+      outreach_priority: 9
+      recommended: false
+      source: user-provided
+
+  - org_id: bonanza-studios
+    legal_name: Bonanza Studios
+    roles: [buyer]
+    categories: [product-design, software-development]
+    profile:
+      display_name: Bonanza Studios
+      website: https://www.bonanza-studios.com/
+      products_and_services: "Digital product design and development: UX research, prototyping, AI-enabled products, design retainers and organizational AI implementation."
+      target_customers: "Enterprises, midmarket companies and growing startups building or improving digital products."
+      campus: The Delta Campus
+      programme: prospect-gifting
+      status: prospective_buyer
+      outreach_priority: 10
+      recommended: false
+      source: user-provided

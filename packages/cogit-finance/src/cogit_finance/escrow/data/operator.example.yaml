@@ -1,0 +1,19 @@
+# Operator configuration (SPEC §14). Copy next to the deployment and point
+# COGIT_FINANCE_OPERATOR_CONFIG at it. Validated against operator.schema.json.
+operator:
+  name: Example Campus
+  legal_name: Example Campus GmbH
+  address: Example Street 1, 10115 Berlin
+  contact: escrow@example.invalid
+escrow:
+  fee_bps: 100
+  currency: EUR
+  timers: {quote_ttl_s: 600, funding_due_s: 900, rework_window_s: 600, dispute_window_s: 3600, evaluator_respond_s: 60}
+  max_delivery_attempts: 5
+rail:
+  kind: sim                        # sim | sepa | card
+  escrow_iban: DE00EXAMPLE0000000001
+  fee_iban: DE00EXAMPLE0000000002
+  sim: {base_url: http://sim-bank:8080}
+evaluators:
+  allow: []                        # evaluator ids the operator accepts; empty = any registered

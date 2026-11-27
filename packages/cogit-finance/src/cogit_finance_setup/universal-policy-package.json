@@ -1,0 +1,13 @@
+{
+  "module_key": "cogit.universal-policy",
+  "version": "1.0.0",
+  "artifact_sha256": "490032710ff6c013b334ad6e38f89dc76b2529390a070934c844fae09f1dcc14",
+  "exports": [
+    {
+      "kind": "command",
+      "key": "action.evaluate",
+      "export_version": "1.0.0",
+      "contract_id": "universal-policy.v1"
+    }
+  ]
+}

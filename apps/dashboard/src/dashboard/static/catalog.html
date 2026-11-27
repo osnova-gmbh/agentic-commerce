@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f4">
+  <title>Company catalog | Cogit Finance</title>
+  <link rel="icon" href="/static/assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/catalog.css">
+</head>
+<body>
+  <a class="skip-link" href="#companies">Skip to companies</a>
+  <header class="site-header wrap">
+    <a class="brand" href="/" aria-label="Cogit Finance home">
+      <img src="/static/assets/mark.svg" width="31" height="31" alt="">
+      <span>cogit<span class="brand-divider">/</span><span class="brand-finance">finance</span></span>
+    </a>
+    <nav aria-label="Workspace navigation">
+      <a href="/demo">Deal overview</a>
+      <a class="nav-current" href="/catalog" aria-current="page">Company catalog</a>
+    </nav>
+    <span class="environment"><span class="status-dot"></span>The Delta Campus</span>
+  </header>
+  <main class="wrap catalog-main">
+    <section class="catalog-intro" aria-labelledby="page-heading">
+      <p class="eyebrow">PROSPECT-GIFTING PROGRAMME</p>
+      <h1 id="page-heading">Good companies.<br><span>Thoughtful introductions.</span></h1>
+      <p class="catalog-copy">Explore the campus companies that could use prospect gifting to reach their next business customer.</p>
+    </section>
+    <aside class="catalog-note">
+      <strong>Start with Elephant, Base and MeinGPT.</strong>
+      <span>These are prospective buyers for the gifting programme. Their profiles describe the software and services they sell.</span>
+    </aside>
+    <section class="catalog-directory" aria-labelledby="directory-heading">
+      <div class="catalog-toolbar">
+        <div><p class="eyebrow">THE COMPANY CATALOG</p><h2 id="directory-heading">Buyer prospects <span id="company-count"></span></h2></div>
+        <div class="catalog-filters">
+          <label for="company-search">Find a company or service
+            <input id="company-search" type="search" placeholder="Search companies, services, customers" autocomplete="off">
+          </label>
+          <label class="priority-filter"><input id="priority-only" type="checkbox"> First three to approach</label>
+        </div>
+      </div>
+      <p id="catalog-status" class="catalog-status" role="status" aria-live="polite">Loading company profiles.</p>
+      <div id="companies" class="company-grid"></div>
+    </section>
+  </main>
+  <footer class="site-footer wrap"><span>Company descriptions supplied for the prospect-gifting programme.</span><a href="/demo">Open the transaction demo &rarr;</a></footer>
+  <script src="/static/catalog.js"></script>
+</body>
+</html>

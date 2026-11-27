@@ -28,3 +28,9 @@ __pycache__/
 # Operating-system artifacts
 .DS_Store
 Thumbs.db
+
+# Local build state
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+var/

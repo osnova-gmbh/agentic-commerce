@@ -1,0 +1,28 @@
+{
+  "description": "E -> buyer, seller. Both parties accepted.",
+  "type": "object",
+  "properties": {
+    "terms_hash": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "description": "Lower-case hex SHA-256"
+    },
+    "accepted_by": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 36,
+        "maxLength": 36,
+        "description": "UUID"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    }
+  },
+  "required": [
+    "terms_hash",
+    "accepted_by"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,27 @@
+# The seller agent publishes these offers at start (catalog.publish).
+seller_org_id: seller-co
+offers:
+  - offer_id: offer-1
+    title: Market report
+    description: A short market report with its data and a machine-readable summary.
+    category: reports
+    price_minor: 50000
+    currency: EUR
+    delivery_time_s: 60
+    input_schema:
+      type: object
+      properties:
+        topic: {type: string, minLength: 1, maxLength: 200}
+      required: [topic]
+      additionalProperties: false
+    deliverable:
+      media_type: application/zip
+      required_files: [report.md, data.csv, summary.json]
+    default_acceptance:
+      policy: all
+      max_attempts: 2
+      evaluators:
+        - {evaluator_id: integrity, version: 1, params: {}}
+        - {evaluator_id: required-files, version: 1, params: {required_files: [report.md, data.csv, summary.json]}}
+        - {evaluator_id: deadline, version: 1, params: {}}   # the seller sets delivery_deadline when quoting
+    active: true

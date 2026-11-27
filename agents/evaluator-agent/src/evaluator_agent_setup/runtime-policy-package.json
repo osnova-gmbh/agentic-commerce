@@ -1,0 +1,13 @@
+{
+  "module_key": "cogit.runtime-policy",
+  "version": "1.0.0",
+  "artifact_sha256": "141e0989cbf89d08052db9c578cf4e083d41f63754e7ec91000069bc8b72ab80",
+  "exports": [
+    {
+      "kind": "command",
+      "key": "checkpoint.evaluate",
+      "export_version": "1.0.0",
+      "contract_id": "runtime.checkpoint.v1"
+    }
+  ]
+}

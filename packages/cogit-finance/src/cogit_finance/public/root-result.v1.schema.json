@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Public result bytes omit input text and internal identifiers.",
+  "properties": {
+    "outcome": {
+      "const": "completed",
+      "title": "Outcome",
+      "type": "string"
+    },
+    "requestId": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Requestid",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "const": "reference-request-result.v1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "open",
+        "closed"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "outcome",
+    "requestId",
+    "status",
+    "revision"
+  ],
+  "title": "PublicReferenceResult",
+  "type": "object"
+}

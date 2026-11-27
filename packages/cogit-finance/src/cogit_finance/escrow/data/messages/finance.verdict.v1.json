@@ -1,0 +1,66 @@
+{
+  "description": "evaluator -> E. Signed verdict on one evaluation request.",
+  "type": "object",
+  "properties": {
+    "evaluation_request_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "terms_hash": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "description": "Lower-case hex SHA-256"
+    },
+    "delivery_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "artifact_sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "description": "Lower-case hex SHA-256"
+    },
+    "evaluator_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "evaluator_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "error"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      },
+      "minItems": 0,
+      "maxItems": 20
+    }
+  },
+  "required": [
+    "evaluation_request_id",
+    "terms_hash",
+    "delivery_id",
+    "artifact_sha256",
+    "evaluator_id",
+    "evaluator_version",
+    "outcome",
+    "reasons"
+  ],
+  "additionalProperties": false
+}

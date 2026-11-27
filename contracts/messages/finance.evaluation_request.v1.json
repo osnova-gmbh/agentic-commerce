@@ -1,0 +1,91 @@
+{
+  "description": "E -> evaluator. Judge one delivery.",
+  "type": "object",
+  "properties": {
+    "evaluation_request_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "terms_hash": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "description": "Lower-case hex SHA-256"
+    },
+    "delivery_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "artifact": {
+      "type": "object",
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "sha256": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "description": "Lower-case hex SHA-256"
+        },
+        "byte_length": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "artifact_id",
+        "sha256",
+        "byte_length",
+        "media_type"
+      ],
+      "additionalProperties": false
+    },
+    "evaluator_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "evaluator_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "params": {
+      "type": "object",
+      "description": "Free-form JSON object"
+    },
+    "delivered_at": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "description": "UTC timestamp, YYYY-MM-DDTHH:MM:SSZ"
+    },
+    "respond_by": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "description": "UTC timestamp, YYYY-MM-DDTHH:MM:SSZ"
+    }
+  },
+  "required": [
+    "evaluation_request_id",
+    "terms_hash",
+    "delivery_id",
+    "artifact",
+    "evaluator_id",
+    "evaluator_version",
+    "params",
+    "delivered_at",
+    "respond_by"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,117 @@
+{
+  "description": "E -> buyer or seller. Passes on another party's signed envelope with the deal head (SPEC §6.3).",
+  "type": "object",
+  "properties": {
+    "relayed": {
+      "type": "object",
+      "properties": {
+        "envelope_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 36,
+          "maxLength": 36,
+          "description": "UUID"
+        },
+        "type_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "type_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sender_did": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 256,
+          "description": "Agent DID"
+        },
+        "recipient_did": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 256,
+          "description": "Agent DID"
+        },
+        "conversation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "causation_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 36,
+          "maxLength": 36,
+          "description": "UUID"
+        },
+        "created_at": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 20,
+          "description": "UTC timestamp, YYYY-MM-DDTHH:MM:SSZ"
+        },
+        "body": {
+          "type": "object",
+          "description": "Free-form JSON object"
+        },
+        "signature": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "envelope_version",
+        "message_id",
+        "type_key",
+        "type_version",
+        "sender_did",
+        "recipient_did",
+        "conversation_id",
+        "causation_id",
+        "created_at",
+        "body",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "deal": {
+      "type": "object",
+      "properties": {
+        "deal_id": {
+          "type": "string",
+          "minLength": 36,
+          "maxLength": 36,
+          "description": "UUID"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "state": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        }
+      },
+      "required": [
+        "deal_id",
+        "seq",
+        "state"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "relayed",
+    "deal"
+  ],
+  "additionalProperties": false
+}

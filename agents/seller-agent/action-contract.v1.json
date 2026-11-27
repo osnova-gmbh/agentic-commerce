@@ -1,0 +1,424 @@
+{
+  "schema_version": "v1",
+  "actions": [
+    {
+      "name": "apply_resolution",
+      "description": "Apply an approved synthetic case resolution.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Case Id",
+            "type": "string"
+          },
+          "resolution": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "resolution"
+        ],
+        "title": "ApplyResolutionInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "applied": {
+            "title": "Applied",
+            "type": "boolean"
+          },
+          "already_applied": {
+            "title": "Already Applied",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "applied",
+          "already_applied"
+        ],
+        "title": "ApplyResolutionOutput",
+        "type": "object"
+      },
+      "risk": "write",
+      "requires_approval": true,
+      "idempotency": "keyed",
+      "required_capabilities": [
+        "records.write"
+      ],
+      "metadata": null
+    },
+    {
+      "name": "handle_message",
+      "description": "Handle one finance message from the escrow agent: quote a relayed request, accept matching terms, deliver or redeliver.",
+      "input_schema": {
+        "additionalProperties": false,
+        "description": "One signed message envelope, as claimed by the delivery loop.",
+        "properties": {
+          "envelope": {
+            "additionalProperties": true,
+            "title": "Envelope",
+            "type": "object"
+          }
+        },
+        "required": [
+          "envelope"
+        ],
+        "title": "HandleMessageInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "additionalProperties": false,
+        "description": "What the delivery loop acknowledges for the message.",
+        "properties": {
+          "status": {
+            "enum": [
+              "processed",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "HandleMessageOutput",
+        "type": "object"
+      },
+      "risk": "write",
+      "requires_approval": false,
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
+    },
+    {
+      "name": "lookup_record",
+      "description": "Look up a synthetic service record.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "record_id": {
+            "minLength": 1,
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "record_id"
+        ],
+        "title": "LookupRecordInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "record_id": {
+            "title": "Record Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "record_id",
+          "status"
+        ],
+        "title": "LookupRecordOutput",
+        "type": "object"
+      },
+      "risk": "read",
+      "requires_approval": false,
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
+    },
+    {
+      "name": "lookup_resolution",
+      "description": "Read committed synthetic case resolutions.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Case Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "title": "LookupResolutionInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "resolutions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Resolutions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id",
+          "resolutions"
+        ],
+        "title": "LookupResolutionOutput",
+        "type": "object"
+      },
+      "risk": "read",
+      "requires_approval": false,
+      "idempotency": "inherent",
+      "required_capabilities": [
+        "records.read"
+      ],
+      "metadata": null
+    },
+    {
+      "name": "persist_reference_request",
+      "description": "Persist and read a reference request through AgentDb.",
+      "input_schema": {
+        "additionalProperties": false,
+        "description": "Existing typed request or one bounded canonical plain-text instruction.",
+        "oneOf": [
+          {
+            "not": {
+              "required": [
+                "instruction"
+              ]
+            },
+            "required": [
+              "request_id",
+              "description"
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "request_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "description"
+                  ]
+                }
+              ]
+            },
+            "required": [
+              "instruction"
+            ]
+          }
+        ],
+        "properties": {
+          "request_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Request Id"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "instruction": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Instruction"
+          }
+        },
+        "title": "PersistRequestInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "object_id": {
+            "title": "Object Id",
+            "type": "string"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "root_artifact_id": {
+            "title": "Root Artifact Id",
+            "type": "string"
+          },
+          "root_sha256": {
+            "title": "Root Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object_id",
+          "request_id",
+          "description",
+          "status",
+          "revision",
+          "root_artifact_id",
+          "root_sha256"
+        ],
+        "title": "PersistRequestOutput",
+        "type": "object"
+      },
+      "risk": "write",
+      "requires_approval": false,
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
+    },
+    {
+      "name": "publish_catalog",
+      "description": "Publish this seller's offers from the offers file to the catalog module and return the count.",
+      "input_schema": {
+        "additionalProperties": false,
+        "description": "Publishing takes no input: the offers come from the offers file.",
+        "properties": {},
+        "title": "PublishCatalogInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "additionalProperties": false,
+        "description": "How many offers the catalog now holds for this seller.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "title": "PublishCatalogOutput",
+        "type": "object"
+      },
+      "risk": "write",
+      "requires_approval": false,
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
+    },
+    {
+      "name": "validate_request",
+      "description": "Validate a synthetic service request.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {
+            "minLength": 1,
+            "title": "Request Id",
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "description"
+        ],
+        "title": "ValidateRequestInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "valid",
+          "errors"
+        ],
+        "title": "ValidateRequestOutput",
+        "type": "object"
+      },
+      "risk": "read",
+      "requires_approval": false,
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
+    }
+  ]
+}
