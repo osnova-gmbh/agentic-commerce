@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agentic Commerce"
+  short_description: "Discover offers and run escrow checkout safely"
+  default_prompt: "Use $use-agentic-commerce to discover an offer and follow its escrow checkout."

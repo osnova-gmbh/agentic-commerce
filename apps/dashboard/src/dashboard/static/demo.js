@@ -75,7 +75,7 @@ function renderBorisEvidence(report, dealId, error = '', loading = false) {
     if (records.length) {
       const table = el('table', 'boris-evidence-table',
         el('thead', '', el('tr', '', ...['Agent / message', 'Request', 'Time (UTC)', 'Result'].map(text => el('th', '', text)))),
-        el('tbody', '', ...records.map(row => {
+        el('tbody', '', ...[...records].sort((a, b) => (Date.parse(b.completed_at || b.started_at) || 0) - (Date.parse(a.completed_at || a.started_at) || 0)).map(row => {
           const matched = row.status === 'verified' && isLiveRecord(row);
           const labels = {verified: matched ? 'Response matched' : row.transport_kind === 'test' ? 'Test response matched' : 'Unverified transport', pending: 'Pending', failed: 'Failed'};
           const result = el('td', '', el('span', 'boris-result ' + (matched ? 'verified' : row.status === 'verified' ? '' : row.status || ''), labels[row.status] || 'Unverified'));

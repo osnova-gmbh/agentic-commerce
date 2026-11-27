@@ -181,7 +181,7 @@ function renderAccounts(accounts) {
 function renderEvents(timeline) {
   const headers = ['#', 'Event', 'Agent', 'State after', 'Hash', 'Time (UTC)'];
   const table = el('table', 'events', el('thead', '', el('tr', '', ...headers.map(text => el('th', '', text)))),
-    el('tbody', '', ...timeline.map(row => {
+    el('tbody', '', ...[...timeline].sort((a, b) => b.seq - a.seq).map(row => {
       const actor = el('td', 'event-actor', el('span', 'actor-dot ' + row.actor, row.actor.slice(0, 1).toUpperCase()), row.actor); actor.title = row.actor_did;
       return el('tr', row.tone, el('td', 'event-seq', String(row.seq).padStart(2, '0')),
         el('td', 'event-name', el('strong', '', EVENT_NAMES[row.event_type] || row.event_type), el('span', '', row.detail || row.event_type)), actor,

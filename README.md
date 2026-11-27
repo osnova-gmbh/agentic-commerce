@@ -31,6 +31,17 @@ modules do not require a deployed AgentDb worker. See [dashboard setup and detai
 The separate planned identity demonstration has Alice authenticate with her own DID,
 request a quote from Bob through an Affinidi gateway, and verify Bob's signed response.
 
+## Discoverable API and MCP
+
+The checkout API publishes `/api`, `/.well-known/agent.json`, `/openapi.json`, and offline `/docs`. Services include exact input schemas; checkout status includes executable next actions. The commerce MCP server supports stdio and Streamable HTTP and uses the existing checkout API.
+
+```powershell
+python -m pip install "mcp>=1.26,<2"
+python scripts/run_mcp.py --api-url http://127.0.0.1:8091
+```
+
+See [agent API, MCP, and skill setup](docs/AGENT-API.md). The portable project skill is `use-agentic-commerce` in `.agents/skills/`.
+
 ## Visual product concept
 
 [`apps/landing/`](apps/landing/) contains a responsive **Cogit Finance** landing-page sketch based on [`SPEC.md`](SPEC.md), with an interactive sample escrow deal. It is a front-end concept only; it does not implement the agents, bank, or payment protocol.

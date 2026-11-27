@@ -151,7 +151,9 @@ to 10 green. A decision counts as approve or reject by the state it led to (`APP
 
 ## API
 
-All routes are `GET`. Errors answer `{"error", "message"}`; a failing source answers `502`.
+The standalone dashboard registers read-only routes. The checkout launcher also registers the explicit prepare, fund, deliver, and release operations. Start discovery at `/api` or `/.well-known/agent.json`; `/openapi.json` contains request and response schemas, while `/docs` is an offline API reference. Services and checkout status advertise executable action descriptors, including required headers and confirmation requirements. Errors answer `{"error", "message"}`; a failing source answers `502`.
+
+For the commerce MCP server (stdio or Streamable HTTP) and portable agent skill, see [Agent API and MCP](../../docs/AGENT-API.md).
 
 | Route | Result |
 | --- | --- |
