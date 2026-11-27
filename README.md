@@ -14,7 +14,9 @@ From the repository root:
 python scripts/run_demo.py --port 8091
 ```
 
-Open **http://127.0.0.1:8091/demo** and select a service from the catalog.
+Open **http://127.0.0.1:8091/demo** for the provider catalog, with real published prices and quote links.
+
+For the local escrow transaction simulator, open **http://127.0.0.1:8091/demo?legacy=1** and select a service from the catalog.
 Review its terms, **Fund escrow**, **Simulate work & delivery**, and then
 **Release payment to seller** after the delivery checks pass. The price and
 deliverable come from the selected offer. A failed delivery keeps the funds held
@@ -38,12 +40,6 @@ catalog queries, signed requests and quotes, terms, funding confirmation,
 artifact delivery, evaluator verdicts, payouts and receipts as an animated
 sequence diagram. Run `node films/commerce-flow/server.mjs` and open
 http://127.0.0.1:4175/ to watch the 62-second export.
-
-## Visual product concept
-
-[`apps/landing/`](apps/landing/) contains a responsive **Cogit Finance** landing-page sketch based on [`SPEC.md`](SPEC.md), with an interactive sample escrow deal. It is a front-end concept only; it does not implement the agents, bank, or payment protocol.
-
-Run `node apps/landing/server.mjs` and open **http://127.0.0.1:4173**, or open [`apps/landing/index.html`](apps/landing/index.html) directly. See the [preview README](apps/landing/README.md) for checks and design notes.
 
 ## Cartoon explainer
 
