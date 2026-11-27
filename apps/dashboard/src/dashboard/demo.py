@@ -29,6 +29,7 @@ from seller_agent.seller import SellerCore
 
 from .app import STATIC, create_app
 from .boris import BorisBankPort, BorisGateway, BorisModulePort, offline_report
+from .api_models import BorisReportResponse, CheckoutStatusResponse, LegacyPurchaseResponse
 from .sources import ModuleSource
 
 log = logging.getLogger(__name__)
@@ -194,23 +195,24 @@ class PurchaseRequest(BaseModel):
     scenario: Literal["happy", "rework"] = "happy"
 
 
-def create_demo_app(engine: DemoEngine) -> FastAPI:
+def create_demo_app(engine: DemoEngine, *, legacy_purchases: bool = True) -> FastAPI:
     app = create_app(engine.source)
     app.state.demo = engine
 
-    @app.get("/demo")
+    @app.get("/demo", include_in_schema=False)
     def controls():
         return FileResponse(STATIC / "demo.html", media_type="text/html")
 
-    @app.get("/api/demo/status")
+    @app.get("/api/demo/status", response_model=CheckoutStatusResponse, response_model_exclude_unset=True,
+             operation_id="current_checkout", tags=["Checkout"], summary="Read the current checkout and its allowed actions")
     def status():
         return engine.status()
 
-    @app.get("/api/demo/boris")
+    @app.get("/api/demo/boris", response_model=BorisReportResponse, response_model_exclude_unset=True,
+             operation_id="read_boris_evidence", tags=["Evidence"], summary="Read recorded Boris exchanges, optionally scoped to a deal")
     def boris_evidence(deal_id: str | None = None):
         return engine.boris_report(deal_id)
 
-    @app.post("/api/demo/purchases", status_code=202)
     def purchase(request: PurchaseRequest, idempotency_key: str = Header(min_length=1, max_length=200)):
         try:
             return engine.start(request.scenario, idempotency_key)
@@ -219,7 +221,17 @@ def create_demo_app(engine: DemoEngine) -> FastAPI:
         except RuntimeError as exc:
             raise HTTPException(409, str(exc)) from exc
 
-    @app.get("/api/demo/deals/{deal_id}/delivery")
+    if legacy_purchases:
+        app.add_api_route("/api/demo/purchases", purchase, methods=["POST"], status_code=202,
+                          response_model=LegacyPurchaseResponse, response_model_exclude_unset=True,
+                          operation_id="run_legacy_purchase", tags=["Checkout"],
+                          summary="Run the legacy automatic simulated purchase",
+                          description="Available only in the legacy engine. Creates and runs a complete simulated purchase.",
+                          openapi_extra={"x-side-effects": ["Runs a complete simulated purchase."], "x-requires-confirmation": True})
+
+    @app.get("/api/demo/deals/{deal_id}/delivery", operation_id="download_delivery", tags=["Evidence"], response_class=Response,
+             summary="Download the selected deal's delivered ZIP",
+             responses={200: {"description": "Delivered files", "content": {"application/zip": {"schema": {"type": "string", "format": "binary"}}}}})
     def download_delivery(deal_id: str):
         read = engine.source.deal(deal_id)
         deliveries = read.get("deliveries") or []

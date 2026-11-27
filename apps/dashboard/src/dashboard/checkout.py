@@ -22,6 +22,8 @@ from .demo import AGENTS, DemoEngine, create_demo_app
 from .boris import BorisConnectionError
 from .provider_checkout import provider_delivery, provider_services
 from .view import deal_view, format_minor
+from .api_models import CheckoutMutationResponse, CheckoutStatusResponse, ServiceListResponse
+from .discovery import checkout_actions, checkout_links, prepare_action
 
 log = logging.getLogger(__name__)
 TERMINAL = {"SETTLED", "REFUNDED", "CANCELLED", "DECLINED", "EXPIRED"}
@@ -121,6 +123,7 @@ class CatalogDemoEngine(DemoEngine):
                     # transaction total; prepare() records the explicit demo quote.
                     if provider["requires_demo_amount"]:
                         row.update(price_minor=None, price="Set demo amount", payout_minor=None, fee_minor=None)
+                row["actions"] = [prepare_action(row)]
                 rows.append(row)
         return sorted(rows, key=lambda row: (row["title"].casefold(), row["seller_org_id"], row["offer_id"]))
 
@@ -138,7 +141,7 @@ class CatalogDemoEngine(DemoEngine):
     def _launch(self, action: str, request_key: str, fingerprint: dict, deal_id: str, targets: set[str], background: bool) -> dict:
         self.current = {"running": True, "deal_id": deal_id, "scenario": self.orders[deal_id]["scenario"], "error": None, "action": action}
         self.order_progress[deal_id] = self.current
-        result = {"deal_id": deal_id, "action": action, "status": "processing"}
+        result = {"deal_id": deal_id, "action": action, "status": "processing", "links": checkout_links(deal_id)}
         self.requests[f"{action}:{request_key}"] = {"fingerprint": fingerprint, "result": result}
         if background:
             self.worker = threading.Thread(target=self.run_phase, args=(targets,), daemon=True, name=f"checkout-{action}")
@@ -290,6 +293,8 @@ class CatalogDemoEngine(DemoEngine):
                     "REJECTED": ["deliver"], "APPROVED": ["release"], "SETTLED": ["browse"],
                 }.get(result["state"], [])
         result["boris"] = self.boris_report(result["deal_id"])
+        result["actions"] = checkout_actions(result)
+        result["links"] = checkout_links(result["deal_id"])
         return result
 
     def archived_delivery(self, deal_id: str) -> bytes | None:
@@ -327,7 +332,7 @@ class DeliveryRequest(BaseModel):
 
 
 def create_checkout_app(engine: CatalogDemoEngine):
-    app = create_demo_app(engine)
+    app = create_demo_app(engine, legacy_purchases=False)
     app.state.archived_views = engine.archived_views
     app.state.service_titles = {(row["seller_org_id"], row["offer_id"]): row["title"] for row in engine.services()}
 
@@ -339,31 +344,45 @@ def create_checkout_app(engine: CatalogDemoEngine):
         except RuntimeError as exc:
             raise HTTPException(409, str(exc)) from exc
 
-    @app.get("/api/demo/services")
+    @app.get("/api/demo/services", response_model=ServiceListResponse, response_model_exclude_unset=True,
+             operation_id="list_services", tags=["Checkout"], summary="Discover purchasable demo services and offer-specific input schemas")
     def services():
         return {"services": engine.services()}
 
-    @app.post("/api/demo/orders", status_code=202)
-    def prepare(request: OrderRequest, idempotency_key: str = Header(min_length=1, max_length=200)):
+    @app.post("/api/demo/orders", status_code=202, response_model=CheckoutMutationResponse, response_model_exclude_unset=True,
+              operation_id="prepare_checkout", tags=["Checkout"], summary="Prepare the selected service and request a quote",
+              description="Creates a demo order without funding it. Supply inputs matching that service input_schema and an explicit demo_price_minor where required. Poll the returned links.status until running is false.",
+              openapi_extra={"x-side-effects": ["Creates a simulated checkout and requests a quote."], "x-requires-confirmation": False})
+    def prepare(request: OrderRequest, idempotency_key: str = Header(min_length=1, max_length=200, description="Unique logical action key; reuse with an identical request when retrying")):
         return execute(engine.prepare, request.seller_org_id, request.offer_id, request.inputs, idempotency_key,
                        demo_price_minor=request.demo_price_minor)
 
-    @app.get("/api/demo/orders/{deal_id}")
+    @app.get("/api/demo/orders/{deal_id}", response_model=CheckoutStatusResponse, response_model_exclude_unset=True,
+             operation_id="read_checkout", tags=["Checkout"], summary="Poll a checkout and discover currently allowed action links")
     def order_status(deal_id: str):
         if deal_id not in engine.orders:
             raise HTTPException(404, "Unknown checkout")
         return engine.status(deal_id)
 
-    @app.post("/api/demo/orders/{deal_id}/fund", status_code=202)
-    def fund(deal_id: str, idempotency_key: str = Header(min_length=1, max_length=200)):
+    @app.post("/api/demo/orders/{deal_id}/fund", status_code=202, response_model=CheckoutMutationResponse, response_model_exclude_unset=True,
+              operation_id="fund_checkout", tags=["Checkout"], summary="Accept quoted terms and fund simulated escrow",
+              description="Requires QUOTED or FUNDING_REQUESTED and explicit authorization for the selected offer and amount. Poll links.status for confirmation; an accepted request is not a payment receipt.",
+              openapi_extra={"x-side-effects": ["Accepts terms and transfers the agreed simulated amount from buyer to escrow."], "x-requires-confirmation": True})
+    def fund(deal_id: str, idempotency_key: str = Header(min_length=1, max_length=200, description="Unique logical action key; reuse with an identical request when retrying")):
         return execute(engine.advance, deal_id, "fund", idempotency_key)
 
-    @app.post("/api/demo/orders/{deal_id}/deliver", status_code=202)
-    def deliver(deal_id: str, request: DeliveryRequest, idempotency_key: str = Header(min_length=1, max_length=200)):
+    @app.post("/api/demo/orders/{deal_id}/deliver", status_code=202, response_model=CheckoutMutationResponse, response_model_exclude_unset=True,
+              operation_id="deliver_checkout", tags=["Checkout"], summary="Produce a simulated delivery and run independent checks",
+              description="Requires FUNDED or REJECTED. happy produces a complete delivery; rework demonstrates an initial failed check. Poll links.status for APPROVED or REJECTED.",
+              openapi_extra={"x-side-effects": ["Produces a simulated artifact and evaluator verdicts; does not release payment."], "x-requires-confirmation": False})
+    def deliver(deal_id: str, request: DeliveryRequest, idempotency_key: str = Header(min_length=1, max_length=200, description="Unique logical action key; reuse with an identical request when retrying")):
         return execute(engine.advance, deal_id, "deliver", idempotency_key, scenario=request.scenario)
 
-    @app.post("/api/demo/orders/{deal_id}/release", status_code=202)
-    def release(deal_id: str, idempotency_key: str = Header(min_length=1, max_length=200)):
+    @app.post("/api/demo/orders/{deal_id}/release", status_code=202, response_model=CheckoutMutationResponse, response_model_exclude_unset=True,
+              operation_id="release_checkout", tags=["Checkout"], summary="Release approved simulated escrow funds",
+              description="Requires APPROVED and explicit release authorization after delivery review. Poll links.status for SETTLED; a 202 alone does not prove payout.",
+              openapi_extra={"x-side-effects": ["Transfers the seller payout and operator fee from simulated escrow."], "x-requires-confirmation": True})
+    def release(deal_id: str, idempotency_key: str = Header(min_length=1, max_length=200, description="Unique logical action key; reuse with an identical request when retrying")):
         return execute(engine.advance, deal_id, "release", idempotency_key)
 
     return app

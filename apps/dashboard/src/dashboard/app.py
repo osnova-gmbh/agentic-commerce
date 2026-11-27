@@ -6,13 +6,16 @@ from pathlib import Path
 
 import httpx
 from cogit_finance_seams import BankError, ModuleError
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Path as APIPath, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .sources import DataSource
 from .catalog import register_catalog
+from .api_models import AccountsResponse, BalancesResponse, DealsResponse, DealViewResponse, HealthResponse
+from .discovery import API_ERRORS, register_discovery
 from .view import accounts_view, balances_view, deal_summary, deal_view
 
 STATIC = Path(__file__).with_name("static")
@@ -24,7 +27,9 @@ def _error(status: int, code: str, message: str) -> JSONResponse:
 
 def create_app(source: DataSource) -> FastAPI:
     """Serve ``source`` (a ``FixtureSource`` or a ``ModuleSource``). GET routes only."""
-    app = FastAPI(title="Escrow dashboard", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="Cogit Finance API", version="1.0.0",
+                  description="Read provider catalogs and escrow records. Demo factories also expose explicit simulated checkout steps.",
+                  docs_url=None, redoc_url=None, openapi_url="/openapi.json", responses=API_ERRORS)
     app.state.source = source
     app.state.archived_views = {}
     app.state.service_titles = {}
@@ -38,7 +43,13 @@ def create_app(source: DataSource) -> FastAPI:
     async def no_store(request: Request, call_next):
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
+        response.headers["Link"] = '</api>; rel="service-desc", </openapi.json>; rel="describedby"; type="application/vnd.oai.openapi+json"'
         return response
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid_request(_: Request, exc: RequestValidationError) -> JSONResponse:
+        message = "; ".join(str(error.get("msg", "Invalid value")) for error in exc.errors())
+        return _error(422, "validation_error", message)
 
     @app.exception_handler(ModuleError)
     async def module_error(_: Request, exc: ModuleError) -> JSONResponse:
@@ -57,11 +68,12 @@ def create_app(source: DataSource) -> FastAPI:
         code = {404: "not_found", 405: "method_not_allowed"}.get(exc.status_code, "http_error")
         return _error(exc.status_code, code, str(exc.detail))
 
-    @app.get("/")
+    @app.get("/", include_in_schema=False)
     def page() -> FileResponse:
         return FileResponse(STATIC / "index.html", media_type="text/html")
 
-    @app.get("/api/deals")
+    @app.get("/api/deals", response_model=DealsResponse, response_model_exclude_unset=True,
+             operation_id="list_deals", tags=["Deals"], summary="List live and archived deals, newest first")
     def list_deals() -> dict:
         rows = [deal_summary(row) for row in source.deals()]
         live_ids = {row["deal_id"] for row in rows}
@@ -73,8 +85,9 @@ def create_app(source: DataSource) -> FastAPI:
         rows.sort(key=lambda row: (row["created_at"], row["updated_at"]), reverse=True)  # newest first
         return {"deals": rows}
 
-    @app.get("/api/deals/{deal_id}")
-    def read_deal(deal_id: str):
+    @app.get("/api/deals/{deal_id}", response_model=DealViewResponse, response_model_exclude_unset=True,
+             operation_id="read_deal", tags=["Deals"], summary="Read a deal, timeline, balances and delivery verdicts")
+    def read_deal(deal_id: str = APIPath(min_length=1, max_length=128, description="Deal identifier returned by list_deals or prepare_checkout")):
         read = source.deal(deal_id)
         if not read.get("deal"):
             if deal_id in app.state.archived_views:
@@ -82,18 +95,21 @@ def create_app(source: DataSource) -> FastAPI:
             return _error(404, "unknown_deal", f"no deal {deal_id}")
         return with_service_title(deal_view(read, source.balances(deal_id)))
 
-    @app.get("/api/balances")
-    def read_balances(deal_id: str | None = None) -> dict:
+    @app.get("/api/balances", response_model=BalancesResponse, response_model_exclude_unset=True,
+             operation_id="read_balances", tags=["Accounts"], summary="Read escrow ledger balances")
+    def read_balances(deal_id: str | None = Query(default=None, max_length=128, description="Restrict balances to one deal; omit for aggregate balances")) -> dict:
         return balances_view(source.balances(deal_id), deal_id)
 
-    @app.get("/api/accounts")
+    @app.get("/api/accounts", response_model=AccountsResponse, response_model_exclude_unset=True,
+             operation_id="list_accounts", tags=["Accounts"], summary="Read simulated bank account balances")
     def read_accounts() -> dict:
         return accounts_view(source.accounts())
 
-    @app.get("/health")
+    @app.get("/health", response_model=HealthResponse, operation_id="health", tags=["Discovery"], summary="Check API availability")
     def health() -> dict:
         return {"status": "ok"}
 
     register_catalog(app, source, STATIC)
+    register_discovery(app)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     return app

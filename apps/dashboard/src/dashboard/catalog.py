@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
 from .sources import DataSource
+from .api_models import CatalogResponse, ProviderOffersResponse
 
 
 def public_offer(company: dict, offer: dict) -> dict:
@@ -53,14 +54,16 @@ def register_catalog(app: FastAPI, source: DataSource, static: Path) -> None:
         rows.sort(key=lambda row: (row["outreach_priority"] or 999, row["name"].casefold()))
         return rows
 
-    @app.get("/catalog")
+    @app.get("/catalog", include_in_schema=False)
     def page() -> FileResponse:
         return FileResponse(static / "catalog.html", media_type="text/html")
 
-    @app.get("/api/catalog")
+    @app.get("/api/catalog", response_model=CatalogResponse, response_model_exclude_unset=True,
+             operation_id="list_companies", tags=["Catalog"], summary="Discover public Delta Campus companies and their offerings")
     def companies() -> dict:
         return {"companies": directory()}
 
-    @app.get("/api/provider-offers")
+    @app.get("/api/provider-offers", response_model=ProviderOffersResponse, response_model_exclude_unset=True,
+             operation_id="list_provider_offers", tags=["Catalog"], summary="List published provider offerings and their pricing basis")
     def offers() -> dict:
         return {"offers": [offer for company in directory() for offer in company["offers"]]}
