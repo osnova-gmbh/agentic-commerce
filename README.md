@@ -8,8 +8,15 @@ This repository contains research, an implementation plan and machine-specific W
 
 The first proposed demonstration is intentionally small: Alice authenticates with her own DID, requests a quote from Bob through an Affinidi gateway, and verifies Bob's signed response. No LLM calls, purchases or payments are included in that first slice.
 
+## Visual product concept
+
+[`apps/landing/`](apps/landing/) contains a responsive **Cogit Finance** landing-page sketch based on [`SPEC.md`](SPEC.md), with an interactive sample escrow deal. It is a front-end concept only; it does not implement the agents, bank, or payment protocol.
+
+Run `node apps/landing/server.mjs` and open **http://127.0.0.1:4173**, or open [`apps/landing/index.html`](apps/landing/index.html) directly. See the [preview README](apps/landing/README.md) for checks and design notes.
+
 ## Documents
 
+- [Cogit Finance specification](SPEC.md): authoritative escrow product behavior and implementation plan.
 - [Alice/Bob implementation plan](ALICE-BOB-PLAN.md): responsibilities, protocol, proposed files and acceptance checks.
 - [WSL/Boris handover](WSL-HANDOVER.md): local commands, installed software, blockers and verification evidence. Paths and account state are specific to the original development machine; recheck them before use.
 
