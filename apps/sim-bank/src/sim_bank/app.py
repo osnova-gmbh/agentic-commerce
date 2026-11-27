@@ -59,6 +59,17 @@ def create_app(seed_file: Path | None = None) -> FastAPI:
         ledger.reset()
         return {"ok": True}
 
+    @app.post("/admin/fund")
+    async def post_funding(request: Request) -> dict:
+        key = request.headers.get("Idempotency-Key", "").strip()
+        if not key:
+            raise Refusal(400, "missing_idempotency_key", "send an Idempotency-Key header")
+        try:
+            body = json.loads(await request.body())
+        except ValueError:
+            raise Refusal(400, "invalid_funding", "the body must be a JSON object") from None
+        return ledger.fund_account(key, body)
+
     @app.get("/health")
     async def get_health() -> dict:
         return {"status": "ok"}

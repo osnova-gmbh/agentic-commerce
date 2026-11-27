@@ -1,7 +1,8 @@
 """In-memory double-entry ledger of the sim bank (contracts/sim-bank.md).
 
-Every transfer debits one account and credits another under one lock, so the sum of all
-balances never changes. Money is integer minor units; there are no floats.
+Every transfer debits one account and credits another under one lock. The explicit
+demo funding operation can raise an account's balance without recording a payment.
+Money is integer minor units; there are no floats.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ import yaml
 DEFAULT_SEED = Path(__file__).with_name("bank.yaml")
 TRANSFER_FIELDS = ("from_iban", "to_iban", "amount_minor", "currency", "reference")
 EVENT_FIELDS = ("event_id", "transfer_id", *TRANSFER_FIELDS, "booked_at")
+MAX_DEMO_BALANCE_MINOR = 1_000_000_000
 
 
 class Refusal(Exception):
@@ -80,6 +82,18 @@ def validate_transfer(body: object) -> dict:
     return {name: body[name] for name in TRANSFER_FIELDS}
 
 
+def validate_funding(body: object) -> dict:
+    """Validate an explicit simulation budget, separate from bank transfers."""
+    if not isinstance(body, dict) or set(body) != {"iban", "minimum_balance_minor"}:
+        raise Refusal(400, "invalid_funding", "send iban and minimum_balance_minor")
+    if not isinstance(body["iban"], str) or not body["iban"]:
+        raise Refusal(400, "invalid_funding", "iban must be a non-empty string")
+    minimum = body["minimum_balance_minor"]
+    if not _is_int(minimum) or not 1 <= minimum <= MAX_DEMO_BALANCE_MINOR:
+        raise Refusal(400, "invalid_funding", "minimum_balance_minor must be an integer from 1 to 1000000000")
+    return {"iban": body["iban"], "minimum_balance_minor": minimum}
+
+
 class Ledger:
     """Accounts, booked transfers and their credit events. One lock guards everything."""
 
@@ -92,6 +106,7 @@ class Ledger:
         self._balances: dict[str, int] = {}
         self._transfers: list[dict] = []
         self._by_key: dict[str, dict] = {}
+        self._funding_by_key: dict[str, tuple[dict, dict]] = {}
         self.reset()
 
     def reset(self) -> None:
@@ -102,6 +117,30 @@ class Ledger:
             self._balances = {account["iban"]: account["balance_minor"] for account in accounts}
             self._transfers = []
             self._by_key = {}
+            self._funding_by_key = {}
+
+    def fund_account(self, idempotency_key: str, body: object) -> dict:
+        """Raise a demo budget to a minimum, preserving all payment history.
+
+        This administrative operation is not a payment and emits no credit event:
+        an escrow watcher must never mistake replenishment for buyer funding.
+        """
+        request = validate_funding(body)
+        with self._lock:
+            known = self._funding_by_key.get(idempotency_key)
+            if known is not None:
+                if known[0] != request:
+                    raise Refusal(409, "idempotency_conflict", "this key was used with a different funding request")
+                return dict(known[1])
+            iban = request["iban"]
+            if iban not in self._balances:
+                raise Refusal(404, "unknown_account", f"iban {iban} is not an account")
+            current = self._balances[iban]
+            credited = max(0, request["minimum_balance_minor"] - current)
+            self._balances[iban] = current + credited
+            receipt = {"iban": iban, "credited_minor": credited, "balance_minor": current + credited}
+            self._funding_by_key[idempotency_key] = (request, receipt)
+            return dict(receipt)
 
     def transfer(self, idempotency_key: str, body: object) -> dict:
         request = validate_transfer(body)

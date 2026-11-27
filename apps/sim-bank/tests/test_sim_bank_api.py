@@ -1,11 +1,13 @@
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
 import yaml
 from fastapi.testclient import TestClient
 from sim_bank import DEFAULT_SEED, create_app
+from sim_bank.ledger import Ledger
 from sim_bank_helpers import BUYER, ESCROW, FEES, SELLER, balances, pay, payment
 
 TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
@@ -114,6 +116,90 @@ def test_insufficient_funds_books_nothing_and_does_not_burn_the_key(http):
     assert error(http.get("/transfers/by-key/k")) == (404, "unknown_transfer")
     assert error(pay(http, amount_minor=1000001)) == (409, "insufficient_funds")
     assert pay(http, amount_minor=1000000).status_code == 200  # the whole balance may leave
+
+
+def test_demo_funding_preserves_transfers_other_accounts_and_credit_events(http):
+    booked = pay(http).json()
+    before = balances(http)
+    events = http.get("/events", params={"iban": ESCROW}).json()
+    response = http.post("/admin/fund", json={"iban": BUYER, "minimum_balance_minor": 1000000},
+                         headers={"Idempotency-Key": "refill:buyer"})
+    assert response.status_code == 200
+    assert response.json() == {"iban": BUYER, "credited_minor": 50000, "balance_minor": 1000000}
+    assert balances(http) == {**before, BUYER: 1000000}
+    assert http.get("/transfers/by-key/pay:d1").json() == booked
+    assert http.get("/events", params={"iban": ESCROW}).json() == events
+    assert http.get("/events", params={"iban": BUYER}).json() == {"events": []}
+    # Administrative funding consumes no transfer/event ID.
+    assert pay(http, key="pay:d2").json()["event_id"] == "2"
+
+
+def test_demo_funding_replay_does_not_add_budget_again_after_spending(http):
+    body = {"iban": BUYER, "minimum_balance_minor": 1200000}
+    headers = {"Idempotency-Key": "refill:buyer"}
+    first = http.post("/admin/fund", json=body, headers=headers).json()
+    pay(http)
+    before = balances(http)
+    assert http.post("/admin/fund", json=body, headers=headers).json() == first
+    assert balances(http) == before
+    assert error(http.post("/admin/fund", json={**body, "minimum_balance_minor": 1300000},
+                           headers=headers)) == (409, "idempotency_conflict")
+
+
+def test_demo_funding_never_lowers_an_existing_balance(http):
+    response = http.post("/admin/fund", json={"iban": BUYER, "minimum_balance_minor": 1},
+                         headers={"Idempotency-Key": "refill:already-funded"})
+    assert response.json() == {"iban": BUYER, "credited_minor": 0, "balance_minor": 1000000}
+    assert balances(http) == OPENING
+
+
+@pytest.mark.parametrize("body", [
+    {}, [], {"iban": BUYER}, {"iban": "", "minimum_balance_minor": 100},
+    {"iban": BUYER, "minimum_balance_minor": 100, "extra": True},
+    *[{"iban": BUYER, "minimum_balance_minor": value}
+      for value in (0, -1, True, 1.5, "100", 1000000001)],
+])
+def test_invalid_demo_funding_is_refused(http, body):
+    response = http.post("/admin/fund", json=body, headers={"Idempotency-Key": "refill"})
+    assert error(response) == (400, "invalid_funding")
+    assert balances(http) == OPENING
+
+
+def test_demo_funding_requires_key_json_and_known_account(http):
+    body = {"iban": BUYER, "minimum_balance_minor": 100}
+    assert error(http.post("/admin/fund", json=body)) == (400, "missing_idempotency_key")
+    headers = {"Idempotency-Key": "refill"}
+    assert error(http.post("/admin/fund", content="{", headers=headers)) == (400, "invalid_funding")
+    assert error(http.post("/admin/fund", json={**body, "iban": "unknown"}, headers=headers)) == (404, "unknown_account")
+    assert balances(http) == OPENING
+
+
+def test_concurrent_demo_funding_credits_only_once():
+    ledger = Ledger()
+    body = {"iban": BUYER, "minimum_balance_minor": 2000000}
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        receipts = list(pool.map(lambda _: ledger.fund_account("one-refill", body), range(20)))
+    assert receipts == [{"iban": BUYER, "credited_minor": 1000000, "balance_minor": 2000000}] * 20
+    assert {row["iban"]: row["balance_minor"] for row in ledger.accounts()} == {**OPENING, BUYER: 2000000}
+
+
+def test_concurrent_distinct_funding_keys_raise_only_to_the_largest_minimum():
+    ledger = Ledger()
+    requests = [(f"refill:{i}", {"iban": BUYER, "minimum_balance_minor": 2000000 + i}) for i in range(20)]
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        receipts = list(pool.map(lambda item: ledger.fund_account(*item), requests))
+    assert sum(receipt["credited_minor"] for receipt in receipts) == 1000019
+    assert {row["iban"]: row["balance_minor"] for row in ledger.accounts()} == {**OPENING, BUYER: 2000019}
+    for request, receipt in zip(requests, receipts):
+        assert ledger.fund_account(*request) == receipt
+
+
+def test_reset_also_clears_demo_funding_receipts(http):
+    body = {"iban": BUYER, "minimum_balance_minor": 1100000}
+    headers = {"Idempotency-Key": "refill"}
+    assert http.post("/admin/fund", json=body, headers=headers).json()["credited_minor"] == 100000
+    http.post("/admin/reset")
+    assert http.post("/admin/fund", json=body, headers=headers).json()["credited_minor"] == 100000
 
 
 def test_missing_idempotency_key(http):

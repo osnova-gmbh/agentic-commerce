@@ -45,6 +45,13 @@ run from the repository root:
 python scripts/run_demo.py --port 8091
 ```
 
+The launcher automatically replenishes the simulated buyer budget when needed,
+so repeated demonstrations do not exhaust its opening balance. The bank records
+administrative demo funding separately from payments. With an older running
+simulated bank, the launcher recycles settled seller/fee balances without using
+funds still held in escrow. Pass `--no-demo-refill` to test insufficient funds.
+Failed funding can be retried without duplicating the payment.
+
 Open **http://127.0.0.1:8091/demo?legacy=1** for the simulated checkout. Enter the
 brief, review the quoted terms, and click **Fund escrow**. Funding stops before
 the seller starts work. **Simulate work & delivery** produces the selected

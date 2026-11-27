@@ -225,6 +225,7 @@ class CatalogDemoEngine(DemoEngine):
         deal_id = self.current["deal_id"]
         initial = self.source.deal(deal_id).get("deal") or {}
         initial_head = initial.get("head_seq", 0)
+        initial_attempts = {run.run_id: run.attempts for run in self.bus.runtime.runs.values()}
         try:
             for _ in range(150):
                 if self.stop.is_set():
@@ -235,7 +236,8 @@ class CatalogDemoEngine(DemoEngine):
                                                     limit=1, deal_id=deal_id).run_once()
                     self.escrow.tick()
                     runs = [run for run in self.bus.runtime.runs.values() if run.input.get("envelope", {}).get("conversation_id") == deal_id]
-                    failures = [run for run in runs if run.status == "failed"]
+                    failures = [run for run in runs if run.status == "failed"
+                                and run.attempts > initial_attempts.get(run.run_id, 0)]
                     if failures:
                         raise RuntimeError(failures[-1].error or "An agent step failed")
                     deal = self.source.deal(deal_id).get("deal") or {}

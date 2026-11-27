@@ -76,6 +76,7 @@ def main() -> None:
 
     from dashboard.checkout import CatalogDemoEngine, create_checkout_app
     from dashboard.boris import BorisGateway
+    from dashboard.demo_bank import DemoFundingBank
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8091)
@@ -84,6 +85,8 @@ def main() -> None:
     parser.add_argument("--history", type=Path, default=root / ".local/run-app/checkout-history.json")
     parser.add_argument("--boris-transport", choices=("http", "offline"), default="http",
                         help="Use the enabled Boris configuration, or explicitly run offline")
+    parser.add_argument("--no-demo-refill", action="store_true",
+                        help="Keep the simulated buyer's finite opening balance")
     args = parser.parse_args()
     if not 0 <= args.step_delay <= 3:
         parser.error("--step-delay must be between 0 and 3 seconds")
@@ -93,10 +96,13 @@ def main() -> None:
         boris = (BorisGateway.from_config(root, evidence_path=args.history.parent / "boris-evidence.jsonl")
                  if args.boris_transport == "http" else None)
         engine = CatalogDemoEngine(root, bank_url=args.bank_url, step_delay=args.step_delay,
-                                   history_file=args.history, boris=boris)
+                                   history_file=args.history, boris=boris,
+                                   bank=None if args.no_demo_refill else DemoFundingBank.from_url(args.bank_url))
         print(f"Transaction demo: http://127.0.0.1:{args.port}/demo", flush=True)
         print("Boris: required HTTP echo before message delivery and bank transfers" if boris
               else "Boris: offline; no remote execution evidence", flush=True)
+        print("Demo funds: finite balance" if args.no_demo_refill
+              else "Demo funds: buyer balance replenishes automatically when needed", flush=True)
         uvicorn.run(create_checkout_app(engine), host="127.0.0.1", port=args.port)
     finally:
         if engine is not None:
