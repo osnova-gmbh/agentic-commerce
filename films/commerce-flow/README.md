@@ -10,13 +10,22 @@ three independent checks, EUR 495 payout, EUR 5 operator fee and signed receipts
 Catalog calls and bank transfers are distinguished from signed finance messages.
 It illustrates the protocol; it is not a screen recording or a live transaction.
 
+## MP4 downloads
+
+- [Full film with sound](out/commerce-flow-final.mp4) — 1920 × 1080, 24 fps, 62 seconds.
+- [Silent film](out/commerce-flow.mp4) — the same protocol flow without audio.
+
+Both finished MP4 exports are versioned in this repository. Use **Download raw file**
+on the GitHub file page to save or play the export.
+
 ## Sources
 
 - flow-data.js: the requests, payload summaries, timing and accounting.
 - film.js: vector drawing and animation, independent of wall-clock time.
 - commerce-flow.html: editable local animation with playback and scrubbing.
 - index.html, server.mjs: exported-video player and chapter navigation.
-- out/: generated MP4, frame previews and verification evidence (ignored).
+- out/: the two finished MP4 exports are tracked; intermediate frames, previews
+  and verification evidence remain ignored.
 
 ## Build with local Vidder
 
