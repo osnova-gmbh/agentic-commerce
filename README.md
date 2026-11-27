@@ -39,6 +39,16 @@ artifact delivery, evaluator verdicts, payouts and receipts as an animated
 sequence diagram. Run `node films/commerce-flow/server.mjs` and open
 http://127.0.0.1:4175/ to watch the 62-second export.
 
+## Visual product concept
+
+[`apps/landing/`](apps/landing/) contains a responsive **Cogit Finance** landing-page sketch based on [`SPEC.md`](SPEC.md), with an interactive sample escrow deal. It is a front-end concept only; it does not implement the agents, bank, or payment protocol.
+
+Run `node apps/landing/server.mjs` and open **http://127.0.0.1:4173**, or open [`apps/landing/index.html`](apps/landing/index.html) directly. See the [preview README](apps/landing/README.md) for checks and design notes.
+
+## Cartoon explainer
+
+[`films/alice-bob-delta/`](films/alice-bob-delta/) contains the editable 26-second cartoon: Alice buys a research report from Bob while Delta holds the payment. Open `alice-bob-delta.html` for the source animation; see [`FILM.md`](films/alice-bob-delta/FILM.md) for the storyboard, Vidder rendering commands, licenses, and verification notes. Generated MP4s, audio, and review frames stay in the ignored `out/` directory.
+
 ## Documents
 
 - [Cogit Finance specification](SPEC.md): authoritative escrow product behavior and implementation plan.
