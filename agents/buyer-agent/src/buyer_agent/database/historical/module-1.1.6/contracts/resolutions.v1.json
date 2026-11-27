@@ -1,0 +1,110 @@
+{
+  "exports": [
+    {
+      "key": "resolutions.apply",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit.buyer-agent.resolutions.apply.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "resolution": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "request_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "case_id",
+          "resolution",
+          "request_key"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "applied": {
+            "type": "boolean"
+          },
+          "already_applied": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "applied",
+          "already_applied"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "reference_resolution_apply",
+      "callerKinds": [
+        "fenced_worker"
+      ],
+      "capability": "buyer_agent.write",
+      "policyScope": "installation",
+      "requiredPolicies": []
+    },
+    {
+      "key": "resolutions.list",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit.buyer-agent.resolutions.list.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "resolutions": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          }
+        },
+        "required": [
+          "case_id",
+          "resolutions"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "reference_resolution_list",
+      "callerKinds": [
+        "fenced_worker"
+      ],
+      "capability": "buyer_agent.read",
+      "policyScope": "installation",
+      "requiredPolicies": []
+    }
+  ]
+}

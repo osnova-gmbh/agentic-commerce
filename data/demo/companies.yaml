@@ -1,0 +1,610 @@
+# Demo participants and Delta Campus company profiles.
+# Provider offers and pricing verified against the linked official pages on 2026-11-27.
+# Published subscription/unit rates are not fixed escrow transaction prices.
+companies:
+- org_id: buyer-co
+  legal_name: Example Buyer GmbH
+  register_id: HRB 000001
+  address: Example Street 10, 10115 Berlin
+  roles:
+  - buyer
+  categories: []
+  iban: DE00EXAMPLE0000000010
+  kyb_verified: true
+  kyb_verified_by: operator-co
+  spending_limit_minor: 200000
+  profile: {}
+- org_id: seller-co
+  legal_name: Example Seller GmbH
+  register_id: HRB 000002
+  address: Example Street 20, 10115 Berlin
+  roles:
+  - seller
+  categories:
+  - reports
+  iban: DE00EXAMPLE0000000020
+  kyb_verified: true
+  kyb_verified_by: operator-co
+  spending_limit_minor: 0
+  profile: {}
+- org_id: operator-co
+  legal_name: Delta Campus
+  register_id: HRB 000003
+  address: Example Street 1, 10115 Berlin
+  roles: []
+  categories: []
+  iban: DE00EXAMPLE0000000001
+  kyb_verified: true
+  kyb_verified_by: operator-co
+  spending_limit_minor: 0
+  profile: {}
+- org_id: elephant-technologies
+  legal_name: Elephant Technologies
+  roles:
+  - buyer
+  categories:
+  - ai-training
+  - knowledge-management
+  profile:
+    display_name: Elephant Technologies
+    website: https://www.elephantcompany.com/
+    products_and_services: 'AI training and knowledge software: employee onboarding, training courses, digital work
+      instructions and AI assistants for frontline staff.'
+    target_customers: Industrial companies, manufacturers and service organizations with technicians, installers
+      or other operational teams.
+    campus: The Delta Campus
+    programme: prospect-gifting
+    status: prospective_buyer
+    outreach_priority: 1
+    recommended: true
+    source: user-provided
+    offers:
+    - company_id: elephant-technologies
+      offer_id: ai-coursebuilder
+      title: AI Coursebuilder
+      description: An AI authoring tool that turns company documents, presentations and videos into interactive
+        e-learning courses, with translations and LMS export.
+      category: Training software
+      source_url: https://www.elephantcompany.com/de/pricing
+      price_minor: 180000
+      currency: EUR
+      price_label: €1,800 per year
+      pricing_basis: Annual subscription including one content creator. Additional content creators are listed at
+        €540 per year each. Tax treatment is not specified in the cited page.
+      contact_url: https://www.elephantcompany.com/de/demo-buchen
+      verified_on: '2026-11-27'
+      availability: contact_provider
+    - company_id: elephant-technologies
+      offer_id: sop-builder
+      title: SOP Builder
+      description: Creates digital work instructions and inspection protocols from video, documents and voice input,
+        with document exports, public links and QR codes.
+      category: Work instructions
+      source_url: https://www.elephantcompany.com/de/pricing
+      price_minor: 380000
+      currency: EUR
+      price_label: €3,800 per year
+      pricing_basis: Annual subscription including one creator. Additional creators are listed at €900 per year
+        each. Tax treatment is not specified in the cited page.
+      contact_url: https://www.elephantcompany.com/de/demo-buchen
+      verified_on: '2026-11-27'
+      availability: contact_provider
+    - company_id: elephant-technologies
+      offer_id: content-hub
+      title: Elephant Content Hub
+      description: A ready-to-use compliance training library with AI adaptation, multilingual content and SCORM
+        exports for an existing learning-management system.
+      category: Compliance training
+      source_url: https://www.elephantcompany.com/de/pricing
+      price_minor: 500000
+      currency: EUR
+      price_label: €5,000 per year
+      pricing_basis: Published annual Content Hub subscription price. Tax treatment is not specified in the cited
+        page.
+      contact_url: https://www.elephantcompany.com/de/demo-buchen
+      verified_on: '2026-11-27'
+      availability: contact_provider
+- org_id: base-baselinker
+  legal_name: Base / BaseLinker
+  roles:
+  - buyer
+  categories:
+  - ecommerce-operations
+  profile:
+    display_name: Base / BaseLinker
+    website: https://enterprise.base.com/
+    products_and_services: 'Ecommerce operations software: manages product listings, inventory, orders, shipping,
+      returns and connections between marketplaces, warehouses and ERP systems.'
+    target_customers: Retailers, consumer brands and ecommerce businesses, including large enterprises.
+    campus: The Delta Campus
+    programme: prospect-gifting
+    status: prospective_buyer
+    outreach_priority: 2
+    recommended: true
+    source: user-provided
+    offers:
+    - company_id: base-baselinker
+      offer_id: base-enterprise
+      title: Base Enterprise
+      description: A multichannel commerce platform combining product information, listings, order routing, inventory,
+        fulfillment and ERP integrations, with enterprise implementation and support.
+      category: Ecommerce operations
+      source_url: https://enterprise.base.com/platform
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: The provider states that Enterprise pricing is customized. Scope, integrations, implementation
+        and service terms must be agreed with its enterprise team.
+      contact_url: https://enterprise.base.com/
+      verified_on: '2026-11-27'
+      availability: contact_provider
+- org_id: meingpt-selectcode
+  legal_name: MeinGPT / SelectCode
+  roles:
+  - buyer
+  categories:
+  - enterprise-ai
+  - workflow-automation
+  profile:
+    display_name: MeinGPT / SelectCode
+    website: https://meingpt.com/
+    products_and_services: 'Enterprise AI platform and implementation: AI chat, company assistants, meeting tools,
+      workflow automation and integrations with business systems.'
+    target_customers: German-speaking midmarket and industrial companies introducing AI across their organizations.
+    campus: The Delta Campus
+    programme: prospect-gifting
+    status: prospective_buyer
+    outreach_priority: 3
+    recommended: true
+    source: user-provided
+    offers:
+    - company_id: meingpt-selectcode
+      offer_id: meingpt-platform
+      title: MeinGPT platform
+      description: A company AI workspace with model chat, file analysis, shared assistants, meeting transcription,
+        workflows and central administration.
+      category: Enterprise AI
+      source_url: https://meingpt.com/preise
+      price_minor: 2000
+      currency: EUR
+      price_label: €20 per user/month
+      pricing_basis: Monthly-billing rate for the first 50 user licenses; progressive volume tiers apply above 50.
+        Annual billing has a 10% license discount. Model usage is charged separately; this is not a complete usage-inclusive
+        project price.
+      contact_url: https://meingpt.com/demo
+      verified_on: '2026-11-27'
+      availability: contact_provider
+    - company_id: meingpt-selectcode
+      offer_id: meingpt-outpost
+      title: MeinGPT Outpost
+      description: Connects approved documents and services from a company's own network to MeinGPT through an outbound
+        connection. Local-file access is in early access; database and service connectors are in private beta.
+      category: AI integrations
+      source_url: https://meingpt.com/preise
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: An optional platform add-on with Free, Starter, Pro or custom configurations. A starting price
+        is shown, but the required package depends on documents, services and locations; confirm the complete configuration
+        with the provider.
+      contact_url: https://meingpt.com/demo
+      verified_on: '2026-11-27'
+      availability: contact_provider
+    - company_id: meingpt-selectcode
+      offer_id: use-case-sprint
+      title: Use-Case Sprint and implementation support
+      description: Paid support to select and implement an initial AI use case, followed by joint implementation
+        and enablement so the customer's team can build further use cases.
+      category: AI implementation
+      source_url: https://meingpt.com/demo
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: The site identifies the initial Use-Case Sprint as paid. The scope and price of implementation
+        support are provided individually.
+      contact_url: https://meingpt.com/demo
+      verified_on: '2026-11-27'
+      availability: contact_provider
+- org_id: kenjo
+  legal_name: Kenjo
+  roles:
+  - buyer
+  categories:
+  - hr
+  - workforce-management
+  profile:
+    display_name: Kenjo
+    website: https://www.kenjo.io/
+    products_and_services: 'HR and workforce-management software: shift scheduling, time tracking, absence management,
+      employee records, recruitment and payroll preparation.'
+    target_customers: Employers with deskless teams, particularly in manufacturing, retail, healthcare, transport
+      and logistics.
+    campus: The Delta Campus
+    programme: prospect-gifting
+    status: prospective_buyer
+    outreach_priority: 4
+    recommended: false
+    source: user-provided
+    offers:
+    - company_id: kenjo
+      offer_id: starter
+      title: Kenjo Starter
+      description: Workforce-management plan covering payroll preparation, shift planning, standard workflows, employee
+        documents and reporting.
+      category: workforce-management
+      source_url: https://www.kenjo.io/pricing
+      price_minor: 600
+      currency: EUR
+      price_label: €6 / employee / month
+      pricing_basis: Published per-employee monthly rate. Annual billing advertises a 10% discount. A separate one-time
+        onboarding fee starts at €400 and varies by country; provider confirmation is required for the total.
+      contact_url: https://www.kenjo.io/pricing
+      verified_on: '2026-11-27'
+      availability: contact_provider
+    - company_id: kenjo
+      offer_id: growth
+      title: Kenjo Growth
+      description: Workforce-management plan adding kiosk check-in, e-signatures, advanced workflows, onboarding,
+        multi-office management and business-intelligence reports.
+      category: workforce-management
+      source_url: https://www.kenjo.io/pricing
+      price_minor: 1000
+      currency: EUR
+      price_label: €10 / employee / month
+      pricing_basis: Published per-employee monthly rate. Annual billing advertises a 10% discount. A separate one-time
+        onboarding fee starts at €400 and varies by country; provider confirmation is required for the total.
+      contact_url: https://www.kenjo.io/pricing
+      verified_on: '2026-11-27'
+      availability: contact_provider
+    - company_id: kenjo
+      offer_id: connect
+      title: Kenjo Connect
+      description: Advanced workforce-management plan with reporting, customizations, APIs, integrations, training
+        tracking and implementation support.
+      category: workforce-management
+      source_url: https://www.kenjo.io/pricing
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: Kenjo lists this plan as price on request.
+      contact_url: https://www.kenjo.io/pricing
+      verified_on: '2026-11-27'
+      availability: contact_provider
+- org_id: formation
+  legal_name: FORMATION
+  roles:
+  - buyer
+  categories:
+  - asset-tracking
+  - location-intelligence
+  profile:
+    display_name: FORMATION
+    website: https://tryformation.com/
+    products_and_services: 'Asset tracking and location intelligence: tracks tools, vehicles, parcels and equipment;
+      maps movements and connects location events to operational workflows.'
+    target_customers: Factories, warehouses, logistics operators, depots and other organizations managing physical
+      assets.
+    campus: The Delta Campus
+    programme: prospect-gifting
+    status: prospective_buyer
+    outreach_priority: 5
+    recommended: false
+    source: user-provided
+    offers:
+    - company_id: formation
+      offer_id: hybrid-tracking
+      title: FORMATION Hybrid Tracking
+      description: Asset-location software combining QR and barcode workflows with active tracking technologies
+        such as UWB, BLE and GPS.
+      category: asset-tracking
+      source_url: https://tryformation.com/indepth/hybridtracking/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: No public fixed price was found on the official product page.
+      contact_url: https://tryformation.com/
+      verified_on: '2026-11-27'
+      availability: contact_provider
+    - company_id: formation
+      offer_id: process-insights-optimisation
+      title: FORMATION Process Insights & Optimisation
+      description: Analysis of recorded asset movement and operational processes to identify bottlenecks, understand
+        utilization and improve workflows.
+      category: operational-analytics
+      source_url: https://tryformation.com/indepth/process-insights-optimisation/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: No public fixed price was found on the official product page.
+      contact_url: https://tryformation.com/
+      verified_on: '2026-11-27'
+      availability: contact_provider
+    - company_id: formation
+      offer_id: integrations
+      title: FORMATION Integrations
+      description: Connections between location data and SAP, ERP, inventory and identity systems, including APIs
+        and movement-triggered updates.
+      category: enterprise-integration
+      source_url: https://tryformation.com/indepth/integrations/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: Scope depends on the customer's systems; no public fixed price was found.
+      contact_url: https://tryformation.com/
+      verified_on: '2026-11-27'
+      availability: contact_provider
+- org_id: nala-earth
+  legal_name: Nala Earth
+  roles:
+  - buyer
+  categories:
+  - procurement-intelligence
+  - environmental-risk
+  profile:
+    display_name: Nala Earth
+    website: https://nala.earth/
+    products_and_services: 'Procurement and environmental-risk intelligence: monitors crop and weather risks, provides
+      commodity-market outlooks, and analyzes biodiversity and nature dependencies.'
+    target_customers: Food-and-beverage manufacturers, ingredient buyers and corporate procurement or sustainability
+      teams.
+    campus: The Delta Campus
+    programme: prospect-gifting
+    status: prospective_buyer
+    outreach_priority: 6
+    recommended: false
+    source: user-provided
+    offers:
+    - company_id: nala-earth
+      offer_id: weather-risk
+      title: Nala Weather Risk — Crop Risk Intelligence
+      description: Crop- and region-specific weather monitoring, seasonal risk scores and alerts for frost, heat,
+        drought, rainfall and waterlogging.
+      category: procurement-risk
+      source_url: https://nala.earth/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: The platform is configured to the customer's crop mix and sourcing regions; no public fixed
+        price was found.
+      contact_url: https://nala.earth/
+      verified_on: '2026-11-27'
+      availability: contact_provider
+    - company_id: nala-earth
+      offer_id: market-outlook
+      title: Nala Market Outlook — Crop Price Intelligence
+      description: Forward-looking crop-price intelligence combining weather risk with commodity-market dynamics
+        to inform procurement and finance decisions.
+      category: procurement-intelligence
+      source_url: https://nala.earth/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: No public fixed price was found on the official product page.
+      contact_url: https://nala.earth/
+      verified_on: '2026-11-27'
+      availability: contact_provider
+    - company_id: nala-earth
+      offer_id: nature-analytics
+      title: Nala Nature Analytics
+      description: Biodiversity and nature-risk intelligence for supply-chain nature dependencies and TNFD reporting.
+      category: nature-risk-intelligence
+      source_url: https://nala.earth/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: No public fixed price was found on the official product page.
+      contact_url: https://nala.earth/
+      verified_on: '2026-11-27'
+      availability: contact_provider
+- org_id: tilla
+  legal_name: Tilla
+  roles:
+  - buyer
+  categories:
+  - maritime
+  - crew-management
+  profile:
+    display_name: Tilla
+    website: https://www.tilla.tech/
+    products_and_services: 'Maritime crew-change software: coordinates crew rotations, port selection, flights,
+      travel arrangements, collaboration and cost reporting.'
+    target_customers: Shipping companies, ship managers and maritime crewing organizations.
+    campus: The Delta Campus
+    programme: prospect-gifting
+    status: prospective_buyer
+    outreach_priority: 7
+    recommended: false
+    source: user-provided
+    offers:
+    - company_id: tilla
+      offer_id: crew-change-management
+      title: Crew Change Management
+      description: Software for planning and comparing crew-change ports and flights, coordinating crew travel and
+        agency work, and reporting on crew-change operations.
+      category: Maritime software
+      source_url: https://www.tilla.tech/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: null
+      availability: contact_provider
+      verified_on: '2026-11-27'
+- org_id: dealspec
+  legal_name: dealspec
+  roles:
+  - buyer
+  categories:
+  - mergers-and-acquisitions
+  - deal-management
+  profile:
+    display_name: dealspec
+    website: https://www.dealspec.de/
+    products_and_services: 'AI-assisted M&A software: supports transaction projects, company and investor searches,
+      data organization and automated deal workflows.'
+    target_customers: M&A advisory firms, private-equity investors and search funds.
+    campus: The Delta Campus
+    programme: prospect-gifting
+    status: prospective_buyer
+    outreach_priority: 8
+    recommended: false
+    source: user-provided
+    offers:
+    - company_id: dealspec
+      offer_id: ma-operating-system
+      title: M&A Operating System
+      description: A platform for M&A advisors, private-equity teams and search funds with project management, investor
+        and company data, long lists, pipelines, documents and AI workflows. The public site currently invites users
+        to join a waitlist.
+      category: M&A software
+      source_url: https://www.dealspec.de/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: null
+      availability: waitlist
+      verified_on: '2026-11-27'
+    - company_id: dealspec
+      offer_id: deal-sourcing
+      title: Deal Sourcing
+      description: Custom target-sourcing and outreach systems for M&A advisors, private equity and search funds,
+        including target criteria, research, enrichment, scoring, monitoring and outreach.
+      category: M&A services
+      source_url: https://www.dealspec.de/services/deal-sourcing
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: Scope and delivery arrangements agreed with the provider.
+      availability: contact_provider
+      verified_on: '2026-11-27'
+    - company_id: dealspec
+      offer_id: analyst-as-a-service
+      title: Analyst-as-a-Service
+      description: On-demand analyst capacity for financial models, deal documents and transaction-process support,
+        produced in the client's templates with an agreed monthly baseline and optional peak capacity.
+      category: M&A services
+      source_url: https://www.dealspec.de/services/analyst-as-a-service
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: Monthly baseline hours and any peak capacity agreed with the provider.
+      availability: contact_provider
+      verified_on: '2026-11-27'
+- org_id: overfly
+  legal_name: Overfly
+  roles:
+  - buyer
+  categories:
+  - ai-engineering
+  - software-development
+  profile:
+    display_name: Overfly
+    website: https://www.overfly.ai/
+    products_and_services: 'Applied AI engineering: identifies business use cases, builds AI agents and custom software,
+      integrates enterprise systems and deploys solutions into everyday operations.'
+    target_customers: Enterprises and software companies implementing AI in business processes.
+    campus: The Delta Campus
+    programme: prospect-gifting
+    status: prospective_buyer
+    outreach_priority: 9
+    recommended: false
+    source: user-provided
+    offers:
+    - company_id: overfly
+      offer_id: ai-discovery
+      title: AI Discovery
+      description: Discovery workshops, pain-point interviews, use-case prioritization, ROI projection and AI roadmapping
+        to identify where applied AI can help a business.
+      category: AI strategy
+      source_url: https://www.overfly.ai/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: Provider describes a 2–4 week discovery phase; price is not published.
+      availability: contact_provider
+      verified_on: '2026-11-27'
+    - company_id: overfly
+      offer_id: ai-pilot
+      title: AI Pilot
+      description: A working AI pilot using capabilities such as rapid prototypes, multi-agent systems, enterprise
+        integration and product interface design.
+      category: AI engineering
+      source_url: https://www.overfly.ai/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: Provider describes a 6–12 week pilot phase; scope and price require a quote.
+      availability: contact_provider
+      verified_on: '2026-11-27'
+    - company_id: overfly
+      offer_id: production-software
+      title: Production Software
+      description: Engineering and rollout of applied AI software into everyday operations, including enterprise
+        integration and production deployment.
+      category: AI engineering
+      source_url: https://www.overfly.ai/
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: Scope-dependent implementation; the provider lists a production phase of 6+ weeks.
+      availability: contact_provider
+      verified_on: '2026-11-27'
+- org_id: bonanza-studios
+  legal_name: Bonanza Studios
+  roles:
+  - buyer
+  categories:
+  - product-design
+  - software-development
+  profile:
+    display_name: Bonanza Studios
+    website: https://www.bonanza-studios.com/
+    products_and_services: 'Digital product design and development: UX research, prototyping, AI-enabled products,
+      design retainers and organizational AI implementation.'
+    target_customers: Enterprises, midmarket companies and growing startups building or improving digital products.
+    campus: The Delta Campus
+    programme: prospect-gifting
+    status: prospective_buyer
+    outreach_priority: 10
+    recommended: false
+    source: user-provided
+    offers:
+    - company_id: bonanza-studios
+      offer_id: ai-chief-of-staff
+      title: AI Chief of Staff
+      description: An implementation engagement connecting company tools, shared AI workflows and persistent organizational
+        knowledge, with discovery, setup and handover.
+      category: AI implementation
+      source_url: https://www.bonanza-studios.com/service/ai-brain
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: null
+      availability: contact_provider
+      verified_on: '2026-11-27'
+    - company_id: bonanza-studios
+      offer_id: design-retainer
+      title: Design Retainer
+      description: An on-demand design team covering product, web, app, marketing and brand work, with development
+        support and a workload agreed with the client.
+      category: Product design
+      source_url: https://www.bonanza-studios.com/service/design-retainer
+      price_minor: null
+      currency: null
+      price_label: Request quote
+      pricing_basis: Minimum three-month commitment; workload starts from 10 hours per week and pricing is agreed
+        individually.
+      availability: contact_provider
+      verified_on: '2026-11-27'
+    - company_id: bonanza-studios
+      offer_id: context-engineering-claude-code
+      title: Context Engineering for Claude Code
+      description: A free online course for teams using Claude Code, with three core modules, optional specialist
+        modules and a guide to reusable project context. Some downloadable materials require an email unlock.
+      category: AI training
+      source_url: https://www.bonanza-studios.com/resources/courses/context-engineering-claude-code
+      price_minor: 0
+      currency: null
+      price_label: Free course
+      pricing_basis: Free self-paced online course; the separately offered live masterclass is not included.
+      availability: available
+      verified_on: '2026-11-27'

@@ -1,0 +1,16 @@
+{
+  "description": "buyer, seller -> E. Accept exactly these terms.",
+  "type": "object",
+  "properties": {
+    "terms_hash": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "description": "Lower-case hex SHA-256"
+    }
+  },
+  "required": [
+    "terms_hash"
+  ],
+  "additionalProperties": false
+}

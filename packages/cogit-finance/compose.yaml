@@ -1,0 +1,19 @@
+services:
+  worker:
+    image: ${COGIT_IMAGE:-cogit-finance:local}
+    init: true
+    environment:
+      COGIT_AGENTDB_URL: ${COGIT_AGENTDB_URL:?Set the AgentDb API origin}
+      COGIT_AGENTDB_API_VERSION: ${COGIT_AGENTDB_API_VERSION:?Set the AgentDb API version}
+      COGIT_AGENTDB_INSTALLATION_ID: ${COGIT_AGENTDB_INSTALLATION_ID:?Set the published installation ID}
+      COGIT_AGENTDB_POOL_ID: ${COGIT_AGENTDB_POOL_ID:?Set the published pool ID}
+      COGIT_AGENTDB_WORKER_TOKEN: ${COGIT_AGENTDB_WORKER_TOKEN:?Set the scoped pool worker token}
+      COGIT_AGENTDB_APPROVAL_DECIDER_ID: ${COGIT_AGENTDB_APPROVAL_DECIDER_ID:?Set the authorized decision principal ID}
+      COGIT_AGENTDB_COHORT_RECEIPT: /app/agentdb-receipt.json
+    volumes:
+      - type: bind
+        source: ${COGIT_AGENTDB_COHORT_RECEIPT:?Set the host path of the published receipt}
+        target: /app/agentdb-receipt.json
+        read_only: true
+        bind:
+          create_host_path: false

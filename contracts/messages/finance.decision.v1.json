@@ -1,0 +1,50 @@
+{
+  "description": "E -> buyer, seller. Outcome of the evaluation of one delivery.",
+  "type": "object",
+  "properties": {
+    "delivery_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "approve",
+        "reject"
+      ]
+    },
+    "attempts_left": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "rework_deadline": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 20,
+      "maxLength": 20,
+      "description": "UTC timestamp, YYYY-MM-DDTHH:MM:SSZ"
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      },
+      "minItems": 0,
+      "maxItems": 50
+    }
+  },
+  "required": [
+    "delivery_id",
+    "outcome",
+    "attempts_left",
+    "rework_deadline",
+    "reasons"
+  ],
+  "additionalProperties": false
+}

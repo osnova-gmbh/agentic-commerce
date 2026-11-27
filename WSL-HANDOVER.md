@@ -54,10 +54,9 @@ Linux command output is UTF-8. WSL's own status/list output may be UTF-16LE. Set
 - CLI **0.1.35**, build `b291fbc9`, installed under `/home/denys/.boris/bin/boris`.
 - Official installer SHA-256 and Ed25519 release signatures were verified using OpenSSL 3.
 - Deployment/profile: `https://trustboris.ai` / `trustboris.ai`; existing sign-in works.
-- Project: **Default project**, slug `teal-orchard-5580`.
-- Project ID: `73a0ffe8-3dd3-414f-8e3b-d8c3dcb174a8`.
+- Project: an existing operator project. Resolve the current project name and ID with the authenticated CLI; account-specific identifiers are omitted from this public handover.
 - Agent and LLM caller-authentication features are enabled. No local agents, tunnels or local Boris service are running.
-- Last checked credit: **USD 5 remaining**. No model calls, purchases or agent runs were performed.
+- No model calls, purchases or agent runs were performed during this check. Query the current account balance through the authenticated CLI.
 - A demonstration project-rename plan was generated but **never applied**; the project name is unchanged.
 - Community-agent searches return `community_agents_off`: a deployment administrator must enable that catalogue. This is not a local installation error.
 

@@ -1,0 +1,21 @@
+[importlinter]
+root_package = evaluator_agent
+include_external_packages = True
+
+[importlinter:contract:domain_is_runtime_free]
+name = agent domain must not depend on runtime or web frameworks
+type = forbidden
+source_modules =
+    evaluator_agent
+forbidden_modules =
+    anthropic
+    cogit_runtime
+    fastapi
+    openai
+    sqlalchemy
+    alembic
+    starlette
+    uvicorn
+# Note: cogit_agent_sdk.providers cannot be listed here — import-linter v2
+# raises ValueError for subpackage paths of external packages. That boundary
+# is enforced by the AST test in tests/test_contract.py instead.

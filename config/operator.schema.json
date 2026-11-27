@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Operator configuration",
+  "type": "object",
+  "required": ["operator", "escrow", "rail", "evaluators"],
+  "additionalProperties": false,
+  "properties": {
+    "operator": {
+      "type": "object",
+      "required": ["name", "legal_name", "address", "contact"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "legal_name": {"type": "string", "minLength": 1},
+        "address": {"type": "string", "minLength": 1},
+        "contact": {"type": "string", "minLength": 1}
+      }
+    },
+    "escrow": {
+      "type": "object",
+      "required": ["fee_bps", "currency", "timers", "max_delivery_attempts"],
+      "additionalProperties": false,
+      "properties": {
+        "fee_bps": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "currency": {"type": "string", "enum": ["EUR"]},
+        "timers": {
+          "type": "object",
+          "required": ["quote_ttl_s", "funding_due_s", "rework_window_s", "dispute_window_s", "evaluator_respond_s"],
+          "additionalProperties": false,
+          "properties": {
+            "quote_ttl_s": {"type": "integer", "minimum": 1},
+            "funding_due_s": {"type": "integer", "minimum": 1},
+            "rework_window_s": {"type": "integer", "minimum": 1},
+            "dispute_window_s": {"type": "integer", "minimum": 1},
+            "evaluator_respond_s": {"type": "integer", "minimum": 1}
+          }
+        },
+        "max_delivery_attempts": {"type": "integer", "minimum": 1}
+      }
+    },
+    "rail": {
+      "type": "object",
+      "required": ["kind", "escrow_iban", "fee_iban"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"type": "string", "enum": ["sim", "sepa", "card"]},
+        "escrow_iban": {"type": "string", "minLength": 5, "maxLength": 34},
+        "fee_iban": {"type": "string", "minLength": 5, "maxLength": 34},
+        "sim": {
+          "type": "object",
+          "required": ["base_url"],
+          "additionalProperties": false,
+          "properties": {"base_url": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "evaluators": {
+      "type": "object",
+      "required": ["allow"],
+      "additionalProperties": false,
+      "properties": {"allow": {"type": "array", "items": {"type": "string", "minLength": 1}}}
+    }
+  }
+}

@@ -1,0 +1,611 @@
+{
+  "formatVersion": 1,
+  "moduleKey": "cogit.cogit-finance",
+  "version": "1.1.7",
+  "platform": {
+    "minSchema": 179,
+    "maxSchema": 216
+  },
+  "upgradeFrom": [
+    "1.1.1",
+    "1.1.2",
+    "1.1.3",
+    "1.1.4",
+    "1.1.5",
+    "1.1.6"
+  ],
+  "retention": "preserve",
+  "migrations": [
+    {
+      "id": "000001__reference_domain",
+      "path": "migrations/000001__reference_domain.sql",
+      "sha256": "4242dc17e76a272f8a92ade319646d002122892ad1a31f3f998e12e199441ee4"
+    },
+    {
+      "id": "000002__reference_commands",
+      "path": "migrations/000002__reference_commands.sql",
+      "sha256": "b0472b97b7c8e40f70546d76736c977cff43d76ad0e6074b032cba38065dfcae"
+    },
+    {
+      "id": "000003__reference_list_v2",
+      "path": "migrations/000003__reference_list_v2.sql",
+      "sha256": "5b8845a62d80559119f9622c6ddfa3689b6bbadc7dc338cfda8f4e2a179363f8"
+    },
+    {
+      "id": "000004__reference_resolutions",
+      "path": "migrations/000004__reference_resolutions.sql",
+      "sha256": "319e8963bcb89beae3bad1a0d51fdb6cece47240468115fd63f74f364074e5b0"
+    }
+  ],
+  "files": [
+    {
+      "path": "catalog/resources.v2.json",
+      "sha256": "5f6a3b8c3adf4d59dc24abcb744e38b1aa84f382a477e2418de152695d85b8fc"
+    },
+    {
+      "path": "contracts/requests.v2.json",
+      "sha256": "cb0f554721c29d0bec13476fc650b4117d06059277faf2f5f7360178bc61c851"
+    },
+    {
+      "path": "contracts/settings.v1.json",
+      "sha256": "7282e477c453cc0ef18dabd5c3251ace6b9356c08b4f30b436f78eb0cbbb9d42"
+    },
+    {
+      "path": "contracts/resolutions.v1.json",
+      "sha256": "953c767fc1773b860e70e43b6def47ac383d2526a4f7dd2c758a4b65fbfbf108"
+    }
+  ],
+  "exports": [
+    {
+      "key": "requests.list",
+      "kind": "query",
+      "version": "1.1.0",
+      "contractId": "cogit.cogit-finance.requests.list.v2",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "after": {
+            "type": "string",
+            "maxLength": 36
+          }
+        },
+        "required": [
+          "limit"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "objectId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 36
+                },
+                "requestId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "closed"
+                  ],
+                  "maxLength": 6
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2147483647
+                }
+              },
+              "required": [
+                "objectId"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 100
+          },
+          "after": {
+            "type": "string",
+            "maxLength": 36
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "cogit_finance_list_v2",
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "cogit_finance.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "requests.get",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit.cogit-finance.requests.get.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          }
+        },
+        "required": [
+          "objectId"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "maxLength": 6
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "objectId",
+          "requestId",
+          "description",
+          "status",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "cogit_finance_get",
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "cogit_finance.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "requests.create",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit.cogit-finance.requests.create.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "requestId",
+          "description"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "maxLength": 6
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "objectId",
+          "requestId",
+          "description",
+          "status",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "cogit_finance_create",
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "cogit_finance.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "requests.close",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit.cogit-finance.requests.close.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "objectId",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "maxLength": 6
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "objectId",
+          "requestId",
+          "description",
+          "status",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "cogit_finance_close",
+      "callerKinds": [
+        "tenant_client"
+      ],
+      "capability": "cogit_finance.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "requests.put",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit.cogit-finance.requests.put.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "requestId",
+          "description"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 36
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "maxLength": 6
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "objectId",
+          "requestId",
+          "description",
+          "status",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "cogit_finance_put",
+      "callerKinds": [
+        "fenced_worker"
+      ],
+      "capability": "cogit_finance.write",
+      "policyScope": "installation",
+      "requiredPolicies": []
+    },
+    {
+      "key": "resolutions.apply",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit.cogit-finance.resolutions.apply.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "resolution": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "request_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "case_id",
+          "resolution",
+          "request_key"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "applied": {
+            "type": "boolean"
+          },
+          "already_applied": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "applied",
+          "already_applied"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "cogit_finance_res_apply",
+      "callerKinds": [
+        "fenced_worker"
+      ],
+      "capability": "cogit_finance.write",
+      "policyScope": "installation",
+      "requiredPolicies": []
+    },
+    {
+      "key": "resolutions.list",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit.cogit-finance.resolutions.list.v1",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "resolutions": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          }
+        },
+        "required": [
+          "case_id",
+          "resolutions"
+        ],
+        "additionalProperties": false
+      },
+      "functionName": "cogit_finance_res_list",
+      "callerKinds": [
+        "fenced_worker"
+      ],
+      "capability": "cogit_finance.read",
+      "policyScope": "installation",
+      "requiredPolicies": []
+    }
+  ],
+  "resources": [
+    {
+      "key": "cogit-finance-requests",
+      "objectType": "cogit_finance_request",
+      "objectTypeVersion": 1,
+      "list": "requests.list",
+      "get": "requests.get",
+      "create": "requests.create",
+      "actions": {
+        "close": "requests.close"
+      },
+      "fields": {
+        "objectId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 36
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "closed"
+          ],
+          "maxLength": 6
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      },
+      "filters": [],
+      "sorts": [],
+      "maxPageSize": 100
+    }
+  ],
+  "settings": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    },
+    "defaults": {
+      "label": "Reference requests"
+    }
+  },
+  "policies": [],
+  "evidence": []
+}

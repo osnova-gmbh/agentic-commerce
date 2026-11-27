@@ -1,0 +1,329 @@
+{
+  "formatVersion": 1,
+  "moduleKey": "cogit-finance-deals",
+  "version": "1.0.0",
+  "platform": {
+    "minSchema": 179,
+    "maxSchema": 216
+  },
+  "upgradeFrom": [],
+  "retention": "preserve",
+  "migrations": [
+    {
+      "id": "000001__native",
+      "path": "migrations/000001__native.sql",
+      "sha256": "37e0b7dcb0ca5e0308fe92836f9c73eb5a55fe1b0572c82a04c5be40a95a6fc3"
+    },
+    {
+      "id": "000099__exports",
+      "path": "migrations/000099__exports.sql",
+      "sha256": "13a0c6dcf486d2da296540bfa1fa4fa68040ffe55e048f5ac17bff12431397e6"
+    }
+  ],
+  "files": [],
+  "exports": [
+    {
+      "key": "outbox.pending",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-deals.outbox.pending.v1",
+      "functionName": "ac_deals_outbox_pending",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_deals.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "deal.read",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-deals.deal.read.v1",
+      "functionName": "ac_deals_deal_read",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_deals.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "deal.list",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-deals.deal.list.v1",
+      "functionName": "ac_deals_deal_list",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_deals.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "ledger.balances",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-deals.ledger.balances.v1",
+      "functionName": "ac_deals_ledger_balances",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_deals.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "deal.commit",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-deals.deal.commit.v1",
+      "functionName": "ac_deals_deal_commit",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_deals.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "outbox.mark_sent",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-deals.outbox.mark_sent.v1",
+      "functionName": "ac_deals_outbox_mark_sent",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_deals.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "intent.update",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-deals.intent.update.v1",
+      "functionName": "ac_deals_intent_update",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_deals.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    }
+  ],
+  "resources": [],
+  "settings": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "escrow_installation_id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "operator_principal_id": {
+          "type": "string",
+          "maxLength": 128
+        }
+      },
+      "additionalProperties": false
+    },
+    "defaults": {
+      "escrow_installation_id": "cogit-finance",
+      "operator_principal_id": ""
+    }
+  },
+  "policies": [],
+  "evidence": []
+}

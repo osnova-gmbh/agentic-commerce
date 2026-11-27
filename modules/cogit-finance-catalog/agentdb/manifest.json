@@ -1,0 +1,369 @@
+{
+  "formatVersion": 1,
+  "moduleKey": "cogit-finance-catalog",
+  "version": "1.0.0",
+  "platform": {
+    "minSchema": 179,
+    "maxSchema": 216
+  },
+  "upgradeFrom": [],
+  "retention": "preserve",
+  "migrations": [
+    {
+      "id": "000001__native",
+      "path": "migrations/000001__native.sql",
+      "sha256": "c1c4dbe453d3813507c20bcda82feed456cab46aee6ea223212e8038aa867f6a"
+    },
+    {
+      "id": "000099__exports",
+      "path": "migrations/000099__exports.sql",
+      "sha256": "ba01cddcffc3e773862419e2dd20d52627d1e05c71f60556ec618aa90ec81ec2"
+    }
+  ],
+  "files": [],
+  "exports": [
+    {
+      "key": "company.read",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-catalog.company.read.v1",
+      "functionName": "ac_catalog_company_read",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_catalog.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "companies.list",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-catalog.companies.list.v1",
+      "functionName": "ac_catalog_companies_list",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_catalog.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "sellers.list",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-catalog.sellers.list.v1",
+      "functionName": "ac_catalog_sellers_list",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_catalog.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "catalog.read",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-catalog.catalog.read.v1",
+      "functionName": "ac_catalog_catalog_read",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_catalog.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "evaluators.list",
+      "kind": "query",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-catalog.evaluators.list.v1",
+      "functionName": "ac_catalog_evaluators_list",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_catalog.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "company.upsert",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-catalog.company.upsert.v1",
+      "functionName": "ac_catalog_company_upsert",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_catalog.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "evaluator.upsert",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-catalog.evaluator.upsert.v1",
+      "functionName": "ac_catalog_evaluator_upsert",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_catalog.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "catalog.publish",
+      "kind": "command",
+      "version": "1.0.0",
+      "contractId": "cogit-finance-catalog.catalog.publish.v1",
+      "functionName": "ac_catalog_catalog_publish",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_catalog.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    }
+  ],
+  "resources": [],
+  "settings": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "escrow_installation_id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "operator_principal_id": {
+          "type": "string",
+          "maxLength": 128
+        }
+      },
+      "additionalProperties": false
+    },
+    "defaults": {
+      "escrow_installation_id": "cogit-finance",
+      "operator_principal_id": ""
+    }
+  },
+  "policies": [],
+  "evidence": []
+}
