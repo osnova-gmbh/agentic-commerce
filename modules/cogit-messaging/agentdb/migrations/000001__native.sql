@@ -81,9 +81,10 @@ $$;
 CREATE FUNCTION {{tenantSchema}}.ac_msg_operator(ctx jsonb) RETURNS void
 LANGUAGE plpgsql SET search_path = pg_catalog AS $$
 BEGIN
-  IF ctx->>'callerKind' IS DISTINCT FROM 'tenant_client'
-     OR NULLIF(ctx#>>'{settings,operator_principal_id}','') IS NULL
-     OR ctx->>'principalId' IS DISTINCT FROM ctx#>>'{settings,operator_principal_id}' THEN
+  IF ((ctx->>'callerKind'='tenant_client'
+      AND NULLIF(ctx#>>'{settings,operator_principal_id}','') IS NOT NULL
+      AND ctx->>'principalId'=ctx#>>'{settings,operator_principal_id}')
+    OR (ctx->>'callerKind'='fenced_worker' AND ctx->>'installationId'=ctx#>>'{settings,escrow_installation_id}')) IS NOT TRUE THEN
     PERFORM {{tenantSchema}}.ac_msg_error('forbidden');
   END IF;
 END $$;
@@ -223,7 +224,7 @@ BEGIN
       IF jsonb_typeof(env->k) IS DISTINCT FROM 'string' OR length(env->>k) NOT BETWEEN 1 AND 512 THEN PERFORM {{tenantSchema}}.ac_msg_error('invalid_envelope'); END IF;
     END LOOP;
     IF jsonb_typeof(env->'type_version') IS DISTINCT FROM 'number' OR env->>'type_version' !~ '^[1-9][0-9]*$'
-      OR jsonb_typeof(env->'body') IS DISTINCT FROM 'object' OR env->>'created_at' !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+      OR jsonb_typeof(env->'body') IS DISTINCT FROM 'object' OR jsonb_typeof(env->'created_at') IS DISTINCT FROM 'string' OR env->>'created_at' !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
       OR (env->'causation_id'<>'null'::jsonb AND (jsonb_typeof(env->'causation_id')<>'string' OR env->>'causation_id'='')) THEN PERFORM {{tenantSchema}}.ac_msg_error('invalid_envelope'); END IF;
     row:={{tenantSchema}}.ac_msg_get(t,'identity',env->>'sender_did');
     IF ctx->>'callerKind'<>'fenced_worker' OR row->>'installation_id' IS DISTINCT FROM installation OR row->'active' IS DISTINCT FROM 'true'::jsonb THEN PERFORM {{tenantSchema}}.ac_msg_error('not_your_did'); END IF;

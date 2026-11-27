@@ -81,9 +81,10 @@ $$;
 CREATE FUNCTION {{tenantSchema}}.ac_catalog_operator(ctx jsonb) RETURNS void
 LANGUAGE plpgsql SET search_path = pg_catalog AS $$
 BEGIN
-  IF ctx->>'callerKind' IS DISTINCT FROM 'tenant_client'
-     OR NULLIF(ctx#>>'{settings,operator_principal_id}','') IS NULL
-     OR ctx->>'principalId' IS DISTINCT FROM ctx#>>'{settings,operator_principal_id}' THEN
+  IF ((ctx->>'callerKind'='tenant_client'
+      AND NULLIF(ctx#>>'{settings,operator_principal_id}','') IS NOT NULL
+      AND ctx->>'principalId'=ctx#>>'{settings,operator_principal_id}')
+    OR (ctx->>'callerKind'='fenced_worker' AND ctx->>'installationId'=ctx#>>'{settings,escrow_installation_id}')) IS NOT TRUE THEN
     PERFORM {{tenantSchema}}.ac_catalog_error('forbidden');
   END IF;
 END $$;

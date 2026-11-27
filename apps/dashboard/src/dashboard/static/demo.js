@@ -7,6 +7,8 @@ let checkoutState = null;
 let checkoutMode = 'auto';
 let selectedService = null;
 let draftInputs = {};
+let draftDemoAmount = '';
+let loadedSelection = '';
 let checkoutBusy = false;
 let checkoutError = '';
 let checkoutSignature = '';
@@ -61,7 +63,8 @@ function showCatalog() {
     return;
   }
   checkoutMode = 'catalog'; checkoutError = ''; checkoutSignature = '';
-  history.replaceState(null, '', location.pathname + location.search);
+  loadedSelection = ''; selectedService = null;
+  history.replaceState(null, '', location.pathname + '?legacy=1');
   checkoutPinnedView = null; checkoutPinnedError = '';
   renderCheckout(checkoutState);
   refresh().catch(() => {});
@@ -113,12 +116,18 @@ function providerLink(label, url, secondary = false, external = false) {
 }
 
 function providerOfferUrl(offer) {
-  return '/demo?company=' + encodeURIComponent(offer.company_id) + '&offer=' + encodeURIComponent(offer.offer_id);
+  return '/demo?checkout=1&company=' + encodeURIComponent(offer.company_id) + '&offer=' + encodeURIComponent(offer.offer_id);
+}
+
+function publishedPriceLabel(service) {
+  const label = service.published_price_label || service.price_label;
+  return !label || label === 'Request quote' ? 'Price on request' : label;
 }
 
 function providerPrice(offer) {
+  const price = !offer.price_label || offer.price_label === 'Request quote' ? 'Price on request' : offer.price_label;
   return el('div', 'service-price',
-    el('strong', '', offer.price_label || 'Request quote'),
+    el('strong', '', offer.availability === 'waitlist' ? 'Waitlist' : price),
     offer.pricing_basis ? el('small', '', offer.pricing_basis) : null);
 }
 
@@ -128,22 +137,17 @@ function providerCard(offer) {
       el('span', 'mini-code', offer.availability === 'waitlist' ? 'WAITLIST' : 'PROVIDER OFFER')),
     el('h3', '', offer.title), el('p', 'service-seller', offer.company_name),
     el('p', 'service-description', offer.description),
-    el('div', 'service-card-bottom', providerPrice(offer), providerLink('View offering', providerOfferUrl(offer))));
+    el('div', 'service-card-bottom', providerPrice(offer), providerLink('View deal', providerOfferUrl(offer))));
 }
 
 function providerDetail(offer) {
-  const actions = el('div', 'checkout-actions');
-  if (offer.contact_url) actions.append(providerLink(offer.availability === 'waitlist' ? 'Join waitlist' : 'Request quote',
-    offer.contact_url, false, true));
-  actions.append(providerLink('Official details', offer.source_url, true, true),
-    checkoutNavigation('All provider offers', showCatalog));
+  const free = offer.price_minor === 0;
+  const actions = el('div', 'checkout-actions', providerLink('Deal overview', '/demo'));
   return el('div', '',
     checkoutHeading(offer.company_name, offer.title, offer.description),
     el('div', 'order-details',
       el('div', 'order-service', el('span', 'eyebrow', 'PUBLISHED PROVIDER PRICING'), providerPrice(offer),
-        el('p', '', offer.availability === 'waitlist' ? 'Availability: waitlist' : 'Contact the provider to confirm scope and availability.')),
-      el('div', 'order-service', el('span', 'eyebrow', 'BEFORE A DEAL'),
-        el('p', '', 'Provider pricing is not an agreed escrow amount. Request a quote to confirm the deliverables, payment terms and any subscription or usage charges.'))),
+        el('p', '', offer.availability === 'waitlist' ? 'Availability: waitlist' : free ? 'Free self-paced course.' : 'Pricing and billing terms supplied by the provider.'))),
     actions);
 }
 
@@ -164,7 +168,7 @@ function renderProviderOffers() {
       (providerOffersLoaded ? 'No provider offerings are listed for this selection.' : 'Loading provider offerings.')));
     content = el('div', '',
       checkoutHeading('PROVIDER OFFERS', 'Explore what the companies provide.',
-        'Actual products and services, with their published pricing or an official route to request a quote.'),
+        'Actual products and services, with their published pricing and availability.'),
       list, providerLink('Demo transaction history', '/', true));
   }
   const signature = JSON.stringify({companyId, offerId, offers, loaded: providerOffersLoaded, error: providerOffersError});
@@ -173,7 +177,7 @@ function renderProviderOffers() {
   }
   checkoutStatus.className = 'demo-status' + (providerOffersError ? ' error' : '');
   checkoutStatus.textContent = providerOffersError ||
-    'Published provider offerings. A quote is required before a new escrow deal can be agreed.';
+    'Select a deal to buy it in the escrow demo and follow the transaction.';
 }
 
 async function refreshProviderCheckout(requestId) {
@@ -201,23 +205,40 @@ async function refreshProviderCheckout(requestId) {
 
 function chooseService(service) {
   selectedService = service; draftInputs = {}; checkoutMode = 'configure'; checkoutError = '';
+  const publishedAmount = service.price_minor;
+  const initialAmount = publishedAmount > 0 && publishedAmount <= (service.demo_max_price_minor || Infinity)
+    ? publishedAmount : service.suggested_demo_price_minor || 50000;
+  draftDemoAmount = service.provider_demo ? String(initialAmount / 100) : '';
   for (const [name, field] of Object.entries(service.input_schema.properties || {})) draftInputs[name] = field.default || (name === 'topic' ? 'Agentic commerce' : '');
   checkoutSignature = '';
   renderCheckout(checkoutState);
+}
+
+function checkoutSelection() {
+  const query = new URLSearchParams(location.search);
+  const company = query.get('company'), offer = query.get('offer');
+  return company && offer ? {company, offer, key: company + ':' + offer} : null;
+}
+
+function serviceMatchesSelection(service, selection) {
+  return service?.provider_company_id === selection.company && service?.provider_offer_id === selection.offer;
+}
+
+function unavailableCheckout() {
+  return el('div', '', checkoutHeading('SELECTED DEAL', 'Offering unavailable.',
+    'The selected offer is not available in the current checkout catalog.'), providerLink('Deal overview', '/demo', true));
 }
 
 function catalogView() {
   const list = el('div', 'service-grid', ...catalogServices.map(service => {
     const button = checkoutButton('Select service', () => chooseService(service));
     button.setAttribute('aria-label', 'Select ' + service.title);
-    const pending = checkoutState?.order && !['SETTLED', 'REFUNDED', 'CANCELLED', 'EXPIRED'].includes(checkoutState.state);
-    button.disabled ||= Boolean(pending);
     return el('article', 'service-card',
-      el('div', 'service-card-top', pill('', '', service.category), el('span', 'mini-code', 'DEMO SERVICE')),
+      el('div', 'service-card-top', pill('', '', service.category), el('span', 'mini-code', service.provider_demo ? 'SIMULATED PURCHASE' : 'DEMO SERVICE')),
       el('h3', '', service.title), el('p', 'service-seller', service.seller_name),
       el('p', 'service-description', service.description),
       el('div', 'service-files', ...service.deliverable.required_files.map(file => el('span', '', file))),
-      el('div', 'service-card-bottom', el('div', 'service-price', el('strong', '', moneyText(service.price)), el('small', '', 'Fixed demo price')), button));
+      el('div', 'service-card-bottom', el('div', 'service-price', el('strong', '', service.provider_demo ? publishedPriceLabel(service) : moneyText(service.price)), el('small', '', service.provider_demo ? 'Buy in the escrow demo' : 'Fixed demo price')), button));
   }));
   if (!catalogServices.length) list.append(el('p', 'checkout-copy', 'No purchasable services are currently published.'));
   const content = el('div', '', checkoutHeading('SERVICE CATALOG', 'Choose the work you need.', 'Select a published service, review its terms, and fund escrow when you are ready.'), list);
@@ -240,15 +261,40 @@ function configureView() {
     const label = el('label', '', field.title || name.replaceAll('_', ' ')); label.htmlFor = input.id;
     fields.append(el('div', 'checkout-field', label, input));
   }
+  if (service.provider_demo) {
+    const amount = el('input', 'checkout-input');
+    amount.id = 'demo-amount'; amount.name = 'demo_amount'; amount.type = 'number';
+    amount.min = '0.01'; amount.step = '0.01'; amount.required = true; amount.value = draftDemoAmount;
+    if (service.demo_max_price_minor) amount.max = String(service.demo_max_price_minor / 100);
+    amount.addEventListener('input', () => { draftDemoAmount = amount.value; });
+    const label = el('label', '', 'Simulated escrow amount (EUR)'); label.htmlFor = amount.id;
+    fields.append(el('div', 'checkout-field', label, amount));
+  }
   const submit = checkoutButton('Review terms', () => {}); submit.type = 'submit';
   const form = el('form', 'service-form', fields, el('div', 'checkout-actions', submit, checkoutButton('Back to services', showCatalog, true)));
   form.addEventListener('submit', event => {
     event.preventDefault();
     if (!form.reportValidity()) return;
-    mutateCheckout('/api/demo/orders', { seller_org_id: service.seller_org_id, offer_id: service.offer_id, inputs: draftInputs });
+    const order = { seller_org_id: service.seller_org_id, offer_id: service.offer_id, inputs: draftInputs };
+    if (service.provider_demo) {
+      const amount = Number(draftDemoAmount);
+      if (!Number.isFinite(amount) || amount <= 0 || Math.abs(amount * 100 - Math.round(amount * 100)) > 0.000001) {
+        checkoutError = 'Enter a positive EUR amount with at most two decimal places.';
+        checkoutStatus.className = 'demo-status error'; checkoutStatus.textContent = checkoutError; return;
+      }
+      order.demo_price_minor = Math.round(amount * 100);
+    }
+    mutateCheckout('/api/demo/orders', order);
   });
-  return el('div', '', checkoutHeading('YOUR SERVICE', service.title, service.description),
-    el('div', 'selected-service-line', el('span', '', service.seller_name), el('strong', '', moneyText(service.price))), form);
+  const pricing = service.provider_demo ? el('div', 'order-service',
+    el('p', 'eyebrow', 'PUBLISHED PROVIDER OFFER'),
+    el('p', '', publishedPriceLabel(service)),
+    service.pricing_basis ? el('p', '', service.pricing_basis) : null,
+    el('p', 'checkout-copy', 'Simulated purchase. The amount below is for this escrow demonstration; no provider order or real payment is placed.'),
+    service.availability === 'waitlist' ? el('p', 'checkout-copy', 'This product is currently waitlisted by the provider.') : null) : null;
+  return el('div', '', checkoutHeading('BUY WITH ESCROW', service.title, service.description),
+    el('div', 'selected-service-line', el('span', '', service.seller_name), el('strong', '', service.provider_demo ? 'Simulated purchase' : moneyText(service.price))),
+    pricing, form);
 }
 
 function orderView(state) {
@@ -267,7 +313,8 @@ function orderView(state) {
   const details = el('div', 'order-details',
     el('div', 'order-service', el('span', 'eyebrow', 'SELECTED SERVICE'), el('h3', '', service.title), el('p', '', service.seller_name),
       ...Object.entries(inputs).map(([name, value]) => el('p', 'order-input', el('span', '', (service.input_schema.properties[name]?.title || name) + ': '), value)),
-      el('div', 'service-files', ...service.deliverable.required_files.map(file => el('span', '', file)))),
+      el('div', 'service-files', ...service.deliverable.required_files.map(file => el('span', '', file))),
+      service.provider_demo ? el('p', 'checkout-copy', 'Simulated purchase · ' + publishedPriceLabel(service) + ' published by the provider.') : null),
     el('dl', 'order-totals', ...[
       ['Total to escrow', payment.price], ['Seller receives', payment.payout], ['Operator fee', payment.fee],
     ].map(([label, value]) => el('div', '', el('dt', '', label), el('dd', '', moneyText(value))))));
@@ -309,9 +356,17 @@ function renderCheckout(state) {
     checkoutStatus.textContent = checkoutPinnedError || 'Viewing the selected deal. Your current checkout is preserved.';
     return;
   }
+  const selection = checkoutSelection();
+  if (selection && !selectedId && !selectedService) {
+    checkout.replaceChildren(checkoutRail(null), unavailableCheckout());
+    checkoutStatus.textContent = 'The selected deal could not be loaded.';
+    return;
+  }
   let mode = checkoutMode;
   if (mode === 'auto') mode = checkoutMode = state.order ? 'order' : 'catalog';
-  const signature = JSON.stringify({ mode, state: mode === 'configure' ? null : state, selected: selectedService?.offer_id, busy: checkoutBusy });
+  const pendingOrder = state.order && !['SETTLED', 'REFUNDED', 'CANCELLED', 'DECLINED', 'EXPIRED'].includes(state.state)
+    ? state.deal_id : null;
+  const signature = JSON.stringify({ mode, state: mode === 'configure' ? {pendingOrder} : state, selected: selectedService?.offer_id, busy: checkoutBusy, error: checkoutError });
   if (signature !== checkoutSignature) {
     checkoutSignature = signature;
     checkout.replaceChildren(checkoutRail(mode === 'order' ? state : null), mode === 'configure' ? configureView() : mode === 'order' && state.order ? orderView(state) : catalogView());
@@ -343,22 +398,48 @@ async function refreshCheckout() {
   if (!isLegacyCheckout()) return refreshProviderCheckout(requestId);
   try {
     if (!catalogServices.length) catalogServices = (await checkoutJSON('/api/demo/services', { cache: 'no-store' })).services;
-    const next = await checkoutJSON('/api/demo/status', { cache: 'no-store' });
-    const selectedId = pinned();
+    const selectedId = pinned(), selectedQuery = location.search;
+    const selection = checkoutSelection();
+    const current = await checkoutJSON('/api/demo/status', { cache: 'no-store' });
+    let next = current;
     let selected = null, selectionError = '';
-    if (selectedId && selectedId !== next.deal_id) {
+    if (selectedId && selectedId !== current.deal_id) {
       try {
-        selected = await checkoutJSON('/api/deals/' + encodeURIComponent(selectedId), { cache: 'no-store' });
+        next = await checkoutJSON('/api/demo/orders/' + encodeURIComponent(selectedId), { cache: 'no-store' });
       } catch (error) {
-        selectionError = 'Cannot load selected deal: ' + error.message;
+        if (error.status !== 404) throw error;
+        try {
+          selected = await checkoutJSON('/api/deals/' + encodeURIComponent(selectedId), { cache: 'no-store' });
+        } catch (archiveError) {
+          selectionError = 'Cannot load selected deal: ' + archiveError.message;
+        }
       }
     }
-    if (requestId !== checkoutRefreshId || selectedId !== pinned()) return;
+    // A new provider checkout must not inherit another tab's active order.
+    if (!selectedId && selection && !serviceMatchesSelection(current.order?.service, selection)) {
+      next = {running: false, deal_id: null, state: null, order: null, error: null, allowed_actions: []};
+    }
+    if (requestId !== checkoutRefreshId || selectedId !== pinned() || selectedQuery !== location.search) return;
     const changed = next.state !== checkoutState?.state || next.deal_id !== checkoutState?.deal_id;
     checkoutState = next;
     checkoutPinnedView = selected; checkoutPinnedError = selectionError;
+    const activeOrder = next.order && !['SETTLED', 'REFUNDED', 'CANCELLED', 'DECLINED', 'EXPIRED'].includes(next.state);
+    if (!selectedId && next.order && ((!selection && checkoutMode === 'auto') ||
+      (selection && activeOrder && serviceMatchesSelection(next.order.service, selection)))) {
+      location.hash = encodeURIComponent(next.deal_id);
+      return;
+    }
+    if (selection && !selectedId && loadedSelection !== selection.key) {
+      loadedSelection = selection.key;
+      const service = catalogServices.find(item => serviceMatchesSelection(item, selection));
+      if (activeOrder && serviceMatchesSelection(next.order?.service, selection)) {
+        selectedService = service || next.order.service; checkoutMode = 'order';
+      } else if (service) chooseService(service);
+      else { selectedService = null; checkoutMode = 'configure'; }
+      checkoutSignature = '';
+    }
     if (changed) await refresh();
-    if (requestId !== checkoutRefreshId || selectedId !== pinned()) return;
+    if (requestId !== checkoutRefreshId || selectedId !== pinned() || selectedQuery !== location.search) return;
     renderCheckout(checkoutState);
   } catch (error) {
     checkoutStatus.className = 'demo-status error'; checkoutStatus.textContent = 'Cannot load checkout: ' + error.message;

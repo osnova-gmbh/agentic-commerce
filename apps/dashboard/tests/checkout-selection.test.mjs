@@ -32,6 +32,17 @@ const publishedOffers = [{
   pricing_basis: 'Monthly subscription, billed annually', contact_url: null,
 }];
 
+const providerServices = publishedOffers.map(offer => ({
+  ...service, seller_org_id: 'seller-co', offer_id: 'provider:' + offer.company_id + ':' + offer.offer_id,
+  title: offer.title, seller_name: offer.company_name, description: offer.description,
+  provider_company_id: offer.company_id, provider_offer_id: offer.offer_id,
+  provider_demo: true, demo: true, published_price_label: offer.price_label,
+  published_price_minor: offer.price_minor, price_minor: offer.price_minor,
+  pricing_basis: offer.pricing_basis, requires_demo_amount: !offer.price_minor,
+  suggested_demo_price_minor: 50000, demo_max_price_minor: 200000,
+  input_schema: {properties: {brief: {type: 'string', title: 'Brief', default: 'Team use case'}}, required: ['brief']},
+}));
+
 class Element {
   constructor(tag, className = '', ...children) {
     this.tag = tag; this.className = className; this.children = []; this.listeners = {};
@@ -42,6 +53,7 @@ class Element {
   setAttribute(name, value) { this[name] = value; }
   addEventListener(name, callback) { this.listeners[name] = callback; }
   scrollIntoView() {}
+  reportValidity() { return true; }
   get options() { return this.children; }
   get textContent() { return this.children.map(value => value instanceof Element ? value.textContent : String(value)).join(' '); }
   set textContent(value) { this.children = [value]; }
@@ -53,7 +65,7 @@ class Element {
   }
 }
 
-async function harness({hash = archivedId, search = '?legacy=1', running = false, state = 'SETTLED', archiveResponse, offers = publishedOffers} = {}) {
+async function harness({hash = archivedId, search = '?legacy=1', running = false, state = 'SETTLED', archiveResponse, offers = publishedOffers, services = [service, ...providerServices], currentService = service, orderResponses = {}} = {}) {
   const elements = Object.fromEntries(['checkout-content', 'status', 'demo-controls', 'browse-services-nav']
     .map(id => [id, new Element('div')]));
   const listeners = [];
@@ -61,7 +73,7 @@ async function harness({hash = archivedId, search = '?legacy=1', running = false
   const requests = [];
   const current = {
     deal_id: activeId, running, state, error: null,
-    order: {service, inputs: {topic: 'AI for finance teams'}, scenario: 'happy'},
+    order: {service: currentService, inputs: {topic: 'AI for finance teams'}, scenario: 'happy'},
     payment: service, allowed_actions: state === 'FUNDED' ? ['deliver'] : ['browse'],
   };
   const location = {
@@ -77,7 +89,10 @@ async function harness({hash = archivedId, search = '?legacy=1', running = false
     window: {addEventListener: (name, callback) => { if (name === 'hashchange') listeners.push(callback); }},
     location,
     URL, URLSearchParams,
-    isLegacyCheckout: () => new URLSearchParams(location.search).get('legacy') === '1',
+    isLegacyCheckout: () => {
+      const query = new URLSearchParams(location.search);
+      return query.get('legacy') === '1' || query.get('checkout') === '1' || Boolean(query.get('company') && query.get('offer'));
+    },
     history: {replaceState: (_state, _title, url) => {
       const next = new URL(url, 'http://local'); currentHash = next.hash; location.search = next.search;
     }},
@@ -89,10 +104,21 @@ async function harness({hash = archivedId, search = '?legacy=1', running = false
     moneyText: text => (text || '-').replace('EUR ', '€'),
     refresh: async () => {},
     fetch: async (url, options = {}) => {
-      requests.push({url, method: options.method || 'GET'});
+      requests.push({url, method: options.method || 'GET', body: options.body ? JSON.parse(options.body) : undefined});
+      if (url === '/api/demo/orders' && options.method === 'POST') {
+        const order = JSON.parse(options.body);
+        current.order = {service: services.find(item => item.offer_id === order.offer_id), inputs: order.inputs};
+        current.state = 'QUOTED'; current.allowed_actions = ['fund'];
+        return {ok: true, json: async () => ({deal_id: activeId})};
+      }
       if (url === '/api/provider-offers') return {ok: true, json: async () => ({offers})};
-      if (url === '/api/demo/services') return {ok: true, json: async () => ({services: [service]})};
+      if (url === '/api/demo/services') return {ok: true, json: async () => ({services})};
       if (url === '/api/demo/status') return {ok: true, json: async () => structuredClone(current)};
+      if (url.startsWith('/api/demo/orders/')) {
+        const id = decodeURIComponent(url.slice('/api/demo/orders/'.length));
+        const order = orderResponses[id] || (id === current.deal_id ? current : null);
+        if (order) return {ok: true, json: async () => structuredClone(order)};
+      }
       if (url === '/api/deals/' + archivedId) {
         if (archiveResponse) return archiveResponse();
         return {ok: true, json: async () => structuredClone(archived)};
@@ -107,6 +133,15 @@ async function harness({hash = archivedId, search = '?legacy=1', running = false
     context, current, location, requests, flush,
     text: () => elements['checkout-content'].textContent,
     status: () => elements.status.textContent,
+    inputs: () => elements['checkout-content'].querySelectorAll('input'),
+    fill: async (id, value) => {
+      const input = elements['checkout-content'].querySelectorAll('input').find(node => node.id === id);
+      assert.ok(input, 'Missing input: ' + id); input.value = value; input.listeners.input(); await flush();
+    },
+    submit: async () => {
+      const form = elements['checkout-content'].querySelectorAll('form')[0];
+      assert.ok(form, 'Missing checkout form'); form.listeners.submit({preventDefault() {}}); await flush();
+    },
     buttons: () => elements['checkout-content'].querySelectorAll('button'),
     links: () => elements['checkout-content'].querySelectorAll('a'),
     click: async label => {
@@ -139,29 +174,51 @@ test('the primary overview lists actual provider offers, not generic simulation 
   assert.doesNotMatch(page.text(), /AI training course|Market report|1,200/);
   assert.ok(page.requests.some(request => request.url === '/api/provider-offers'));
   assert.ok(page.requests.every(request => !request.url.startsWith('/api/demo/')));
-  assert.equal(page.links().find(link => link.textContent === 'View offering').href,
-    '/demo?company=elephant&offer=learning-platform');
+  assert.equal(page.links().find(link => link.textContent === 'View deal').href,
+    '/demo?checkout=1&company=elephant&offer=learning-platform');
 });
 
-test('a provider deep link shows source and billing basis without escrow payment actions', async () => {
-  const page = await harness({hash: '', search: '?company=base&offer=operations'});
+test('a provider deep link opens its purchase form and preserves published billing basis', async () => {
+  const page = await harness({hash: '', search: '?checkout=1&company=base&offer=operations'});
   assert.match(page.text(), /Commerce operations platform/);
-  assert.match(page.text(), /€49 \/ month/);
+  assert.match(page.text(), /Base/);
   assert.match(page.text(), /Monthly subscription, billed annually/);
-  assert.match(page.text(), /not an agreed escrow amount/);
+  assert.match(page.text(), /Simulated escrow amount/);
+  assert.ok(page.buttons().some(button => button.textContent.startsWith('Review terms')));
   assert.doesNotMatch(page.text(), /Learning and knowledge platform|AI training course/);
-  assert.equal(page.links().find(link => link.textContent === 'Official details').href, 'https://example.invalid/base');
-  assert.ok(page.buttons().every(button => !/Fund escrow|Release payment|Simulate/.test(button.textContent)));
+  assert.ok(page.requests.some(request => request.url === '/api/demo/services'));
   assert.ok(page.requests.every(request => request.method === 'GET'));
 });
 
-test('quote and waitlist actions link only to the supplied official contact', async () => {
+test('provider checkout has no call or external-contact buttons', async () => {
   const page = await harness({hash: '', search: '?company=elephant&offer=learning-platform'});
-  assert.equal(page.links().find(link => link.textContent === 'Request quote').href, 'https://example.invalid/elephant/contact');
-  const waitlist = await harness({hash: '', search: '?company=elephant&offer=learning-platform',
-    offers: [{...publishedOffers[0], availability: 'waitlist'}]});
-  assert.match(waitlist.text(), /Availability: waitlist/);
-  assert.equal(waitlist.links().find(link => link.textContent === 'Join waitlist').href, 'https://example.invalid/elephant/contact');
+  assert.doesNotMatch(page.text(), /Request (call|quote)|Official details|Join waitlist/);
+  assert.match(page.text(), /Simulated purchase/);
+  assert.ok(page.links().every(link => !link.href.startsWith('https:')));
+  assert.equal(page.inputs().find(input => input.id === 'demo-amount').value, '500');
+});
+
+test('provider purchase submits the selected offer and explicit simulated amount', async () => {
+  const page = await harness({hash: '', search: '?checkout=1&company=base&offer=operations'});
+  await page.fill('demo-amount', '123.45');
+  await page.fill('service-brief', 'Automate our fulfillment');
+  await page.submit();
+  const request = page.requests.find(item => item.method === 'POST');
+  assert.equal(request.url, '/api/demo/orders');
+  assert.equal(request.body.offer_id, 'provider:base:operations');
+  assert.equal(request.body.demo_price_minor, 12345);
+  assert.equal(request.body.inputs.brief, 'Automate our fulfillment');
+  assert.equal(page.location.hash, '#' + activeId);
+  assert.match(page.text(), /Commerce operations platform/);
+  assert.ok(page.buttons().some(button => button.textContent.startsWith('Fund escrow')));
+});
+
+test('switching selected provider opens that provider without the previous service', async () => {
+  const page = await harness({hash: '', search: '?checkout=1&company=base&offer=operations'});
+  page.location.search = '?checkout=1&company=elephant&offer=learning-platform';
+  await page.context.refreshCheckout();
+  assert.match(page.text(), /Learning and knowledge platform/);
+  assert.doesNotMatch(page.text(), /Commerce operations platform|AI training course/);
 });
 
 test('default historical links never fetch or display the unrelated live checkout', async () => {
@@ -179,7 +236,8 @@ test('default historical links never fetch or display the unrelated live checkou
 test('an unknown provider offering does not fall back to a generic purchasable service', async () => {
   const page = await harness({hash: '', search: '?company=missing&offer=unknown'});
   assert.match(page.text(), /Offering unavailable/);
-  assert.doesNotMatch(page.text(), /AI training course|Market report|Fund escrow/);
+  assert.doesNotMatch(page.text(), /AI training course|Market report/);
+  assert.ok(page.buttons().every(button => !/Fund escrow|Review terms/.test(button.textContent)));
 });
 
 test('changing the hash updates the checkout context as well as the selected deal', async () => {
@@ -228,4 +286,67 @@ test('a late historical response cannot replace a newer hash selection', async (
   await page.flush();
   assert.match(page.text(), /AI training course/);
   assert.doesNotMatch(page.text(), /READ-ONLY TRANSACTION/);
+});
+
+test('invalid simulated amounts never submit a provider purchase', async () => {
+  const page = await harness({hash: '', search: '?checkout=1&company=base&offer=operations'});
+  await page.fill('demo-amount', '12.345');
+  await page.submit();
+  assert.match(page.status(), /at most two decimal places/);
+  assert.ok(page.requests.every(request => request.method === 'GET'));
+});
+
+test('an unrelated pending checkout does not block a provider purchase', async () => {
+  const page = await harness({hash: '', search: '?checkout=1&company=base&offer=operations', state: 'FUNDED'});
+  assert.match(page.text(), /Commerce operations platform/);
+  assert.doesNotMatch(page.text(), /Finish your current checkout|AI training course/);
+  assert.equal(page.buttons().find(button => button.textContent.startsWith('Review terms')).disabled, false);
+  assert.equal(page.current.state, 'FUNDED');
+  assert.ok(page.requests.every(request => request.method === 'GET'));
+});
+
+test('a provider link resumes its pending transaction and pins the live event view', async () => {
+  const page = await harness({hash: '', search: '?checkout=1&company=base&offer=operations',
+    state: 'FUNDED', currentService: providerServices[1]});
+  assert.equal(page.location.hash, '#' + activeId);
+  assert.match(page.text(), /Commerce operations platform/);
+  assert.ok(page.buttons().some(button => button.textContent.startsWith('Simulate work')));
+});
+
+test('a provider link starts a fresh purchase after its earlier transaction settled', async () => {
+  const page = await harness({hash: '', search: '?checkout=1&company=base&offer=operations',
+    state: 'SETTLED', currentService: providerServices[1]});
+  assert.equal(page.location.hash, '');
+  assert.match(page.text(), /BUY WITH ESCROW/);
+  assert.ok(page.buttons().some(button => button.textContent.startsWith('Review terms')));
+});
+
+test('another tab changing its order does not disable the selected provider form', async () => {
+  const page = await harness({hash: '', search: '?checkout=1&company=base&offer=operations', state: 'FUNDED', running: true});
+  assert.equal(page.buttons().find(button => button.textContent.startsWith('Review terms')).disabled, false);
+  assert.equal(page.buttons().find(button => button.textContent.startsWith('Back to services')).disabled, false);
+  await page.fill('demo-amount', '123.45');
+  page.current.state = 'APPROVED';
+  await page.context.refreshCheckout();
+  assert.equal(page.buttons().find(button => button.textContent.startsWith('Review terms')).disabled, false);
+  assert.match(page.text(), /Commerce operations platform/);
+  assert.equal(page.inputs().find(input => input.id === 'demo-amount').value, '123.45');
+});
+
+test('a pinned order stays actionable after another tab starts a different order', async () => {
+  const ownOrder = {
+    deal_id: activeId, running: false, state: 'FUNDED', error: null,
+    order: {service, inputs: {topic: 'My training order'}, scenario: 'happy'},
+    payment: service, allowed_actions: ['deliver'],
+  };
+  const page = await harness({hash: activeId, state: 'FUNDED', orderResponses: {[activeId]: ownOrder}});
+  page.current.deal_id = 'another-tabs-order';
+  page.current.order = {service: providerServices[1], inputs: {brief: 'Different order'}};
+  page.current.state = 'APPROVED';
+  await page.context.refreshCheckout();
+  assert.match(page.text(), /My training order|AI training course/);
+  assert.doesNotMatch(page.text(), /Commerce operations platform|READ-ONLY TRANSACTION/);
+  assert.ok(page.buttons().some(button => button.textContent.startsWith('Simulate work')));
+  assert.ok(page.requests.some(request => request.url === '/api/demo/orders/' + activeId));
+  assert.equal(page.location.hash, '#' + activeId);
 });

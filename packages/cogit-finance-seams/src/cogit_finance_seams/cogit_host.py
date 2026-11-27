@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import inspect
+import os
 from typing import Any, Callable
 
 from cogit_agent_sdk import OperationInvocation
@@ -23,6 +24,7 @@ from cogit_agent_sdk.loop import NoopCancellation
 from cogit_agent_sdk.types import ArtifactRef, ArtifactSlot, Context
 
 from .protocols import ArtifactPort, ModuleError, ModulePort
+from .native import NATIVE_MODULES, decode_result, encode_args
 
 MAX_ARTIFACT_BYTES = 50 * 1024 * 1024
 
@@ -37,20 +39,70 @@ class HandleModules:
 
     def __init__(self, handle: Any) -> None:
         self._handle = handle
+        self._native = getattr(
+            handle,
+            "commerce_native_modules",
+            os.environ.get("COGIT_COMMERCE_NATIVE_MODULES") == "1",
+        )
 
     def module_query(self, module: str, export: str, args: dict | None = None) -> dict:
-        return self._handle.module_query(module, export, args or {}, contract_id=contract_id(module, export))
-
-    def module_command(self, module: str, export: str, args: dict | None = None, *, idempotency_key: str) -> dict:
-        return self._handle.module_command(
-            module, export, args or {}, contract_id=contract_id(module, export), idempotency_key=idempotency_key
+        native = self._native and module in NATIVE_MODULES
+        result = self._handle.module_query(
+            module,
+            export,
+            encode_args(args) if native else args or {},
+            contract_id=contract_id(module, export),
         )
+        return decode_result(result) if native else result
+
+    def module_command(
+        self,
+        module: str,
+        export: str,
+        args: dict | None = None,
+        *,
+        idempotency_key: str,
+    ) -> dict:
+        native = self._native and module in NATIVE_MODULES
+        if native and (module, export) in {
+            ("cogit-messaging", "message.send"),
+            ("cogit-finance-deals", "deal.commit"),
+        }:
+            # These exports deduplicate by message/source identity in SQL.
+            # A retry can reconstruct an envelope with a different timestamp or
+            # a freshly read head. Keep exact transport replays separate so the
+            # domain dispatcher can recognize that already-recorded identity.
+            import json
+
+            request_hash = hashlib.sha256(
+                (
+                    idempotency_key
+                    + ":"
+                    + json.dumps(
+                        args or {},
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        ensure_ascii=False,
+                    )
+                ).encode()
+            ).hexdigest()
+            idempotency_key = f"commerce:{request_hash}"
+        result = self._handle.module_command(
+            module,
+            export,
+            encode_args(args) if native else args or {},
+            contract_id=contract_id(module, export),
+            idempotency_key=idempotency_key,
+        )
+        return decode_result(result) if native else result
 
 
 class HandleArtifacts:
     """ArtifactPort over the SDK's artifact seams."""
 
-    def __init__(self, handle: Any, kind: str = "deliverable", filename: str = "deliverable.zip") -> None:
+    def __init__(
+        self, handle: Any, kind: str = "deliverable", filename: str = "deliverable.zip"
+    ) -> None:
         self._handle = handle
         self._kind = kind
         self._filename = filename
@@ -59,10 +111,17 @@ class HandleArtifacts:
         digest = hashlib.sha256(data).hexdigest()
         slot = self._handle.declare_artifact(self._kind, media_type, self._filename)
         ref = self._handle.finalize_artifact(slot, data, digest)
-        return {"artifact_id": ref.id, "sha256": digest, "byte_length": len(data), "media_type": media_type}
+        return {
+            "artifact_id": ref.id,
+            "sha256": digest,
+            "byte_length": len(data),
+            "media_type": media_type,
+        }
 
     def get(self, artifact_id: str) -> bytes:
-        return self._handle.read_artifact(ArtifactRef(id=artifact_id), max_bytes=MAX_ARTIFACT_BYTES)
+        return self._handle.read_artifact(
+            ArtifactRef(id=artifact_id), max_bytes=MAX_ARTIFACT_BYTES
+        )
 
     def stat(self, artifact_id: str) -> dict | None:
         try:
@@ -80,23 +139,44 @@ class HandleArtifacts:
 class LocalRunHandle(RunHandle):
     """Run handle for work executed outside AgentDb, on the in-process stand-ins."""
 
-    def __init__(self, execution_id: str, context: Context, *, modules: ModulePort, artifacts: ArtifactPort) -> None:
+    commerce_native_modules = False
+
+    def __init__(
+        self,
+        execution_id: str,
+        context: Context,
+        *,
+        modules: ModulePort,
+        artifacts: ArtifactPort,
+    ) -> None:
         super().__init__(execution_id, context)
         self.local_context = context
         self._modules = modules
         self._artifacts = artifacts
 
-    def module_query(self, module_key: str, query_key: str, payload: dict, *, contract_id: str) -> dict:
+    def module_query(
+        self, module_key: str, query_key: str, payload: dict, *, contract_id: str
+    ) -> dict:
         del contract_id
         return self._modules.module_query(module_key, query_key, payload)
 
     def module_command(
-        self, module_key: str, command_key: str, payload: dict, *, contract_id: str, idempotency_key: str
+        self,
+        module_key: str,
+        command_key: str,
+        payload: dict,
+        *,
+        contract_id: str,
+        idempotency_key: str,
     ) -> dict:
         del contract_id
-        return self._modules.module_command(module_key, command_key, payload, idempotency_key=idempotency_key)
+        return self._modules.module_command(
+            module_key, command_key, payload, idempotency_key=idempotency_key
+        )
 
-    def _perform_finalize_artifact(self, slot: ArtifactSlot, body: bytes, hash: str) -> ArtifactRef:
+    def _perform_finalize_artifact(
+        self, slot: ArtifactSlot, body: bytes, hash: str
+    ) -> ArtifactRef:
         stored = self._artifacts.put(body, slot.media_type)
         if stored["sha256"] != hash:
             raise ValueError("Artifact hash does not match its body")
@@ -113,9 +193,19 @@ class LocalRunHandle(RunHandle):
         return self._artifacts.get(ref.id)
 
 
-def invoke_action(agent: Any, action: str, payload: dict, handle: RunHandle, *, idempotency_key: str | None = None) -> dict:
+def invoke_action(
+    agent: Any,
+    action: str,
+    payload: dict,
+    handle: RunHandle,
+    *,
+    idempotency_key: str | None = None,
+) -> dict:
     """Run one bound action of a configured agent the way a run host would."""
-    binding = next((item for item in agent.action_bindings() if item.descriptor.name == action), None)
+    binding = next(
+        (item for item in agent.action_bindings() if item.descriptor.name == action),
+        None,
+    )
     if binding is None:
         raise ModuleError("unknown_action", action)
     request = binding.operation.input_model.model_validate(payload)
@@ -123,16 +213,28 @@ def invoke_action(agent: Any, action: str, payload: dict, handle: RunHandle, *, 
         tenant_id="local", correlation_id="local", agent_id=agent.descriptor.name
     )
     invocation = OperationInvocation(
-        context=context, handle=handle, cancellation=NoopCancellation(), idempotency_key=idempotency_key
+        context=context,
+        handle=handle,
+        cancellation=NoopCancellation(),
+        idempotency_key=idempotency_key,
     )
     result = binding.invoke(request, invocation)
     if inspect.isawaitable(result):
         result = asyncio.run(result)  # type: ignore[arg-type]
-    return result.model_dump(mode="json") if hasattr(result, "model_dump") else dict(result or {})
+    return (
+        result.model_dump(mode="json")
+        if hasattr(result, "model_dump")
+        else dict(result or {})
+    )
 
 
 def agent_invoker(
-    agent: Any, installation_id: str, *, modules: ModulePort, artifacts: ArtifactPort, tenant_id: str = "local"
+    agent: Any,
+    installation_id: str,
+    *,
+    modules: ModulePort,
+    artifacts: ArtifactPort,
+    tenant_id: str = "local",
 ) -> Callable[[str, dict, str], dict]:
     """Invoker for ``LocalRuntime.register``: each run gets its own LocalRunHandle."""
     counter = {"n": 0}
@@ -140,8 +242,14 @@ def agent_invoker(
     def invoke(action: str, payload: dict, idempotency_key: str) -> dict:
         counter["n"] += 1
         execution_id = f"{installation_id}-{counter['n']:05d}"
-        context = Context(tenant_id=tenant_id, correlation_id=execution_id, agent_id=installation_id)
-        handle = LocalRunHandle(execution_id, context, modules=modules, artifacts=artifacts)
-        return invoke_action(agent, action, payload, handle, idempotency_key=idempotency_key)
+        context = Context(
+            tenant_id=tenant_id, correlation_id=execution_id, agent_id=installation_id
+        )
+        handle = LocalRunHandle(
+            execution_id, context, modules=modules, artifacts=artifacts
+        )
+        return invoke_action(
+            agent, action, payload, handle, idempotency_key=idempotency_key
+        )
 
     return invoke

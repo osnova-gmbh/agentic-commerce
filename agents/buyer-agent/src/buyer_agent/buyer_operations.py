@@ -23,9 +23,10 @@ from collections.abc import Mapping
 from cogit_agent_sdk import OperationInvocation
 from cogit_finance_seams import BankPort, SimBankClient
 from cogit_finance_seams.cogit_host import HandleModules
-from cogit_messaging_shim import AgentKey, ShimMessaging
+from cogit_messaging_shim import ShimMessaging
 
 from buyer_agent.buyer_core import BuyerCore, BuyerSettings
+from buyer_agent.identity import identity
 from buyer_agent.schemas import (
     HandleMessageInput,
     HandleMessageOutput,
@@ -61,9 +62,9 @@ def build_bank(environ: Mapping[str, str] | None = None) -> BankPort:
 def build_buyer(invocation: OperationInvocation) -> BuyerCore:
     """Wire the core to the run handle: modules, signed messaging and the bank."""
     modules = HandleModules(invocation.handle)
-    key = AgentKey.load_or_create(os.environ.get("AGENT_KEY_FILE") or DEFAULT_KEY_FILE)
+    key = identity.load_key()
     return BuyerCore(
-        modules, ShimMessaging(key, modules), build_bank(), settings_from_env()
+        modules, ShimMessaging(key, modules, message_namespace=invocation.idempotency_key), build_bank(), settings_from_env()
     )
 
 
@@ -74,7 +75,7 @@ def start_purchase(
     """Discover an offer and send ``finance.service_request`` to E."""
     with invocation.handle.step("action", "start_purchase") as step:
         result = build_buyer(invocation).start_purchase(
-            request.category, request.max_price_minor
+            request.category, request.max_price_minor, request_id=invocation.idempotency_key
         )
         output = StartPurchaseOutput(
             status=result.status,

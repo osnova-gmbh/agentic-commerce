@@ -81,9 +81,10 @@ $$;
 CREATE FUNCTION {{tenantSchema}}.ac_deals_operator(ctx jsonb) RETURNS void
 LANGUAGE plpgsql SET search_path = pg_catalog AS $$
 BEGIN
-  IF ctx->>'callerKind' IS DISTINCT FROM 'tenant_client'
-     OR NULLIF(ctx#>>'{settings,operator_principal_id}','') IS NULL
-     OR ctx->>'principalId' IS DISTINCT FROM ctx#>>'{settings,operator_principal_id}' THEN
+  IF ((ctx->>'callerKind'='tenant_client'
+      AND NULLIF(ctx#>>'{settings,operator_principal_id}','') IS NOT NULL
+      AND ctx->>'principalId'=ctx#>>'{settings,operator_principal_id}')
+    OR (ctx->>'callerKind'='fenced_worker' AND ctx->>'installationId'=ctx#>>'{settings,escrow_installation_id}')) IS NOT TRUE THEN
     PERFORM {{tenantSchema}}.ac_deals_error('forbidden');
   END IF;
 END $$;
@@ -104,7 +105,7 @@ CREATE UNIQUE INDEX ac_deals_active_intent ON {{tenantSchema}}.ac_deals_records(
  WHERE kind='intent' AND doc->>'kind' IN ('payout','refund') AND doc->>'status' IN ('prepared','submitted','unknown');
 CREATE INDEX ac_deals_by_deal ON {{tenantSchema}}.ac_deals_records(tenant_id,kind,(doc->>'deal_id'));
 
-CREATE FUNCTION {{tenantSchema}}.ac_deals_row(t uuid,k text,deal text,item jsonb,merge boolean,stamp text) RETURNS void
+CREATE FUNCTION {{tenantSchema}}.ac_deals_row(t uuid,k text,deal text,item jsonb,merge_rows boolean,stamp text) RETURNS void
 LANGUAGE plpgsql SET search_path = pg_catalog AS $$
 DECLARE rules jsonb; keyname text; ident text; old jsonb; row jsonb; failure text;
 BEGIN
@@ -119,7 +120,7 @@ BEGIN
   IF item->>'deal_id' IS NOT NULL AND item->>'deal_id'<>deal THEN PERFORM {{tenantSchema}}.ac_deals_error('invalid_argument'); END IF;
   ident:={{tenantSchema}}.ac_deals_text(item,keyname);
   old:={{tenantSchema}}.ac_deals_get(t,k,ident);
-  IF old IS NOT NULL AND NOT merge THEN PERFORM {{tenantSchema}}.ac_deals_error(failure); END IF;
+  IF old IS NOT NULL AND NOT merge_rows THEN PERFORM {{tenantSchema}}.ac_deals_error(failure); END IF;
   IF old IS NOT NULL AND old->>'deal_id'<>deal THEN PERFORM {{tenantSchema}}.ac_deals_error('invalid_argument'); END IF;
   row:={{tenantSchema}}.ac_deals_clean(item-'deal_id',rules,old IS NOT NULL);
   row:=COALESCE(old,'{}')||row||jsonb_build_object('deal_id',deal);
@@ -129,7 +130,7 @@ BEGIN
   IF k IN ('intent','posting') AND old IS NULL THEN row:=row||jsonb_build_object('created_at',stamp); END IF;
   IF k='intent' THEN row:=row||jsonb_build_object('updated_at',stamp); END IF;
   BEGIN
-    IF merge THEN PERFORM {{tenantSchema}}.ac_deals_put(t,k,ident,row);
+    IF merge_rows THEN PERFORM {{tenantSchema}}.ac_deals_put(t,k,ident,row);
     ELSE INSERT INTO {{tenantSchema}}.ac_deals_records(tenant_id,kind,id,doc) VALUES(t,k,ident,row); END IF;
   EXCEPTION WHEN unique_violation THEN PERFORM {{tenantSchema}}.ac_deals_error(failure);
   END;

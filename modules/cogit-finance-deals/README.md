@@ -89,11 +89,8 @@ scripts/test.sh modules/cogit-finance-deals            # from the repository roo
 
 ## AgentDb packaging
 
-The AgentDb-native packaging of this module, as PL/pgSQL functions
-`fn(ctx jsonb, input jsonb) returns jsonb` with a `manifest.json`, is a later port and not
-part of this build. This implementation is the specification for that port: the tables and
-indexes in `migrations/`, the export names and kinds in `DealsModule.queries` and
-`DealsModule.commands`, the order of the `deal.commit` rules in `commit.py`, and the
-behaviour pinned by the tests. In the port the head check is the compare-and-swap that
-`commit.py` already performs on `deal_deals` (`UPDATE … WHERE head_seq = … AND head_hash = …`),
-so that two concurrent writers cannot append to the same link.
+The native implementation is in `agentdb/`: PL/pgSQL functions and an AgentDb
+manifest. Build it with `python scripts/build_agentdb_modules.py`; deployment
+and live acceptance are described in [the runtime guide](../../docs/AGENTDB-RUNTIME.md).
+The Python/SQLite implementation remains the behavioral reference. Native
+exports use the lossless JSON carrier in `cogit_finance_seams.native`.

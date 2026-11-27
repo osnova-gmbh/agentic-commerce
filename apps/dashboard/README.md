@@ -12,12 +12,28 @@ More pictures: [broken run, settled after a redelivery](docs/broken.png) and
 
 ## Run
 
+The primary overview at `/demo` now lists 26 published provider offerings from the
+ten Delta Campus companies. Company cards at `/catalog` list those same records;
+selecting an offer opens `/demo?checkout=1&company=<id>&offer=<id>`. Published billing
+basis, quote-only services, free courses and waitlisted products are preserved.
+The selected company and product carry through the purchase form, quote,
+escrow funding, delivery checks and settlement. These are local demonstrations:
+a stand-in seller supplies the simulated delivery, and no provider is contacted.
+The published provider rate is shown separately from the editable simulated
+escrow amount, so subscriptions, custom quotes and free or waitlisted products
+can demonstrate the same flow without inventing a provider price.
+Every page has the same three navigation tabs, in the same order: **Company
+catalog**, **Deal overview**, and **Escrow demo**. The escrow demo opens
+`/demo?legacy=1`; saved
+`/demo#<deal-id>` links remain read-only transaction history.
+
 The demo's **Company catalog** navigation opens `/catalog`. It shows the ten
 Delta Campus companies supplied for the prospect-gifting programme, with their
-products, target customers and website links. Elephant Technologies, Base /
+products, target customers and links into the deal overview. Elephant Technologies, Base /
 BaseLinker and MeinGPT / SelectCode are marked as the first three to approach.
-These records have the buyer role and prospective status; no prices, payment
-details, spending authorization or verified onboarding are inferred.
+These records retain their buyer-prospect status for gifting and list their own
+published products and services. No bank details, spending authorization or
+verified onboarding are inferred.
 Profiles are seeded from `data/demo/companies.yaml` into the catalog module and
 read through `companies.list`; the public `/api/catalog` response omits bank
 and onboarding fields.
@@ -29,7 +45,7 @@ run from the repository root:
 python scripts/run_demo.py --port 8091
 ```
 
-Open **http://127.0.0.1:8091/demo** and choose a published service. Enter the
+Open **http://127.0.0.1:8091/demo?legacy=1** for the simulated checkout. Enter the
 brief, review the quoted terms, and click **Fund escrow**. Funding stops before
 the seller starts work. **Simulate work & delivery** produces the selected
 service's ZIP and runs the checks; even after approval the money remains held.

@@ -3,7 +3,9 @@
 Reference implementation of the `cogit-messaging` AgentDb module of SPEC §11.1: Python over
 SQLite, behind the frozen export contract in
 [contracts/module-exports.md](../../contracts/module-exports.md). It is the specification
-for the later AgentDb-native port (PL/pgSQL functions plus `manifest.json`).
+for the native implementation in `agentdb/` (PL/pgSQL functions plus `manifest.json`).
+See [the runtime guide](../../docs/AGENTDB-RUNTIME.md) for deployment and acceptance.
+Native claims use row locks and `SKIP LOCKED`; workers verify signatures before processing.
 
 The module binds agent DIDs to installations, keeps an immutable registry of message
 types and runs a simple message queue. It knows nothing about escrow and verifies no

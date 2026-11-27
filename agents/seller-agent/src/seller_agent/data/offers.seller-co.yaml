@@ -7,7 +7,7 @@ offers:
     category: reports
     price_minor: 50000
     currency: EUR
-    delivery_time_s: 60
+    delivery_time_s: 900
     input_schema:
       type: object
       properties:
@@ -24,4 +24,31 @@ offers:
         - {evaluator_id: integrity, version: 1, params: {}}
         - {evaluator_id: required-files, version: 1, params: {required_files: [report.md, data.csv, summary.json]}}
         - {evaluator_id: deadline, version: 1, params: {}}   # the seller sets delivery_deadline when quoting
+    active: true
+
+  # Illustrative demo service and price, not a real company's commercial offer.
+  - offer_id: ai-training
+    title: AI training course
+    description: A simulated training pack for your team, with a course, practical exercises and a delivery summary.
+    category: training
+    price_minor: 120000
+    currency: EUR
+    delivery_time_s: 900
+    input_schema:
+      type: object
+      properties:
+        topic: {type: string, minLength: 1, maxLength: 200, title: Course topic, default: AI for everyday work}
+        audience: {type: string, minLength: 1, maxLength: 120, title: Audience, default: Business teams}
+      required: [topic, audience]
+      additionalProperties: false
+    deliverable:
+      media_type: application/zip
+      required_files: [course.md, exercises.md, summary.json]
+    default_acceptance:
+      policy: all
+      max_attempts: 2
+      evaluators:
+        - {evaluator_id: integrity, version: 1, params: {}}
+        - {evaluator_id: required-files, version: 1, params: {required_files: [course.md, exercises.md, summary.json]}}
+        - {evaluator_id: deadline, version: 1, params: {}}
     active: true

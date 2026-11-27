@@ -44,6 +44,69 @@ actions:
   required_capabilities:
   - records.write
   metadata: null
+- name: bootstrap
+  description: Seed configured local demo identities, companies and evaluators once.
+  input_schema:
+    properties: {}
+    title: BootstrapInput
+    type: object
+  output_schema:
+    properties:
+      companies:
+        title: Companies
+        type: integer
+      identities:
+        title: Identities
+        type: integer
+      evaluators:
+        title: Evaluators
+        type: integer
+    required:
+    - companies
+    - identities
+    - evaluators
+    title: BootstrapOutput
+    type: object
+  risk: write
+  requires_approval: false
+  idempotency: inherent
+  required_capabilities: []
+  metadata: null
+- name: drain_inbox
+  description: Process a bounded batch of signed messages under the worker's AgentDb
+    context.
+  input_schema:
+    properties:
+      limit:
+        default: 10
+        maximum: 100
+        minimum: 1
+        title: Limit
+        type: integer
+    title: DrainInput
+    type: object
+  output_schema:
+    properties:
+      handled:
+        title: Handled
+        type: integer
+      rejected:
+        title: Rejected
+        type: integer
+      released:
+        title: Released
+        type: integer
+    required:
+    - handled
+    - rejected
+    - released
+    title: DrainOutput
+    type: object
+  risk: write
+  requires_approval: false
+  idempotency: inherent
+  required_capabilities: []
+  metadata: null
 - name: handle_message
   description: Process one signed finance.* message addressed to E.
   input_schema:
@@ -607,3 +670,107 @@ database_packages:
     key: resolutions.list
     export_version: 1.0.0
     contract_id: cogit.cogit-finance.resolutions.list.v1
+- module_key: cogit-messaging
+  version: 1.0.0
+  artifact_sha256: c5c0aece64f6aa85586301c3a30b6ee4dc79781133cecfb05430ca36941d0ebe
+  exports:
+  - kind: query
+    key: identity.resolve
+    export_version: 1.0.0
+    contract_id: cogit-messaging.identity.resolve.v1
+  - kind: query
+    key: conversation.read
+    export_version: 1.0.0
+    contract_id: cogit-messaging.conversation.read.v1
+  - kind: command
+    key: identity.register
+    export_version: 1.0.0
+    contract_id: cogit-messaging.identity.register.v1
+  - kind: command
+    key: type.register
+    export_version: 1.0.0
+    contract_id: cogit-messaging.type.register.v1
+  - kind: command
+    key: message.send
+    export_version: 1.0.0
+    contract_id: cogit-messaging.message.send.v1
+  - kind: command
+    key: message.claim
+    export_version: 1.0.0
+    contract_id: cogit-messaging.message.claim.v1
+  - kind: command
+    key: message.ack
+    export_version: 1.0.0
+    contract_id: cogit-messaging.message.ack.v1
+  - kind: command
+    key: message.release
+    export_version: 1.0.0
+    contract_id: cogit-messaging.message.release.v1
+- module_key: cogit-finance-catalog
+  version: 1.0.0
+  artifact_sha256: b96f92491c7b1abecae61d615e1d02dd39f1a7cd2fe2862a3a95189b6eb99db6
+  exports:
+  - kind: query
+    key: company.read
+    export_version: 1.0.0
+    contract_id: cogit-finance-catalog.company.read.v1
+  - kind: query
+    key: companies.list
+    export_version: 1.0.0
+    contract_id: cogit-finance-catalog.companies.list.v1
+  - kind: query
+    key: sellers.list
+    export_version: 1.0.0
+    contract_id: cogit-finance-catalog.sellers.list.v1
+  - kind: query
+    key: catalog.read
+    export_version: 1.0.0
+    contract_id: cogit-finance-catalog.catalog.read.v1
+  - kind: query
+    key: evaluators.list
+    export_version: 1.0.0
+    contract_id: cogit-finance-catalog.evaluators.list.v1
+  - kind: command
+    key: company.upsert
+    export_version: 1.0.0
+    contract_id: cogit-finance-catalog.company.upsert.v1
+  - kind: command
+    key: evaluator.upsert
+    export_version: 1.0.0
+    contract_id: cogit-finance-catalog.evaluator.upsert.v1
+  - kind: command
+    key: catalog.publish
+    export_version: 1.0.0
+    contract_id: cogit-finance-catalog.catalog.publish.v1
+- module_key: cogit-finance-deals
+  version: 1.0.0
+  artifact_sha256: 0195c2e27ec8834f3f17609e3b792a75e2180d48a976821ee8a5508cf4003db4
+  exports:
+  - kind: query
+    key: outbox.pending
+    export_version: 1.0.0
+    contract_id: cogit-finance-deals.outbox.pending.v1
+  - kind: query
+    key: deal.read
+    export_version: 1.0.0
+    contract_id: cogit-finance-deals.deal.read.v1
+  - kind: query
+    key: deal.list
+    export_version: 1.0.0
+    contract_id: cogit-finance-deals.deal.list.v1
+  - kind: query
+    key: ledger.balances
+    export_version: 1.0.0
+    contract_id: cogit-finance-deals.ledger.balances.v1
+  - kind: command
+    key: deal.commit
+    export_version: 1.0.0
+    contract_id: cogit-finance-deals.deal.commit.v1
+  - kind: command
+    key: outbox.mark_sent
+    export_version: 1.0.0
+    contract_id: cogit-finance-deals.outbox.mark_sent.v1
+  - kind: command
+    key: intent.update
+    export_version: 1.0.0
+    contract_id: cogit-finance-deals.intent.update.v1

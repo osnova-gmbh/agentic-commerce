@@ -1,0 +1,24 @@
+{
+  "name": "commerce-seller",
+  "status": "active",
+  "agent_did": "<seller-public-DID>",
+  "access_point": {
+    "listen_address": "127.0.0.1:8443",
+    "route": "/seller",
+    "protocol": "mcp",
+    "public": false,
+    "caller_authentication": {
+      "methods": [{
+        "type": "did_auth",
+        "extraction": {"source": "http_header", "field": "X-Agent-Session"},
+        "allowed_dids": ["<buyer-public-DID>", "<escrow-public-DID>"],
+        "challenge_ttl_seconds": 300,
+        "session_ttl_seconds": 300,
+        "audience": "<gateway-origin>/seller",
+        "allowed_algorithms": ["EdDSA"]
+      }],
+      "on_failure": "reject"
+    }
+  },
+  "target": {"endpoint": "<private-seller-MCP-endpoint>"}
+}

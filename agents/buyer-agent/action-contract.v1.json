@@ -1,8 +1,9 @@
 {
+  "schema_version": "v1",
   "actions": [
     {
+      "name": "apply_resolution",
       "description": "Apply an approved synthetic case resolution.",
-      "idempotency": "keyed",
       "input_schema": {
         "additionalProperties": false,
         "properties": {
@@ -26,17 +27,15 @@
         "title": "ApplyResolutionInput",
         "type": "object"
       },
-      "metadata": null,
-      "name": "apply_resolution",
       "output_schema": {
         "additionalProperties": false,
         "properties": {
-          "already_applied": {
-            "title": "Already Applied",
-            "type": "boolean"
-          },
           "applied": {
             "title": "Applied",
+            "type": "boolean"
+          },
+          "already_applied": {
+            "title": "Already Applied",
             "type": "boolean"
           }
         },
@@ -47,15 +46,62 @@
         "title": "ApplyResolutionOutput",
         "type": "object"
       },
+      "risk": "write",
+      "requires_approval": true,
+      "idempotency": "keyed",
       "required_capabilities": [
         "records.write"
       ],
-      "requires_approval": true,
-      "risk": "write"
+      "metadata": null
     },
     {
-      "description": "Handle one inbound signed finance message.",
+      "name": "drain_inbox",
+      "description": "Process a bounded batch of signed messages under the worker's AgentDb context.",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "default": 10,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "DrainInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "handled": {
+            "title": "Handled",
+            "type": "integer"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "integer"
+          },
+          "released": {
+            "title": "Released",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "handled",
+          "rejected",
+          "released"
+        ],
+        "title": "DrainOutput",
+        "type": "object"
+      },
+      "risk": "write",
+      "requires_approval": false,
       "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
+    },
+    {
+      "name": "handle_message",
+      "description": "Handle one inbound signed finance message.",
       "input_schema": {
         "additionalProperties": false,
         "description": "One inbound signed envelope, exactly as the delivery loop claimed it.",
@@ -72,12 +118,18 @@
         "title": "HandleMessageInput",
         "type": "object"
       },
-      "metadata": null,
-      "name": "handle_message",
       "output_schema": {
         "additionalProperties": false,
         "description": "Disposition of the message; the delivery loop maps it to the acknowledgement.",
         "properties": {
+          "status": {
+            "enum": [
+              "processed",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
           "reason": {
             "anyOf": [
               {
@@ -89,14 +141,6 @@
             ],
             "default": null,
             "title": "Reason"
-          },
-          "status": {
-            "enum": [
-              "processed",
-              "rejected"
-            ],
-            "title": "Status",
-            "type": "string"
           }
         },
         "required": [
@@ -105,13 +149,15 @@
         "title": "HandleMessageOutput",
         "type": "object"
       },
-      "required_capabilities": [],
+      "risk": "write",
       "requires_approval": false,
-      "risk": "write"
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
     },
     {
+      "name": "lookup_record",
       "description": "Look up a synthetic service record.",
-      "idempotency": "inherent",
       "input_schema": {
         "additionalProperties": false,
         "properties": {
@@ -127,8 +173,6 @@
         "title": "LookupRecordInput",
         "type": "object"
       },
-      "metadata": null,
-      "name": "lookup_record",
       "output_schema": {
         "additionalProperties": false,
         "properties": {
@@ -148,13 +192,15 @@
         "title": "LookupRecordOutput",
         "type": "object"
       },
-      "required_capabilities": [],
+      "risk": "read",
       "requires_approval": false,
-      "risk": "read"
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
     },
     {
+      "name": "lookup_resolution",
       "description": "Read committed synthetic case resolutions.",
-      "idempotency": "inherent",
       "input_schema": {
         "additionalProperties": false,
         "properties": {
@@ -171,8 +217,6 @@
         "title": "LookupResolutionInput",
         "type": "object"
       },
-      "metadata": null,
-      "name": "lookup_resolution",
       "output_schema": {
         "additionalProperties": false,
         "properties": {
@@ -195,15 +239,17 @@
         "title": "LookupResolutionOutput",
         "type": "object"
       },
+      "risk": "read",
+      "requires_approval": false,
+      "idempotency": "inherent",
       "required_capabilities": [
         "records.read"
       ],
-      "requires_approval": false,
-      "risk": "read"
+      "metadata": null
     },
     {
+      "name": "persist_reference_request",
       "description": "Persist and read a reference request through AgentDb.",
-      "idempotency": "inherent",
       "input_schema": {
         "additionalProperties": false,
         "description": "Existing typed request or one bounded canonical plain-text instruction.",
@@ -240,6 +286,20 @@
           }
         ],
         "properties": {
+          "request_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Request Id"
+          },
           "description": {
             "anyOf": [
               {
@@ -267,40 +327,28 @@
             ],
             "default": null,
             "title": "Instruction"
-          },
-          "request_id": {
-            "anyOf": [
-              {
-                "maxLength": 128,
-                "minLength": 1,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Request Id"
           }
         },
         "title": "PersistRequestInput",
         "type": "object"
       },
-      "metadata": null,
-      "name": "persist_reference_request",
       "output_schema": {
         "additionalProperties": false,
         "properties": {
-          "description": {
-            "title": "Description",
-            "type": "string"
-          },
           "object_id": {
             "title": "Object Id",
             "type": "string"
           },
           "request_id": {
             "title": "Request Id",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
             "type": "string"
           },
           "revision": {
@@ -313,10 +361,6 @@
           },
           "root_sha256": {
             "title": "Root Sha256",
-            "type": "string"
-          },
-          "status": {
-            "title": "Status",
             "type": "string"
           }
         },
@@ -332,13 +376,15 @@
         "title": "PersistRequestOutput",
         "type": "object"
       },
-      "required_capabilities": [],
+      "risk": "write",
       "requires_approval": false,
-      "risk": "write"
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
     },
     {
+      "name": "start_purchase",
       "description": "Discover an offer and request it through the escrow.",
-      "idempotency": "inherent",
       "input_schema": {
         "additionalProperties": false,
         "description": "Optional overrides of the configured category and maximum price.",
@@ -374,12 +420,18 @@
         "title": "StartPurchaseInput",
         "type": "object"
       },
-      "metadata": null,
-      "name": "start_purchase",
       "output_schema": {
         "additionalProperties": false,
         "description": "What discovery found and which deal, if any, was requested.",
         "properties": {
+          "status": {
+            "enum": [
+              "requested",
+              "no_offer"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
           "deal_id": {
             "anyOf": [
               {
@@ -391,22 +443,6 @@
             ],
             "default": null,
             "title": "Deal Id"
-          },
-          "offer_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Offer Id"
-          },
-          "offers_seen": {
-            "title": "Offers Seen",
-            "type": "integer"
           },
           "seller_org_id": {
             "anyOf": [
@@ -420,17 +456,25 @@
             "default": null,
             "title": "Seller Org Id"
           },
+          "offer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Offer Id"
+          },
           "sellers_seen": {
             "title": "Sellers Seen",
             "type": "integer"
           },
-          "status": {
-            "enum": [
-              "requested",
-              "no_offer"
-            ],
-            "title": "Status",
-            "type": "string"
+          "offers_seen": {
+            "title": "Offers Seen",
+            "type": "integer"
           }
         },
         "required": [
@@ -441,24 +485,26 @@
         "title": "StartPurchaseOutput",
         "type": "object"
       },
-      "required_capabilities": [],
+      "risk": "write",
       "requires_approval": false,
-      "risk": "write"
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
     },
     {
+      "name": "validate_request",
       "description": "Validate a synthetic service request.",
-      "idempotency": "inherent",
       "input_schema": {
         "additionalProperties": false,
         "properties": {
-          "description": {
-            "minLength": 1,
-            "title": "Description",
-            "type": "string"
-          },
           "request_id": {
             "minLength": 1,
             "title": "Request Id",
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
             "type": "string"
           }
         },
@@ -469,21 +515,19 @@
         "title": "ValidateRequestInput",
         "type": "object"
       },
-      "metadata": null,
-      "name": "validate_request",
       "output_schema": {
         "additionalProperties": false,
         "properties": {
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          },
           "errors": {
             "items": {
               "type": "string"
             },
             "title": "Errors",
             "type": "array"
-          },
-          "valid": {
-            "title": "Valid",
-            "type": "boolean"
           }
         },
         "required": [
@@ -493,10 +537,11 @@
         "title": "ValidateRequestOutput",
         "type": "object"
       },
-      "required_capabilities": [],
+      "risk": "read",
       "requires_approval": false,
-      "risk": "read"
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
     }
-  ],
-  "schema_version": "v1"
+  ]
 }

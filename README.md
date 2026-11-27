@@ -8,6 +8,12 @@ This repository contains a runnable local escrow demo alongside research, implem
 
 ## Run a transaction demo
 
+Agent identity is configured for the buyer, seller and escrow through the existing
+Boris MCP endpoint. Run `python scripts/affinidi_agents.py enable` to apply the
+public project settings and `python scripts/affinidi_agents.py probe` to check
+the connection. See [identity setup](docs/AFFINIDI.md) for the per-agent payload
+and the separate optional DID Auth experiment.
+
 From the repository root:
 
 ```powershell
@@ -46,6 +52,14 @@ http://127.0.0.1:4175/ to watch the 62-second export.
 [`films/alice-bob-delta/`](films/alice-bob-delta/) contains the editable 26-second cartoon: Alice buys a research report from Bob while Delta holds the payment. Open `alice-bob-delta.html` for the source animation; see [`FILM.md`](films/alice-bob-delta/FILM.md) for the storyboard, Vidder rendering commands, licenses, and verification notes. Generated MP4s, audio, and review frames stay in the ignored `out/` directory.
 
 ## Documents
+
+For native AgentDb execution, see [the runtime guide](docs/AGENTDB-RUNTIME.md).
+`python scripts/run_agentdb.py up --agentdb-root C:/cogit/cogit-core/agent-db`
+prepares and installs four workers, deploys the native modules to an isolated
+local stack, and serves a transaction workspace on port 8093. It requires a
+working Docker engine and the pinned dependencies. Use
+`python scripts/verify_agentdb.py --restart` for live settlement and persistence
+acceptance; building the packages alone is not a successful deployment.
 
 - [Cogit Finance specification](SPEC.md): authoritative escrow product behavior and implementation plan.
 - [Alice/Bob implementation plan](ALICE-BOB-PLAN.md): responsibilities, protocol, proposed files and acceptance checks.

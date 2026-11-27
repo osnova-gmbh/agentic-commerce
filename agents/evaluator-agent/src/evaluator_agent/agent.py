@@ -14,7 +14,7 @@ from cogit_agent_sdk import (
     CliCommandGroup,
     CogitAgent,
 )
-from cogit_agent_sdk.types import AgentLoopConfig, Context, RunBudget
+from cogit_agent_sdk.types import AgentLoopConfig, Context, RunBudget, RunRequest
 from cogit_tool_core.providers import ProviderBundle
 
 from evaluator_agent.capabilities import (
@@ -47,10 +47,14 @@ class Agent(CogitAgent):
 
     def configure(self, services: AgentServices) -> None:
         from .database_example import persist_request_binding
+        from .message_operations import handle_message
+        from .schemas import HandleMessageInput
+        from cogit_finance_seams.inbox import inbox_binding
 
         super().configure(services)
         self.internal_operations = build_internal_operations(self)
         action_bindings = register_domain_action_bindings(self)
+        self.register_action(inbox_binding(handle_message, HandleMessageInput))
         self.register_action(persist_request_binding())
         register_domain_tool_bindings(self, action_bindings)
         functions = self.dependencies.functions
@@ -67,6 +71,10 @@ class Agent(CogitAgent):
     async def startup(self) -> None:
         if self.capabilities is not None:
             await self.capabilities.start()
+
+    def handle_run(self, request: RunRequest, context: Context, handle: Any) -> Any:
+        from cogit_finance_seams.commands import run_commerce_command
+        return run_commerce_command(self, request, context, handle, frozenset({"drain_inbox"}))
 
     async def shutdown(self) -> None:
         resources = self.dependencies.closeables

@@ -8,7 +8,7 @@ schema dialect. It is decoded only inside the native function, never executed.
 
 import json
 
-COMMON = r'''
+COMMON = r"""
 CREATE TABLE {{tenantSchema}}.__P___records (
   tenant_id uuid NOT NULL, kind text NOT NULL, id text NOT NULL,
   doc jsonb NOT NULL CHECK (jsonb_typeof(doc) = 'object'),
@@ -91,9 +91,10 @@ $$;
 CREATE FUNCTION {{tenantSchema}}.__P___operator(ctx jsonb) RETURNS void
 LANGUAGE plpgsql SET search_path = pg_catalog AS $$
 BEGIN
-  IF ctx->>'callerKind' IS DISTINCT FROM 'tenant_client'
-     OR NULLIF(ctx#>>'{settings,operator_principal_id}','') IS NULL
-     OR ctx->>'principalId' IS DISTINCT FROM ctx#>>'{settings,operator_principal_id}' THEN
+  IF ((ctx->>'callerKind'='tenant_client'
+      AND NULLIF(ctx#>>'{settings,operator_principal_id}','') IS NOT NULL
+      AND ctx->>'principalId'=ctx#>>'{settings,operator_principal_id}')
+    OR (ctx->>'callerKind'='fenced_worker' AND ctx->>'installationId'=ctx#>>'{settings,escrow_installation_id}')) IS NOT TRUE THEN
     PERFORM {{tenantSchema}}.__P___error('forbidden');
   END IF;
 END $$;
@@ -106,7 +107,7 @@ BEGIN
     PERFORM {{tenantSchema}}.__P___error('forbidden');
   END IF;
 END $$;
-'''
+"""
 
 
 def rule(kind, default=None, required=False, nullable=False, enum=None):
@@ -117,23 +118,43 @@ def rule(kind, default=None, required=False, nullable=False, enum=None):
 
 
 COMPANY = {
-    "org_id": rule("text", required=True), "legal_name": rule("text", required=True),
-    **{key: rule("text") for key in ("register_id", "address", "iban", "kyb_verified_by")},
-    "roles": rule("texts", []), "categories": rule("texts", []),
-    "kyb_verified": rule("bool", False), "spending_limit_minor": rule("int", 0), "profile": rule("object", {}),
+    "org_id": rule("text", required=True),
+    "legal_name": rule("text", required=True),
+    **{
+        key: rule("text")
+        for key in ("register_id", "address", "iban", "kyb_verified_by")
+    },
+    "roles": rule("texts", []),
+    "categories": rule("texts", []),
+    "kyb_verified": rule("bool", False),
+    "spending_limit_minor": rule("int", 0),
+    "profile": rule("object", {}),
 }
 OFFER = {
-    **{key: rule("text", required=True) for key in ("seller_org_id", "offer_id", "title", "category", "currency")},
-    "description": rule("text"), "price_minor": rule("int", required=True), "delivery_time_s": rule("int", required=True),
-    **{key: rule("object", {}) for key in ("input_schema", "deliverable", "default_acceptance")}, "active": rule("bool", True),
+    **{
+        key: rule("text", required=True)
+        for key in ("seller_org_id", "offer_id", "title", "category", "currency")
+    },
+    "description": rule("text"),
+    "price_minor": rule("int", required=True),
+    "delivery_time_s": rule("int", required=True),
+    **{
+        key: rule("object", {})
+        for key in ("input_schema", "deliverable", "default_acceptance")
+    },
+    "active": rule("bool", True),
 }
 EVALUATOR = {
-    **{key: rule("text", required=True) for key in ("evaluator_id", "org_id")}, "version": rule("positive", required=True),
-    "did": rule("text"), "description": rule("text"), "deterministic": rule("bool", False),
-    "accepts": rule("texts", []), "params_schema": rule("object", {}),
+    **{key: rule("text", required=True) for key in ("evaluator_id", "org_id")},
+    "version": rule("positive", required=True),
+    "did": rule("text"),
+    "description": rule("text"),
+    "deterministic": rule("bool", False),
+    "accepts": rule("texts", []),
+    "params_schema": rule("object", {}),
 }
 
-CATALOG = r'''
+CATALOG = r"""
 CREATE FUNCTION {{tenantSchema}}.__P___dispatch(ctx jsonb,a jsonb,op text) RETURNS jsonb
 LANGUAGE plpgsql SET search_path = pg_catalog AS $$
 DECLARE t uuid:=(ctx->>'tenantId')::uuid; row jsonb; item jsonb; result jsonb; ident text; role_filter text; category text; ids text[]:='{}';
@@ -184,18 +205,39 @@ BEGIN
   END IF;
   PERFORM {{tenantSchema}}.__P___error('unknown_export');
 END $$;
-'''
+"""
 
 
 def native_sql(module):
-    prefix = {"cogit-finance-catalog": "ac_catalog", "cogit-finance-deals": "ac_deals", "cogit-messaging": "ac_msg"}[module]
-    source = COMMON + {"cogit-finance-catalog": CATALOG, "cogit-finance-deals": DEALS, "cogit-messaging": MESSAGING}[module]
-    for name, spec in {"COMPANY": COMPANY, "OFFER": OFFER, "EVALUATOR": EVALUATOR, **DEAL_SPECS}.items():
+    prefix = {
+        "cogit-finance-catalog": "ac_catalog",
+        "cogit-finance-deals": "ac_deals",
+        "cogit-messaging": "ac_msg",
+    }[module]
+    source = (
+        COMMON
+        + {
+            "cogit-finance-catalog": CATALOG,
+            "cogit-finance-deals": DEALS,
+            "cogit-messaging": MESSAGING,
+        }[module]
+    )
+    for name, spec in {
+        "COMPANY": COMPANY,
+        "OFFER": OFFER,
+        "EVALUATOR": EVALUATOR,
+        **DEAL_SPECS,
+    }.items():
         source = source.replace(f"__{name}__", json.dumps(spec, separators=(",", ":")))
     source = source.replace("__P__", prefix)
     # Internal helpers cannot be invoked by clients, even if they guess names.
     import re
-    functions = re.findall(r"CREATE FUNCTION \{\{tenantSchema\}\}\.([a-z_]+)\((.*?)\)\s*RETURNS", source, re.S)
+
+    functions = re.findall(
+        r"CREATE FUNCTION \{\{tenantSchema\}\}\.([a-z_]+)\((.*?)\)\s*RETURNS",
+        source,
+        re.S,
+    )
     for name, arguments in functions:
         types = [part.strip().split()[1] for part in arguments.split(",")]
         signature = f"{{{{tenantSchema}}}}.{name}({','.join(types)})"
@@ -205,32 +247,72 @@ def native_sql(module):
 
 DEAL_SPECS = {
     "DELIVERIES": {
-        **{key: rule("text", required=True) for key in ("delivery_id", "artifact_id", "sha256", "media_type", "delivered_at")},
-        "attempt": rule("positive", required=True), "byte_length": rule("int", required=True), "status": rule("text", "delivered"),
+        **{
+            key: rule("text", required=True)
+            for key in (
+                "delivery_id",
+                "artifact_id",
+                "sha256",
+                "media_type",
+                "delivered_at",
+            )
+        },
+        "attempt": rule("positive", required=True),
+        "byte_length": rule("int", required=True),
+        "status": rule("text", "delivered"),
     },
     "EVALUATIONS": {
-        **{key: rule("text", required=True) for key in ("evaluation_request_id", "delivery_id", "evaluator_id", "evaluator_did", "respond_by")},
-        "evaluator_version": rule("int", required=True), "resends": rule("int", 0),
-        "verdict_message_id": rule("text", nullable=True), "outcome": rule("text", nullable=True, enum=["pass", "fail", "error"]),
+        **{
+            key: rule("text", required=True)
+            for key in (
+                "evaluation_request_id",
+                "delivery_id",
+                "evaluator_id",
+                "evaluator_did",
+                "respond_by",
+            )
+        },
+        "evaluator_version": rule("int", required=True),
+        "resends": rule("int", 0),
+        "verdict_message_id": rule("text", nullable=True),
+        "outcome": rule("text", nullable=True, enum=["pass", "fail", "error"]),
     },
     "INTENTS": {
-        **{key: rule("text", required=True) for key in ("intent_id", "currency", "to_iban")},
-        "kind": rule("text", required=True, enum=["payout", "fee", "refund", "return_unmatched"]),
-        "amount_minor": rule("int", required=True), "status": rule("text", "prepared", enum=["prepared", "submitted", "unknown", "confirmed", "failed"]),
+        **{
+            key: rule("text", required=True)
+            for key in ("intent_id", "currency", "to_iban")
+        },
+        "kind": rule(
+            "text", required=True, enum=["payout", "fee", "refund", "return_unmatched"]
+        ),
+        "amount_minor": rule("int", required=True),
+        "status": rule(
+            "text",
+            "prepared",
+            enum=["prepared", "submitted", "unknown", "confirmed", "failed"],
+        ),
         "bank_ref": rule("text", nullable=True),
     },
     "CREDITS": {
-        **{key: rule("text", required=True) for key in ("bank_event_id", "reference", "from_iban", "received_at")},
-        "amount_minor": rule("int", required=True), "disposition": rule("text", required=True, enum=["funded", "returned"]),
+        **{
+            key: rule("text", required=True)
+            for key in ("bank_event_id", "reference", "from_iban", "received_at")
+        },
+        "amount_minor": rule("int", required=True),
+        "disposition": rule("text", required=True, enum=["funded", "returned"]),
     },
     "POSTINGS": {
         **{key: rule("text", required=True) for key in ("posting_id", "source_id")},
-        "account": rule("text", required=True, enum=["held", "seller", "fee", "buyer_refund", "returned"]),
+        "account": rule(
+            "text",
+            required=True,
+            enum=["held", "seller", "fee", "buyer_refund", "returned"],
+        ),
         "amount_minor": rule("signed", required=True),
     },
 }
 
-DEALS = r'''
+DEALS = r"""
 CREATE UNIQUE INDEX ac_deals_hash ON {{tenantSchema}}.__P___records(tenant_id,(doc->>'hash')) WHERE kind='event';
 CREATE UNIQUE INDEX ac_deals_source ON {{tenantSchema}}.__P___records(tenant_id,(doc->>'source_message_id')) WHERE kind='event' AND doc->>'source_message_id' IS NOT NULL;
 CREATE UNIQUE INDEX ac_deals_posting ON {{tenantSchema}}.__P___records(tenant_id,(doc->>'source_id'),(doc->>'account')) WHERE kind='posting';
@@ -238,7 +320,7 @@ CREATE UNIQUE INDEX ac_deals_active_intent ON {{tenantSchema}}.__P___records(ten
  WHERE kind='intent' AND doc->>'kind' IN ('payout','refund') AND doc->>'status' IN ('prepared','submitted','unknown');
 CREATE INDEX ac_deals_by_deal ON {{tenantSchema}}.__P___records(tenant_id,kind,(doc->>'deal_id'));
 
-CREATE FUNCTION {{tenantSchema}}.__P___row(t uuid,k text,deal text,item jsonb,merge boolean,stamp text) RETURNS void
+CREATE FUNCTION {{tenantSchema}}.__P___row(t uuid,k text,deal text,item jsonb,merge_rows boolean,stamp text) RETURNS void
 LANGUAGE plpgsql SET search_path = pg_catalog AS $$
 DECLARE rules jsonb; keyname text; ident text; old jsonb; row jsonb; failure text;
 BEGIN
@@ -253,7 +335,7 @@ BEGIN
   IF item->>'deal_id' IS NOT NULL AND item->>'deal_id'<>deal THEN PERFORM {{tenantSchema}}.__P___error('invalid_argument'); END IF;
   ident:={{tenantSchema}}.__P___text(item,keyname);
   old:={{tenantSchema}}.__P___get(t,k,ident);
-  IF old IS NOT NULL AND NOT merge THEN PERFORM {{tenantSchema}}.__P___error(failure); END IF;
+  IF old IS NOT NULL AND NOT merge_rows THEN PERFORM {{tenantSchema}}.__P___error(failure); END IF;
   IF old IS NOT NULL AND old->>'deal_id'<>deal THEN PERFORM {{tenantSchema}}.__P___error('invalid_argument'); END IF;
   row:={{tenantSchema}}.__P___clean(item-'deal_id',rules,old IS NOT NULL);
   row:=COALESCE(old,'{}')||row||jsonb_build_object('deal_id',deal);
@@ -263,7 +345,7 @@ BEGIN
   IF k IN ('intent','posting') AND old IS NULL THEN row:=row||jsonb_build_object('created_at',stamp); END IF;
   IF k='intent' THEN row:=row||jsonb_build_object('updated_at',stamp); END IF;
   BEGIN
-    IF merge THEN PERFORM {{tenantSchema}}.__P___put(t,k,ident,row);
+    IF merge_rows THEN PERFORM {{tenantSchema}}.__P___put(t,k,ident,row);
     ELSE INSERT INTO {{tenantSchema}}.__P___records(tenant_id,kind,id,doc) VALUES(t,k,ident,row); END IF;
   EXCEPTION WHEN unique_violation THEN PERFORM {{tenantSchema}}.__P___error(failure);
   END;
@@ -409,8 +491,8 @@ BEGIN
   END IF;
   PERFORM {{tenantSchema}}.__P___error('unknown_export');
 END $$;
-'''
-MESSAGING = r'''
+"""
+MESSAGING = r"""
 CREATE INDEX ac_msg_inbox ON {{tenantSchema}}.__P___records(tenant_id,(doc->>'recipient_did'),ordinal) WHERE kind='message';
 CREATE INDEX ac_msg_conversation ON {{tenantSchema}}.__P___records(tenant_id,(doc->>'conversation_id'),ordinal) WHERE kind='message';
 
@@ -537,7 +619,7 @@ BEGIN
       IF jsonb_typeof(env->k) IS DISTINCT FROM 'string' OR length(env->>k) NOT BETWEEN 1 AND 512 THEN PERFORM {{tenantSchema}}.__P___error('invalid_envelope'); END IF;
     END LOOP;
     IF jsonb_typeof(env->'type_version') IS DISTINCT FROM 'number' OR env->>'type_version' !~ '^[1-9][0-9]*$'
-      OR jsonb_typeof(env->'body') IS DISTINCT FROM 'object' OR env->>'created_at' !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+      OR jsonb_typeof(env->'body') IS DISTINCT FROM 'object' OR jsonb_typeof(env->'created_at') IS DISTINCT FROM 'string' OR env->>'created_at' !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
       OR (env->'causation_id'<>'null'::jsonb AND (jsonb_typeof(env->'causation_id')<>'string' OR env->>'causation_id'='')) THEN PERFORM {{tenantSchema}}.__P___error('invalid_envelope'); END IF;
     row:={{tenantSchema}}.__P___get(t,'identity',env->>'sender_did');
     IF ctx->>'callerKind'<>'fenced_worker' OR row->>'installation_id' IS DISTINCT FROM installation OR row->'active' IS DISTINCT FROM 'true'::jsonb THEN PERFORM {{tenantSchema}}.__P___error('not_your_did'); END IF;
@@ -597,4 +679,4 @@ BEGIN
   END IF;
   PERFORM {{tenantSchema}}.__P___error('unknown_export');
 END $$;
-'''
+"""
