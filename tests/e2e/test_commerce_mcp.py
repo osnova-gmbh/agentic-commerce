@@ -68,11 +68,14 @@ async def test_official_mcp_client_can_discover_and_complete_checkout_once():
                     assert discovered["api_contract"]["links"]["openapi"] == "http://127.0.0.1:8094/openapi.json"
                     services = (await call(session, "commerce_list_services"))["services"]
                     chosen = next(row for row in services if row["offer_id"] == "offer-1")
+                    assert chosen["actions"][0]["href"] == "http://127.0.0.1/api/demo/orders"
+                    assert chosen["actions"][0]["response_schema"]["$ref"].startswith("http://127.0.0.1:8094/openapi.json#")
                     prepared = await call(session, "commerce_prepare_checkout", {
                         "seller_org_id": chosen["seller_org_id"], "offer_id": chosen["offer_id"],
                         "inputs": {"topic": "MCP test"}, "idempotency_key": "mcp-prepare",
                     })
                     deal = prepared["deal_id"]
+                    assert prepared["links"]["status"] == "http://127.0.0.1/api/demo/orders/" + deal
                     quoted = await wait_order(session, deal, "QUOTED")
                     assert any(action["name"] == "fund" for action in quoted["actions"])
                     initial_accounts = engine.bank.accounts()
@@ -129,6 +132,11 @@ async def test_stdio_initialization_and_resources_do_not_require_a_running_backe
         async with ClientSession(*streams) as session:
             initialized = await session.initialize()
             assert initialized.serverInfo.name == "Cogit Commerce"
+            discovery = await call(session, "commerce_discover")
+            assert discovery["mcp_endpoint"] is None
+            assert discovery["openapi_url"] == "commerce://openapi"
+            assert discovery["api_manifest_url"] == "commerce://capabilities"
+            assert "mcp" not in discovery["api_contract"]["links"]
             tools = await session.list_tools()
             assert any(tool.name == "commerce_prepare_checkout" for tool in tools.tools)
             resources = await session.list_resources()
@@ -141,7 +149,7 @@ async def test_stdio_initialization_and_resources_do_not_require_a_running_backe
 
 def test_http_sidecar_serves_discovery_even_when_old_backend_has_no_openapi():
     app = create_mcp_server("http://127.0.0.1:8091").streamable_http_app()
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://127.0.0.1:8094") as client:
         manifest = client.get("/api").json()
         assert manifest["links"]["openapi"] == "http://127.0.0.1:8094/openapi.json"
         assert "docs" not in manifest["links"]
@@ -162,3 +170,27 @@ def test_remote_api_targets_are_rejected():
         create_mcp_server("https://example.com")
     with pytest.raises(ValueError, match="credentials"):
         create_mcp_server("http://user:password@localhost:8091")
+
+
+def test_mounted_mcp_uses_the_real_api_origin_and_does_not_recurse():
+    with TestClient(create_bank_app()) as bank_http:
+        engine = CatalogDemoEngine(ROOT, bank=SimBankClient(bank_http), step_delay=0)
+        app = create_checkout_app(engine)
+        register_mcp(app, api_url="http://127.0.0.1:8091")
+        try:
+            with TestClient(app, base_url="http://127.0.0.1:8091") as client:
+                manifest = client.get("/api").json()
+                assert manifest["links"]["mcp"] == "http://127.0.0.1:8091/mcp"
+                response = client.post("/mcp", headers={"Accept": "application/json, text/event-stream"},
+                    json={"jsonrpc": "2.0", "id": 1, "method": "initialize",
+                          "params": {"protocolVersion": "2025-11-25", "capabilities": {},
+                                     "clientInfo": {"name": "pytest", "version": "1"}}})
+                assert response.status_code == 200, response.text
+                assert response.json()["result"]["serverInfo"]["name"] == "Cogit Commerce"
+        finally:
+            engine.close()
+
+
+def test_api_url_must_not_include_a_path():
+    with pytest.raises(ValueError, match="origin"):
+        create_mcp_server("http://127.0.0.1:8091/unrelated")

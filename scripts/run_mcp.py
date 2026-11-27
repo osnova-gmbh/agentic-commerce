@@ -18,7 +18,7 @@ def main() -> None:
     args = parser.parse_args()
     if not 1 <= args.port <= 65535:
         parser.error("--port must be between 1 and 65535")
-    server = create_mcp_server(args.api_url, port=args.port)
+    server = create_mcp_server(args.api_url, port=args.port, transport=args.transport)
     server.run(transport=args.transport)
 
 
