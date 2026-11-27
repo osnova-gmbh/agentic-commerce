@@ -25,6 +25,8 @@ function listedOffers(company) {
 }
 
 function offerPrice(offer) {
+  if (offer.availability === 'waitlist') return 'Waitlist';
+  if (offer.price_label === 'Request quote') return 'Price on request';
   if (typeof offer.price_label === 'string' && offer.price_label.trim()) return offer.price_label;
   if (typeof offer.price_minor === 'number' && Number.isFinite(offer.price_minor) && offer.currency) {
     try {
@@ -32,7 +34,7 @@ function offerPrice(offer) {
         .format(offer.price_minor / 100);
     } catch {}
   }
-  return 'Request quote';
+  return 'Price on request';
 }
 
 function offerList(company) {
@@ -48,6 +50,7 @@ function offerList(company) {
   for (const offer of offers) {
     const link = element('a', 'company-offer');
     const selection = new URLSearchParams({
+      checkout: '1',
       company: offer.company_id || company.org_id,
       offer: offer.offer_id,
     });
@@ -60,7 +63,7 @@ function offerList(company) {
     const bottom = element('div', 'company-offer-bottom');
     bottom.append(
       element('span', 'company-offer-price', offerPrice(offer)),
-      element('span', 'company-offer-action', 'View offer')
+      element('span', 'company-offer-action', 'View deal')
     );
     link.append(heading);
     if (offer.description) link.append(element('p', '', offer.description));
@@ -86,19 +89,10 @@ function card(company) {
   if (company.outreach_priority) heading.append(element('span', 'company-rank', String(company.outreach_priority).padStart(2, '0')));
   const foot = element('div', 'company-card-foot');
   foot.append(element('span', '', company.campus || 'Campus company'));
-  if (company.website) {
-    try {
-      const url = new URL(company.website);
-      if (url.protocol === 'https:' || url.protocol === 'http:') {
-        const link = element('a', '', 'Provider website ↗');
-        link.href = url.href;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.setAttribute('aria-label', 'Visit ' + company.name + ' website');
-        foot.append(link);
-      }
-    } catch {}
-  }
+  const dealsLink = element('a', '', 'View deals');
+  dealsLink.href = '/demo?' + new URLSearchParams({ company: company.org_id }).toString();
+  dealsLink.setAttribute('aria-label', 'View deals from ' + company.name);
+  foot.append(dealsLink);
   const audience = section('Who they serve', company.target_customers);
   audience.classList.add('company-audience');
   node.append(heading, section('What they provide', company.products_and_services),

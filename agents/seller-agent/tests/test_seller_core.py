@@ -28,17 +28,22 @@ def rig() -> Rig:
 
 
 def test_publish_catalog_sends_the_offers_file(rig: Rig) -> None:
-    assert rig.core.publish_catalog() == 1
+    assert rig.core.publish_catalog() == 2
 
     ((args, key),) = rig.modules.published()
     assert args["seller_org_id"] == "seller-co"
-    (offer,) = args["offers"]
+    assert [offer["offer_id"] for offer in args["offers"]] == ["offer-1", "ai-training"]
+    offer, training = args["offers"]
     assert offer["offer_id"] == "offer-1"
     assert offer["price_minor"] == 50000
     assert offer["deliverable"]["required_files"] == [
         "report.md",
         "data.csv",
         "summary.json",
+    ]
+    assert training["price_minor"] == 120000
+    assert training["deliverable"]["required_files"] == [
+        "course.md", "exercises.md", "summary.json"
     ]
     assert key == f"catalog.publish:seller-co:{canonical_hash(args['offers'])}"
 
@@ -60,7 +65,7 @@ def test_relayed_service_request_is_quoted(rig: Rig) -> None:
     assert quote["body"] == {
         "price_minor": 50000,
         "currency": "EUR",
-        "delivery_deadline": "2026-11-27T10:01:00Z",
+        "delivery_deadline": "2026-11-27T10:15:00Z",
         "valid_until": "2026-11-27T10:10:00Z",
         "acceptance": {
             "evaluators": [
@@ -75,7 +80,7 @@ def test_relayed_service_request_is_quoted(rig: Rig) -> None:
                 {
                     "evaluator_id": "deadline",
                     "version": 1,
-                    "params": {"delivery_deadline": "2026-11-27T10:01:00Z"},
+                    "params": {"delivery_deadline": "2026-11-27T10:15:00Z"},
                 },
             ],
             "policy": "all",

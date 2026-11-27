@@ -117,7 +117,8 @@ class BuyerCore:
         return self._escrow_did
 
     def start_purchase(
-        self, category: str | None = None, max_price_minor: int | None = None
+        self, category: str | None = None, max_price_minor: int | None = None,
+        *, request_id: str | None = None,
     ) -> PurchaseResult:
         """Discover one offer and request it from E. Arguments override the settings."""
         wanted = category or self.settings.category
@@ -140,7 +141,7 @@ class BuyerCore:
         if offer is None:
             return PurchaseResult("no_offer", sellers_seen, offers_seen)
         offer_id = str(offer["offer_id"])
-        deal_id = str(uuid.uuid4())
+        deal_id = str(uuid.uuid5(uuid.NAMESPACE_URL, "commerce-purchase:" + request_id)) if request_id else str(uuid.uuid4())
         self._messaging.send(
             SERVICE_REQUEST,
             TYPE_VERSION,

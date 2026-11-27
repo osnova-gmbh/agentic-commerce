@@ -12,7 +12,7 @@
     {
       "id": "000001__native",
       "path": "migrations/000001__native.sql",
-      "sha256": "37e0b7dcb0ca5e0308fe92836f9c73eb5a55fe1b0572c82a04c5be40a95a6fc3"
+      "sha256": "50bb4c703781c1de58142d24307251c163740183279d5c34e300feee858e86f6"
     },
     {
       "id": "000099__exports",

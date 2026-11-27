@@ -63,8 +63,8 @@ scripts/test.sh modules/cogit-finance-catalog          # from the repository roo
 
 ## AgentDb packaging
 
-The AgentDb-native packaging of this module, as PL/pgSQL functions
-`fn(ctx jsonb, input jsonb) returns jsonb` with a `manifest.json`, is a later port and not
-part of this build. This implementation is the specification for that port: the tables in
-`migrations/`, the export names and kinds in `CatalogModule.queries` and
-`CatalogModule.commands`, and the behaviour pinned by the tests.
+The native implementation is in `agentdb/`: PL/pgSQL functions and an AgentDb
+manifest. Build it with `python scripts/build_agentdb_modules.py`; deployment
+and live acceptance are described in [the runtime guide](../../docs/AGENTDB-RUNTIME.md).
+The Python/SQLite implementation remains the behavioral reference. Native
+exports use the lossless JSON carrier in `cogit_finance_seams.native`.

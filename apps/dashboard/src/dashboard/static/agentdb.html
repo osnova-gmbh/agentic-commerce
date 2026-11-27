@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cogit Finance — AgentDb transactions</title>
+  <link rel="icon" href="/static/assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .native-shell{max-width:1100px;margin:4rem auto;padding:0 1.5rem}.native-top{display:flex;align-items:center;justify-content:space-between;gap:1rem}.native-brand{display:flex;gap:.7rem;align-items:center;font-weight:800}.native-brand img{width:34px}.native-card{background:white;border:1px solid #dbe1d7;border-radius:22px;padding:2.2rem;margin:2rem 0}.native-card h1{font-size:clamp(2rem,5vw,3.7rem);max-width:800px;line-height:1.08;letter-spacing:-.05em}.native-card p{max-width:650px;line-height:1.7;color:#526252}.native-card button,.native-card a{display:inline-block;margin-top:1rem;margin-right:1rem}.native-state{padding:1rem 0;min-height:4rem}.native-state.error{color:#9e3232}.native-log{font-size:.85rem;word-break:break-word;color:#526252}
+  </style>
+</head>
+<body>
+  <main class="native-shell">
+    <header class="native-top"><div class="native-brand"><img src="/static/assets/mark.svg" alt="">Cogit Finance</div><span id="connection">Connecting…</span></header>
+    <section class="native-card">
+      <p class="eyebrow">PERSISTENT TRANSACTION WORKSPACE</p><h1>Agree the work.<br>Pay when it’s delivered.</h1>
+      <p>Buy a €500 report. Four independent workers handle the agreement, delivery and checks. AgentDb keeps the transaction record. Payments use the simulated bank.</p>
+      <button id="purchase" class="button dark" disabled>Start €500 purchase</button><a class="button secondary" href="/">View transaction history</a>
+      <div id="status" class="native-state" role="status" aria-live="polite">Checking the workers…</div><div id="reference" class="native-log"></div>
+    </section>
+  </main>
+  <script src="/static/agentdb.js"></script>
+</body>
+</html>

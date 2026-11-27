@@ -2,17 +2,24 @@
 
 // Both the read-only dashboard and local demo share this workspace and live API.
 const isDemo = document.body.dataset.mode === 'demo';
-function isLegacyCheckout() { return isDemo && new URLSearchParams(location.search).get('legacy') === '1'; }
+function isLegacyCheckout() {
+  const query = new URLSearchParams(location.search);
+  return isDemo && (query.get('legacy') === '1' || query.get('checkout') === '1' || Boolean(query.get('company') && query.get('offer')));
+}
 function isProviderView() { return isDemo && !isLegacyCheckout() && !pinned(); }
 document.getElementById('app').innerHTML = `
   <a class="skip-link" href="#deal">Skip to the selected deal</a>
   <header class="site-header wrap">
-    <a class="brand" href="${isDemo ? '/demo' : '/'}" aria-label="Cogit Finance home">
+    <a class="brand" href="/demo" aria-label="Cogit Finance home">
       <img src="/static/assets/mark.svg" width="31" height="31" alt="">
       <span>cogit<span class="brand-divider">/</span><span class="brand-finance">finance</span></span>
     </a>
-    <nav aria-label="Workspace navigation">${isDemo ? '<a href="#demo-controls" id="browse-services-nav">Services</a>' : ''}<a class="nav-current" href="#workspace" aria-current="page">Deal overview</a><a href="/catalog">Company catalog</a>${isDemo ? '<a href="/">Demo history</a>' : '<a href="#activity">Activity</a>'}</nav>
-    <span class="environment"><span class="status-dot"></span>${isDemo ? 'Local simulation' : 'Read-only workspace'}</span>
+    <nav aria-label="Workspace navigation">
+      <a href="/catalog">Company catalog</a>
+      <a href="/demo"${isLegacyCheckout() ? '' : ' class="nav-current" aria-current="page"'}>Deal overview</a>
+      <a href="/demo?legacy=1"${isLegacyCheckout() ? ' class="nav-current" aria-current="page"' : ''}>Escrow demo</a>
+    </nav>
+    <span class="environment"><span class="status-dot"></span>Delta Campus</span>
   </header>
   <section class="workspace-intro wrap" aria-labelledby="page-heading">
     <div><p class="eyebrow">A CLEAR VIEW OF EVERY DEAL</p><h1 id="page-heading">Trust, from start to <span>settlement.</span></h1><p class="intro-copy">The terms, the work, the payment. All in one place.</p></div>
@@ -202,14 +209,15 @@ function syncWorkspaceMode() {
   document.querySelector('.workspace-layout').style.gridTemplateColumns = providers ? 'minmax(0, 1fr)' : '';
   document.getElementById('deal').hidden = providers;
   if (isDemo) {
-    document.getElementById('page-heading').innerHTML = providers ? 'Services from <span>Delta Campus companies.</span>' :
-      history ? 'Demo transaction <span>history.</span>' : 'Trust, from start to <span>settlement.</span>';
-    document.querySelector('.intro-copy').textContent = providers ? 'Explore their actual products, published pricing and official contact options.' :
-      history ? 'A saved simulated transaction. Provider offers are available under Services.' : 'The terms, the work, the payment. All in one place.';
+    document.querySelector('.chrome-mode').textContent = providers ? 'PROVIDER OFFERS' : history ? 'DEMO HISTORY' : 'INTERACTIVE DEMO';
+    document.querySelector('.site-footer > span:last-child').textContent = providers ? 'COGIT FINANCE · PROVIDER DIRECTORY' : history ? 'COGIT FINANCE · DEMO HISTORY' : 'COGIT FINANCE · DEMO ENVIRONMENT';
+    document.title = providers ? 'Cogit Finance - Deal overview' : history ? 'Cogit Finance - Demo history' : 'Cogit Finance - Escrow demo';
+    document.getElementById('page-heading').innerHTML = providers ? 'Deal overview. <span>Delta Campus offers.</span>' :
+      history ? 'Demo transaction <span>history.</span>' : 'Escrow demo. <span>From request to payment.</span>';
+    document.querySelector('.intro-copy').textContent = providers ? 'Explore the companies\' products, published pricing and availability.' :
+      history ? 'A saved simulated transaction. Browse company offers in Deal overview or start a deal in Escrow demo.' : 'Select a service, fund escrow, check delivery, and release payment.';
     document.querySelector('.connection-note').textContent = providers ? 'Published products and services.' :
       history ? 'Saved simulated transaction.' : 'Real agent flow. Simulated funds.';
-    document.querySelector('.environment').innerHTML = '<span class="status-dot"></span>' +
-      (providers ? 'Provider directory' : history ? 'Demo history' : 'Local simulation');
   }
 }
 
@@ -217,7 +225,7 @@ async function refresh() {
   const id = ++refreshId;
   syncWorkspaceMode();
   if (isProviderView()) return;
-  const deals = (await getJSON('/api/deals')).deals; const pin = pinned(); const known = deals.some(deal => deal.deal_id === pin); const selected = pin ? (known ? pin : '') : deals.length ? deals[0].deal_id : '';
+  const deals = (await getJSON('/api/deals')).deals; const pin = pinned(); const known = deals.some(deal => deal.deal_id === pin); const selected = pin ? (known ? pin : '') : isDemo && isLegacyCheckout() ? '' : deals.length ? deals[0].deal_id : '';
   const [view, accounts] = await Promise.all([selected ? getJSON('/api/deals/' + encodeURIComponent(selected)) : null, getJSON('/api/accounts').then(body => body.accounts, () => null)]);
   if (id !== refreshId) return;
   render('list', { deals, selected, pin: known }, renderList); render('deal', { view, accounts }, renderDeal); render('participants', view ? view.deal : null, () => renderParticipants(view));

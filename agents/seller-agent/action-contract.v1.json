@@ -55,6 +55,51 @@
       "metadata": null
     },
     {
+      "name": "drain_inbox",
+      "description": "Process a bounded batch of signed messages under the worker's AgentDb context.",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "default": 10,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "DrainInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "handled": {
+            "title": "Handled",
+            "type": "integer"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "integer"
+          },
+          "released": {
+            "title": "Released",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "handled",
+          "rejected",
+          "released"
+        ],
+        "title": "DrainOutput",
+        "type": "object"
+      },
+      "risk": "write",
+      "requires_approval": false,
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
+    },
+    {
       "name": "handle_message",
       "description": "Handle one finance message from the escrow agent: quote a relayed request, accept matching terms, deliver or redeliver.",
       "input_schema": {

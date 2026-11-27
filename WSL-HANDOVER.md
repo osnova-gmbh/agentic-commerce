@@ -1,6 +1,10 @@
 # WSL / Boris handover
 
-Environment last checked: 2026-11-27. Planning and environment setup only; no application has been built here.
+Historical WSL/Boris environment notes from 2026-11-27. The repository now also
+contains a local transaction simulation and an AgentDb deployment path. See
+[the current runtime guide](docs/AGENTDB-RUNTIME.md). Process and file-lock
+observations below describe the earlier check and must be rechecked before
+treating them as current state.
 
 ## Environment and access
 

@@ -44,6 +44,41 @@ actions:
   required_capabilities:
   - records.write
   metadata: null
+- name: drain_inbox
+  description: Process a bounded batch of signed messages under the worker's AgentDb
+    context.
+  input_schema:
+    properties:
+      limit:
+        default: 10
+        maximum: 100
+        minimum: 1
+        title: Limit
+        type: integer
+    title: DrainInput
+    type: object
+  output_schema:
+    properties:
+      handled:
+        title: Handled
+        type: integer
+      rejected:
+        title: Rejected
+        type: integer
+      released:
+        title: Released
+        type: integer
+    required:
+    - handled
+    - rejected
+    - released
+    title: DrainOutput
+    type: object
+  risk: write
+  requires_approval: false
+  idempotency: inherent
+  required_capabilities: []
+  metadata: null
 - name: handle_message
   description: Judge the delivery named by a finance.evaluation_request and send one
     finance.verdict to the escrow agent.
@@ -571,3 +606,31 @@ database_packages:
     key: resolutions.list
     export_version: 1.0.0
     contract_id: cogit.evaluator-agent.resolutions.list.v1
+- module_key: cogit-messaging
+  version: 1.0.0
+  artifact_sha256: c5c0aece64f6aa85586301c3a30b6ee4dc79781133cecfb05430ca36941d0ebe
+  exports:
+  - kind: query
+    key: identity.resolve
+    export_version: 1.0.0
+    contract_id: cogit-messaging.identity.resolve.v1
+  - kind: query
+    key: conversation.read
+    export_version: 1.0.0
+    contract_id: cogit-messaging.conversation.read.v1
+  - kind: command
+    key: message.send
+    export_version: 1.0.0
+    contract_id: cogit-messaging.message.send.v1
+  - kind: command
+    key: message.claim
+    export_version: 1.0.0
+    contract_id: cogit-messaging.message.claim.v1
+  - kind: command
+    key: message.ack
+    export_version: 1.0.0
+    contract_id: cogit-messaging.message.ack.v1
+  - kind: command
+    key: message.release
+    export_version: 1.0.0
+    contract_id: cogit-messaging.message.release.v1

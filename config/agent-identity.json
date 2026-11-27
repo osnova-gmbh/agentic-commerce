@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "mode": "boris-payload",
+  "endpoint": "https://agent-gateway-01.agw.pool.boris-md.usw1.affinidi.io/agents/teal-orchard-5580",
+  "agents": {
+    "buyer-agent": {
+      "application_name": "buyer-agent"
+    },
+    "seller-agent": {
+      "application_name": "seller-agent"
+    },
+    "cogit-finance": {
+      "application_name": "cogit-finance"
+    }
+  }
+}

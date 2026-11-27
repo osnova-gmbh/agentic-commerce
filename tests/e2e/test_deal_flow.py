@@ -26,11 +26,11 @@ def world(tmp_path: Path, request: pytest.FixtureRequest):
 
 def start_deal(world: DemoWorld) -> str:
     assert world.tick()["types_registered"] == 14
-    assert world.act(SELLER, "publish_catalog") == {"count": 1}
+    assert world.act(SELLER, "publish_catalog") == {"count": 2}
     purchase = world.act(BUYER, "start_purchase")
     assert purchase["status"] == "requested", purchase
     assert (purchase["seller_org_id"], purchase["offer_id"]) == ("seller-co", "offer-1")
-    assert (purchase["sellers_seen"], purchase["offers_seen"]) == (1, 1)  # the discovery evidence
+    assert (purchase["sellers_seen"], purchase["offers_seen"]) == (1, 2)  # the discovery evidence
     return purchase["deal_id"]
 
 
