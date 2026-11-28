@@ -38,6 +38,7 @@ class NativeHost:
         self.settings[module.name] = {
             "escrow_installation_id": ESCROW,
             "operator_principal_id": "test-operator",
+            "operator_readonly_principal_id": "test-reader",
             "redeliver_after_s": 30,
             "max_delivery_attempts": 5,
             **(settings or {}),
@@ -112,9 +113,9 @@ def native_host():
     with connection.cursor() as cursor:
         cursor.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
         for module in PREFIXES:
-            source = (
-                REPO / "modules" / module / "agentdb/migrations/000001__native.sql"
-            ).read_text(encoding="utf-8")
+            directory = REPO / "modules" / module / "agentdb/migrations"
+            source = "\n".join((directory / name).read_text(encoding="utf-8") for name in (
+                "000001__native.sql", "000100__spec_recovery.sql"))
             source = re.sub(
                 r"(?:ALTER (?:TABLE|FUNCTION).*?OWNER TO agentdb_owner;|REVOKE ALL .*? FROM PUBLIC;)",
                 "",
@@ -139,13 +140,26 @@ def test_native_sql_drives_actual_agent_actions(
 ):
     import cogit_messaging_shim.testing as transport
 
-    monkeypatch.setattr(transport, "LocalModuleHost", lambda: native_host)
+    monkeypatch.setattr(transport, "LocalModuleHost", lambda *args: native_host)
     world = DemoWorld(tmp_path, seller_mode)
     try:
         world.tick()
         world.act(SELLER, "publish_catalog")
         deal_id = world.act(BUYER, "start_purchase")["deal_id"]
         assert world.run(deal_id) == "SETTLED"
+        from world import chain_is_valid
+        events = world.deal(deal_id)["events"]
+        assert chain_is_valid(events)
+        if seller_mode == "ok":
+            assert [e["event_type"] for e in events] == [
+                "service_request", "quote", "terms_proposed", "accept_terms", "accept_terms",
+                "terms_countersigned", "payment_request", "funding_received", "delivery",
+                "evaluation_requested", "verdict", "verdict", "verdict", "decision",
+                "payout_submitted", "payout_confirmed", "receipt",
+            ]
+        else:
+            assert len(world.deal(deal_id)["deliveries"]) == 2
+            assert any(row.get("reason") == "stale_verdict" for row in world.conversation(deal_id))
         assert world.balances(deal_id) == {
             "held": 0,
             "seller": 49500,

@@ -80,7 +80,7 @@ class Agent(CogitAgent):
 
     def handle_run(self, request: RunRequest, context: Context, handle: Any) -> Any:
         from cogit_finance_seams.commands import run_commerce_command
-        return run_commerce_command(self, request, context, handle, frozenset({"bootstrap", "tick", "drain_inbox"}))
+        return run_commerce_command(self, request, context, handle, frozenset({"bootstrap", "tick", "drain_inbox", "resolve_dispute"}))
 
     async def shutdown(self) -> None:
         resources = self.dependencies.closeables

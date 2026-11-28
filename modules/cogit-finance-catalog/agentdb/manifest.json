@@ -1,12 +1,14 @@
 {
   "formatVersion": 1,
   "moduleKey": "cogit-finance-catalog",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "platform": {
     "minSchema": 179,
     "maxSchema": 216
   },
-  "upgradeFrom": [],
+  "upgradeFrom": [
+    "1.0.0"
+  ],
   "retention": "preserve",
   "migrations": [
     {
@@ -18,6 +20,11 @@
       "id": "000099__exports",
       "path": "migrations/000099__exports.sql",
       "sha256": "ba01cddcffc3e773862419e2dd20d52627d1e05c71f60556ec618aa90ec81ec2"
+    },
+    {
+      "id": "000100__spec_recovery",
+      "path": "migrations/000100__spec_recovery.sql",
+      "sha256": "0d55df82d5472f1d77888e29a1c32acc64abd214e2b0cac83d04d72e05f7f3d2"
     }
   ],
   "files": [],
@@ -25,7 +32,7 @@
     {
       "key": "company.read",
       "kind": "query",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-catalog.company.read.v1",
       "functionName": "ac_catalog_company_read",
       "inputSchema": {
@@ -65,7 +72,7 @@
     {
       "key": "companies.list",
       "kind": "query",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-catalog.companies.list.v1",
       "functionName": "ac_catalog_companies_list",
       "inputSchema": {
@@ -105,7 +112,7 @@
     {
       "key": "sellers.list",
       "kind": "query",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-catalog.sellers.list.v1",
       "functionName": "ac_catalog_sellers_list",
       "inputSchema": {
@@ -145,7 +152,7 @@
     {
       "key": "catalog.read",
       "kind": "query",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-catalog.catalog.read.v1",
       "functionName": "ac_catalog_catalog_read",
       "inputSchema": {
@@ -185,7 +192,7 @@
     {
       "key": "evaluators.list",
       "kind": "query",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-catalog.evaluators.list.v1",
       "functionName": "ac_catalog_evaluators_list",
       "inputSchema": {
@@ -225,7 +232,7 @@
     {
       "key": "company.upsert",
       "kind": "command",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-catalog.company.upsert.v1",
       "functionName": "ac_catalog_company_upsert",
       "inputSchema": {
@@ -265,7 +272,7 @@
     {
       "key": "evaluator.upsert",
       "kind": "command",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-catalog.evaluator.upsert.v1",
       "functionName": "ac_catalog_evaluator_upsert",
       "inputSchema": {
@@ -305,7 +312,7 @@
     {
       "key": "catalog.publish",
       "kind": "command",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-catalog.catalog.publish.v1",
       "functionName": "ac_catalog_catalog_publish",
       "inputSchema": {
@@ -355,13 +362,18 @@
         "operator_principal_id": {
           "type": "string",
           "maxLength": 128
+        },
+        "operator_readonly_principal_id": {
+          "type": "string",
+          "maxLength": 128
         }
       },
       "additionalProperties": false
     },
     "defaults": {
       "escrow_installation_id": "cogit-finance",
-      "operator_principal_id": ""
+      "operator_principal_id": "",
+      "operator_readonly_principal_id": ""
     }
   },
   "policies": [],

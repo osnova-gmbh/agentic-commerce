@@ -313,6 +313,26 @@ DEAL_SPECS = {
 }
 
 DEALS = r"""
+CREATE FUNCTION {{tenantSchema}}.__P___can_read(ctx jsonb, deal jsonb) RETURNS boolean
+LANGUAGE plpgsql SET search_path = pg_catalog AS $$
+BEGIN
+  IF ctx->>'callerKind'='tenant_client' THEN
+    RETURN COALESCE(NULLIF(ctx->>'principalId','') IN (
+      NULLIF(ctx#>>'{settings,operator_readonly_principal_id}',''),
+      NULLIF(ctx#>>'{settings,operator_principal_id}','')),false);
+  END IF;
+  IF ctx->>'callerKind' IS DISTINCT FROM 'fenced_worker' THEN RETURN false; END IF;
+  IF NULLIF(ctx->>'installationId','')=NULLIF(ctx#>>'{settings,escrow_installation_id}','') THEN RETURN true; END IF;
+  RETURN EXISTS(SELECT 1 FROM {{tenantSchema}}.ac_msg_records i
+    WHERE i.tenant_id=(ctx->>'tenantId')::uuid AND i.kind='identity'
+      AND i.doc->>'installation_id'=ctx->>'installationId' AND i.doc->>'active'='true'
+      AND (i.id IN (deal#>>'{terms,buyer_did}',deal#>>'{terms,seller_did}')
+        OR ((deal->'terms' IS NULL OR deal->'terms'='null'::jsonb) AND EXISTS(
+          SELECT 1 FROM {{tenantSchema}}.__P___records r WHERE r.tenant_id=i.tenant_id
+            AND r.doc->>'deal_id'=deal->>'deal_id'
+            AND ((r.kind='event' AND r.doc->>'event_type'='service_request' AND r.doc#>>'{body,envelope,sender_did}'=i.id)
+              OR (r.kind='outbox' AND r.doc->>'seq'='1' AND r.doc#>>'{envelope,recipient_did}'=i.id))))));
+END $$;
 CREATE UNIQUE INDEX ac_deals_hash ON {{tenantSchema}}.__P___records(tenant_id,(doc->>'hash')) WHERE kind='event';
 CREATE UNIQUE INDEX ac_deals_source ON {{tenantSchema}}.__P___records(tenant_id,(doc->>'source_message_id')) WHERE kind='event' AND doc->>'source_message_id' IS NOT NULL;
 CREATE UNIQUE INDEX ac_deals_posting ON {{tenantSchema}}.__P___records(tenant_id,(doc->>'source_id'),(doc->>'account')) WHERE kind='posting';
@@ -434,6 +454,26 @@ DECLARE t uuid:=(ctx->>'tenantId')::uuid; ident text; row jsonb; item jsonb; res
 BEGIN
   IF jsonb_typeof(a) IS DISTINCT FROM 'object' THEN PERFORM {{tenantSchema}}.__P___error('invalid_argument'); END IF;
   IF op='deal.commit' THEN RETURN {{tenantSchema}}.__P___commit(ctx,a);
+  ELSIF op='credit.read' THEN
+    PERFORM {{tenantSchema}}.__P___escrow(ctx);
+    RETURN jsonb_build_object('credit',{{tenantSchema}}.__P___get(t,'credit',{{tenantSchema}}.__P___text(a,'bank_event_id')));
+  ELSIF op='intents.unresolved' THEN
+    PERFORM {{tenantSchema}}.__P___escrow(ctx);
+    SELECT COALESCE(jsonb_agg(doc ORDER BY id),'[]') INTO result FROM {{tenantSchema}}.__P___records
+      WHERE tenant_id=t AND kind='intent' AND doc->>'status' IN ('prepared','submitted','unknown');
+    RETURN jsonb_build_object('intents',result);
+  ELSIF op='credit.return' THEN
+    PERFORM {{tenantSchema}}.__P___escrow(ctx);
+    ident:={{tenantSchema}}.__P___text(a->'credit','bank_event_id');
+    PERFORM pg_advisory_xact_lock(hashtextextended(t::text||':credit:'||ident,0));
+    IF {{tenantSchema}}.__P___get(t,'credit',ident) IS NOT NULL THEN RETURN '{}'; END IF;
+    IF a#>>'{credit,disposition}' IS DISTINCT FROM 'returned' OR a#>>'{intent,kind}' IS DISTINCT FROM 'return_unmatched' THEN
+      PERFORM {{tenantSchema}}.__P___error('invalid_argument');
+    END IF;
+    PERFORM {{tenantSchema}}.__P___row(t,'credit',NULL,a->'credit',false,stamp);
+    PERFORM {{tenantSchema}}.__P___row(t,'intent',NULL,a->'intent',false,stamp);
+    PERFORM {{tenantSchema}}.__P___row(t,'posting',NULL,a->'posting',false,stamp);
+    RETURN '{}';
   ELSIF op IN ('outbox.mark_sent','intent.update') THEN
     PERFORM {{tenantSchema}}.__P___escrow(ctx);
     IF op='outbox.mark_sent' THEN
@@ -460,6 +500,7 @@ BEGIN
     END IF;
     RETURN '{}';
   ELSIF op='outbox.pending' THEN
+    PERFORM {{tenantSchema}}.__P___escrow(ctx);
     n:={{tenantSchema}}.__P___int(a,'limit',50);
     SELECT COALESCE(jsonb_agg(x.doc ORDER BY x.created,x.deal,x.seq,x.position,x.id),'[]') INTO result FROM (
       SELECT doc-'status'-'sent_at'-'created_at'-'ordinal' AS doc,doc->>'created_at' created,doc->>'deal_id' deal,(doc->>'seq')::bigint seq,(doc->>'ordinal')::bigint position,id
@@ -468,11 +509,13 @@ BEGIN
     RETURN jsonb_build_object('entries',result);
   ELSIF op='deal.list' THEN
     SELECT COALESCE(jsonb_agg(jsonb_build_object('deal_id',doc->'deal_id','state',doc->'state','buyer_org_id',doc->'buyer_org_id','seller_org_id',doc->'seller_org_id','offer_id',doc->'offer_id','head_seq',doc->'head_seq','price_minor',doc#>'{terms,price_minor}','currency',doc#>'{terms,currency}','created_at',doc->'created_at','updated_at',doc->'updated_at') ORDER BY doc->>'created_at' DESC,doc->>'updated_at' DESC,id),'[]')
-      INTO result FROM {{tenantSchema}}.__P___records WHERE tenant_id=t AND kind='deal';
+      INTO result FROM {{tenantSchema}}.__P___records WHERE tenant_id=t AND kind='deal' AND {{tenantSchema}}.__P___can_read(ctx,doc);
     RETURN jsonb_build_object('deals',result);
   ELSIF op='deal.read' THEN
     ident:={{tenantSchema}}.__P___text(a,'deal_id');
-    result:=jsonb_build_object('deal',{{tenantSchema}}.__P___get(t,'deal',ident));
+    row:={{tenantSchema}}.__P___get(t,'deal',ident);
+    IF NOT {{tenantSchema}}.__P___can_read(ctx,row) THEN PERFORM {{tenantSchema}}.__P___error('forbidden'); END IF;
+    result:=jsonb_build_object('deal',row);
     FOR key,kind_name IN SELECT * FROM (VALUES('events','event'),('deliveries','delivery'),('evaluations','evaluation'),('intents','intent'),('credits','credit')) AS kinds(a,b) LOOP
       SELECT COALESCE(jsonb_agg(CASE kind_name WHEN 'evaluation' THEN r.doc-'deal_id' ELSE r.doc END ORDER BY
         CASE kind_name WHEN 'event' THEN (r.doc->>'seq')::bigint WHEN 'delivery' THEN (r.doc->>'attempt')::bigint WHEN 'evaluation' THEN ({{tenantSchema}}.__P___get(t,'delivery',r.doc->>'delivery_id')->>'attempt')::bigint END,
@@ -483,8 +526,12 @@ BEGIN
     RETURN result;
   ELSIF op='ledger.balances' THEN
     ident:={{tenantSchema}}.__P___text(a,'deal_id',true); result:='{}';
+    IF ident IS NOT NULL AND NOT {{tenantSchema}}.__P___can_read(ctx,{{tenantSchema}}.__P___get(t,'deal',ident)) THEN
+      PERFORM {{tenantSchema}}.__P___error('forbidden');
+    END IF;
     FOREACH key IN ARRAY ARRAY['held','seller','fee','buyer_refund','returned'] LOOP
-      SELECT COALESCE(sum((doc->>'amount_minor')::bigint),0) INTO n FROM {{tenantSchema}}.__P___records WHERE tenant_id=t AND kind='posting' AND doc->>'account'=key AND (ident IS NULL OR doc->>'deal_id'=ident);
+      SELECT COALESCE(sum((doc->>'amount_minor')::bigint),0) INTO n FROM {{tenantSchema}}.__P___records WHERE tenant_id=t AND kind='posting' AND doc->>'account'=key AND (ident IS NULL OR doc->>'deal_id'=ident)
+        AND {{tenantSchema}}.__P___can_read(ctx,{{tenantSchema}}.__P___get(t,'deal',doc->>'deal_id'));
       result:=result||jsonb_build_object(key,n);
     END LOOP;
     RETURN result;
@@ -673,6 +720,16 @@ BEGIN
     PERFORM {{tenantSchema}}.__P___put(t,'message',ident,row); RETURN '{}';
   ELSIF op='conversation.read' THEN
     ident:={{tenantSchema}}.__P___text(a,'conversation_id');
+    IF NOT COALESCE(ctx->>'callerKind'='tenant_client' AND NULLIF(ctx->>'principalId','') IN (
+        NULLIF(ctx#>>'{settings,operator_readonly_principal_id}',''),NULLIF(ctx#>>'{settings,operator_principal_id}','')),false)
+      AND NOT (ctx->>'callerKind'='fenced_worker' AND EXISTS(
+        SELECT 1 FROM {{tenantSchema}}.__P___records m JOIN {{tenantSchema}}.__P___records i
+          ON i.tenant_id=m.tenant_id AND i.kind='identity' AND i.doc->>'active'='true'
+          AND i.doc->>'installation_id'=ctx->>'installationId'
+          AND i.id IN (m.doc->>'sender_did',m.doc->>'recipient_did')
+        WHERE m.tenant_id=t AND m.kind='message' AND m.doc->>'conversation_id'=ident)) IS TRUE THEN
+      PERFORM {{tenantSchema}}.__P___error('forbidden');
+    END IF;
     SELECT COALESCE(jsonb_agg(doc-'conversation_id'-'claimed_at'-'available_at'-'admission_key' ORDER BY ordinal),'[]') INTO result
       FROM {{tenantSchema}}.__P___records WHERE tenant_id=t AND kind='message' AND doc->>'conversation_id'=ident;
     RETURN jsonb_build_object('messages',result);

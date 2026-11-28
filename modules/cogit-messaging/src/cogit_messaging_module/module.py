@@ -22,11 +22,19 @@ MODULE_NAME = "cogit-messaging"
 ROLES = ("buyer", "seller", "evaluator", "escrow")
 OUTCOMES = ("processed", "rejected")
 FINAL = ("processed", "rejected", "dead")
-DEFAULT_SETTINGS = {"escrow_installation_id": "cogit-finance", "redeliver_after_s": 30, "max_delivery_attempts": 5}
+DEFAULT_SETTINGS = {
+    "escrow_installation_id": "cogit-finance",
+    "redeliver_after_s": 30,
+    "max_delivery_attempts": 5,
+}
 MAX_CLAIM = 100
 
 _PACKAGED = Path(__file__).resolve().parent / "migrations"  # inside a built wheel
-MIGRATIONS_DIR = _PACKAGED if _PACKAGED.is_dir() else Path(__file__).resolve().parents[2] / "migrations"
+MIGRATIONS_DIR = (
+    _PACKAGED
+    if _PACKAGED.is_dir()
+    else Path(__file__).resolve().parents[2] / "migrations"
+)
 
 # Messages the caller may claim now: its own, queued and due, or claimed too long ago.
 _CLAIMABLE = (
@@ -42,7 +50,10 @@ _CONVERSATION_COLUMNS = (
 class MessagingModule(SqliteModule):
     name = MODULE_NAME
     migrations_dir = MIGRATIONS_DIR
-    queries = {"identity.resolve": "identity_resolve", "conversation.read": "conversation_read"}
+    queries = {
+        "identity.resolve": "identity_resolve",
+        "conversation.read": "conversation_read",
+    }
     commands = {
         "identity.register": "identity_register",
         "type.register": "type_register",
@@ -55,15 +66,21 @@ class MessagingModule(SqliteModule):
     def attach(self, host, settings: dict | None = None) -> None:
         super().attach(host, {**DEFAULT_SETTINGS, **(settings or {})})
         for name in ("redeliver_after_s", "max_delivery_attempts"):
-            int_arg(self.settings, name, minimum=0 if name == "redeliver_after_s" else 1)
+            int_arg(
+                self.settings, name, minimum=0 if name == "redeliver_after_s" else 1
+            )
 
     # identities
 
     def identity_register(self, args: dict, caller: Caller) -> dict:
         self.require_operator(caller)
-        did, installation_id, org_id = (text_arg(args, name) for name in ("did", "installation_id", "org_id"))
+        did, installation_id, org_id = (
+            text_arg(args, name) for name in ("did", "installation_id", "org_id")
+        )
         if args.get("role") not in ROLES:
-            raise ModuleError("invalid_argument", f"role must be one of {', '.join(ROLES)}")
+            raise ModuleError(
+                "invalid_argument", f"role must be one of {', '.join(ROLES)}"
+            )
         self.db.execute(
             "INSERT INTO msg_agent_identities (did, installation_id, org_id, role, active, registered_at)"
             " VALUES (?, ?, ?, ?, 1, ?)"
@@ -77,16 +94,27 @@ class MessagingModule(SqliteModule):
         if args.get("did") is not None:
             row = self._identity(args["did"])
         elif args.get("role") is not None:
-            sql, params = "SELECT * FROM msg_agent_identities WHERE active = 1 AND role = ?", [args["role"]]
+            sql, params = (
+                "SELECT * FROM msg_agent_identities WHERE active = 1 AND role = ?",
+                [args["role"]],
+            )
             if args.get("org_id") is not None:
                 sql, params = sql + " AND org_id = ?", [*params, args["org_id"]]
-            row = self.db.execute(sql + " ORDER BY registered_at, did LIMIT 1", params).fetchone()
+            row = self.db.execute(
+                sql + " ORDER BY registered_at, did LIMIT 1", params
+            ).fetchone()
         else:
             raise ModuleError("invalid_argument", "did or role is required")
-        return {"identity": None if row is None else {**dict(row), "active": bool(row["active"])}}
+        return {
+            "identity": None
+            if row is None
+            else {**dict(row), "active": bool(row["active"])}
+        }
 
     def _identity(self, did: object) -> sqlite3.Row | None:
-        return self.db.execute("SELECT * FROM msg_agent_identities WHERE did = ? AND active = 1", (did,)).fetchone()
+        return self.db.execute(
+            "SELECT * FROM msg_agent_identities WHERE did = ? AND active = 1", (did,)
+        ).fetchone()
 
     def _bound(self, did: str, caller: Caller) -> bool:
         row = self._identity(did)
@@ -95,13 +123,23 @@ class MessagingModule(SqliteModule):
     # type registry
 
     def type_register(self, args: dict, caller: Caller) -> dict:
-        if caller.principal != "installation" or caller.installation_id != self.settings["escrow_installation_id"]:
-            raise ModuleError("forbidden", "only the escrow installation registers message types")
-        type_key, type_version = text_arg(args, "type_key"), int_arg(args, "type_version", minimum=1)
+        if (
+            caller.principal != "installation"
+            or caller.installation_id != self.settings["escrow_installation_id"]
+        ):
+            raise ModuleError(
+                "forbidden", "only the escrow installation registers message types"
+            )
+        type_key, type_version = (
+            text_arg(args, "type_key"),
+            int_arg(args, "type_version", minimum=1),
+        )
         schema = args.get("json_schema")
         check_dialect(schema)
         if has_float(schema):
-            raise ModuleError("unsupported_schema", "schemas carry no floating-point values")
+            raise ModuleError(
+                "unsupported_schema", "schemas carry no floating-point values"
+            )
         text = dumps(schema)
         row = self.db.execute(
             "SELECT json_schema FROM msg_message_types WHERE type_key = ? AND type_version = ?",
@@ -116,16 +154,25 @@ class MessagingModule(SqliteModule):
             return {"status": "created"}
         if row["json_schema"] == text:
             return {"status": "unchanged"}
-        raise ModuleError("type_conflict", f"{type_key} v{type_version} is registered with a different schema")
+        raise ModuleError(
+            "type_conflict",
+            f"{type_key} v{type_version} is registered with a different schema",
+        )
 
     # queue
 
     def message_send(self, args: dict, caller: Caller) -> dict:
         envelope = check_envelope(args.get("envelope"))
-        if caller.principal != "installation" or not self._bound(envelope["sender_did"], caller):
-            raise ModuleError("not_your_did", "sender_did is not bound to the calling installation")
+        if caller.principal != "installation" or not self._bound(
+            envelope["sender_did"], caller
+        ):
+            raise ModuleError(
+                "not_your_did", "sender_did is not bound to the calling installation"
+            )
         message_id = envelope["message_id"]
-        if self.db.execute("SELECT 1 FROM msg_messages WHERE message_id = ?", (message_id,)).fetchone():
+        if self.db.execute(
+            "SELECT 1 FROM msg_messages WHERE message_id = ?", (message_id,)
+        ).fetchone():
             return {"message_id": message_id, "status": "duplicate"}
         if self._identity(envelope["recipient_did"]) is None:
             raise ModuleError("unknown_recipient", envelope["recipient_did"])
@@ -136,12 +183,18 @@ class MessagingModule(SqliteModule):
         ).fetchone()
         if registered is None:
             raise ModuleError("unknown_type", f"{type_key} v{type_version}")
-        error = best_match(Draft202012Validator(loads(registered["json_schema"])).iter_errors(envelope["body"]))
+        error = best_match(
+            Draft202012Validator(loads(registered["json_schema"])).iter_errors(
+                envelope["body"]
+            )
+        )
         if error is not None:
             where = "/".join(str(part) for part in error.absolute_path) or "body"
             raise ModuleError("invalid_body", f"{where}: {error.message}"[:300])
         now = self.now_ts()
-        seq = self.db.execute("SELECT COALESCE(MAX(seq), 0) + 1 FROM msg_messages").fetchone()[0]
+        seq = self.db.execute(
+            "SELECT COALESCE(MAX(seq), 0) + 1 FROM msg_messages"
+        ).fetchone()[0]
         self.db.execute(
             "INSERT INTO msg_messages (message_id, seq, conversation_id, causation_id, type_key, type_version,"
             " sender_did, recipient_did, envelope, status, attempts, available_at, created_at)"
@@ -190,14 +243,19 @@ class MessagingModule(SqliteModule):
                 (now_ts, f"msg:{row['message_id']}", row["message_id"]),
             )
             messages.append(
-                {"message_id": row["message_id"], "envelope": loads(row["envelope"]), "attempts": row["attempts"] + 1}
+                {
+                    "message_id": row["message_id"],
+                    "envelope": loads(row["envelope"]),
+                    "attempts": row["attempts"] + 1,
+                }
             )
         return {"messages": messages}
 
     def _own_message(self, args: dict, caller: Caller) -> sqlite3.Row:
         message_id = text_arg(args, "message_id")
         row = self.db.execute(
-            "SELECT message_id, recipient_did, status, attempts FROM msg_messages WHERE message_id = ?", (message_id,)
+            "SELECT message_id, recipient_did, status, attempts FROM msg_messages WHERE message_id = ?",
+            (message_id,),
         ).fetchone()
         if row is None:
             raise ModuleError("unknown_message", message_id)
@@ -208,13 +266,21 @@ class MessagingModule(SqliteModule):
     def message_ack(self, args: dict, caller: Caller) -> dict:
         row = self._own_message(args, caller)
         if args.get("outcome") not in OUTCOMES:
-            raise ModuleError("invalid_argument", f"outcome must be one of {', '.join(OUTCOMES)}")
+            raise ModuleError(
+                "invalid_argument", f"outcome must be one of {', '.join(OUTCOMES)}"
+            )
         if row["status"] in FINAL:  # repeating an acknowledgement is harmless
             return {}
         self.db.execute(
             "UPDATE msg_messages SET status = ?, reason = ?, run_id = COALESCE(?, run_id), acked_at = ?"
             " WHERE message_id = ?",
-            (args["outcome"], args.get("reason"), args.get("run_id"), self.now_ts(), row["message_id"]),
+            (
+                args["outcome"],
+                args.get("reason"),
+                args.get("run_id"),
+                self.now_ts(),
+                row["message_id"],
+            ),
         )
         return {}
 
@@ -238,8 +304,24 @@ class MessagingModule(SqliteModule):
         return {}
 
     def conversation_read(self, args: dict, caller: Caller) -> dict:
+        if caller.principal not in ("operator", "operator_ro"):
+            allowed = (
+                caller.principal == "installation"
+                and self.db.execute(
+                    "SELECT 1 FROM msg_messages m JOIN msg_agent_identities i"
+                    " ON i.did IN (m.sender_did, m.recipient_did)"
+                    " WHERE m.conversation_id = ? AND i.installation_id = ? AND i.active = 1 LIMIT 1",
+                    (text_arg(args, "conversation_id"), caller.installation_id),
+                ).fetchone()
+            )
+            if not allowed:
+                raise ModuleError("forbidden", "not a conversation participant")
         rows = self.db.execute(
             f"SELECT {_CONVERSATION_COLUMNS} FROM msg_messages WHERE conversation_id = ? ORDER BY seq",
             (text_arg(args, "conversation_id"),),
         ).fetchall()
-        return {"messages": [{**dict(row), "envelope": loads(row["envelope"])} for row in rows]}
+        return {
+            "messages": [
+                {**dict(row), "envelope": loads(row["envelope"])} for row in rows
+            ]
+        }

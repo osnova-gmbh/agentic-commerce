@@ -301,6 +301,46 @@ actions:
   idempotency: inherent
   required_capabilities: []
   metadata: null
+- name: resolve_dispute
+  description: Resolve a dispute with the operator's signed ruling.
+  input_schema:
+    additionalProperties: false
+    description: One signed message envelope, as the delivery loop claimed it.
+    properties:
+      envelope:
+        additionalProperties: true
+        title: Envelope
+        type: object
+    required:
+    - envelope
+    title: HandleMessageInput
+    type: object
+  output_schema:
+    additionalProperties: false
+    description: A rejected message carries the reason; the loop maps the status to
+      the ack.
+    properties:
+      status:
+        enum:
+        - processed
+        - rejected
+        title: Status
+        type: string
+      reason:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Reason
+    required:
+    - status
+    title: HandleMessageOutput
+    type: object
+  risk: write
+  requires_approval: false
+  idempotency: inherent
+  required_capabilities: []
+  metadata: null
 - name: tick
   description: Register the finance.* message types, fund deals from new bank credits
     and re-send the pending outbox.
@@ -671,106 +711,118 @@ database_packages:
     export_version: 1.0.0
     contract_id: cogit.cogit-finance.resolutions.list.v1
 - module_key: cogit-messaging
-  version: 1.0.0
-  artifact_sha256: c5c0aece64f6aa85586301c3a30b6ee4dc79781133cecfb05430ca36941d0ebe
+  version: 1.1.0
+  artifact_sha256: 4d67465cb616c8e2d5bb59775940419da598eb38a20404f1f10f3084ee422e4a
   exports:
   - kind: query
     key: identity.resolve
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.identity.resolve.v1
   - kind: query
     key: conversation.read
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.conversation.read.v1
   - kind: command
     key: identity.register
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.identity.register.v1
   - kind: command
     key: type.register
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.type.register.v1
   - kind: command
     key: message.send
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.message.send.v1
   - kind: command
     key: message.claim
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.message.claim.v1
   - kind: command
     key: message.ack
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.message.ack.v1
   - kind: command
     key: message.release
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.message.release.v1
 - module_key: cogit-finance-catalog
-  version: 1.0.0
-  artifact_sha256: b96f92491c7b1abecae61d615e1d02dd39f1a7cd2fe2862a3a95189b6eb99db6
+  version: 1.1.0
+  artifact_sha256: 76e25b481138407584ba93f8623814a690d41770efbf24a6cc16e3309eeb2457
   exports:
   - kind: query
     key: company.read
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.company.read.v1
   - kind: query
     key: companies.list
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.companies.list.v1
   - kind: query
     key: sellers.list
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.sellers.list.v1
   - kind: query
     key: catalog.read
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.catalog.read.v1
   - kind: query
     key: evaluators.list
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.evaluators.list.v1
   - kind: command
     key: company.upsert
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.company.upsert.v1
   - kind: command
     key: evaluator.upsert
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.evaluator.upsert.v1
   - kind: command
     key: catalog.publish
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.catalog.publish.v1
 - module_key: cogit-finance-deals
-  version: 1.0.0
-  artifact_sha256: 0195c2e27ec8834f3f17609e3b792a75e2180d48a976821ee8a5508cf4003db4
+  version: 1.1.0
+  artifact_sha256: b1789367368a1d88db2adc8b4c0e3510f2dfac126183186252e2d2be304c39cb
   exports:
   - kind: query
     key: outbox.pending
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-deals.outbox.pending.v1
   - kind: query
     key: deal.read
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-deals.deal.read.v1
   - kind: query
     key: deal.list
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-deals.deal.list.v1
   - kind: query
     key: ledger.balances
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-deals.ledger.balances.v1
+  - kind: query
+    key: credit.read
+    export_version: 1.1.0
+    contract_id: cogit-finance-deals.credit.read.v1
+  - kind: query
+    key: intents.unresolved
+    export_version: 1.1.0
+    contract_id: cogit-finance-deals.intents.unresolved.v1
   - kind: command
     key: deal.commit
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-deals.deal.commit.v1
   - kind: command
     key: outbox.mark_sent
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-deals.outbox.mark_sent.v1
   - kind: command
     key: intent.update
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-deals.intent.update.v1
+  - kind: command
+    key: credit.return
+    export_version: 1.1.0
+    contract_id: cogit-finance-deals.credit.return.v1

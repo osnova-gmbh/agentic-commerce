@@ -34,7 +34,7 @@ async function main() {
       COMPOSE_PROJECT_NAME: stamp.project, AGENTDB_COMPOSE_OWNER: stamp.project,
       AGENTDB_CLEANUP_PERMITTED: 'false', AGENTDB_DEPLOYMENT_MODE: 'test',
       AGENTDB_PG_VOLUME: stamp.project + '-pg', AGENTDB_OBJECT_VOLUME: stamp.project + '-objects', AGENTDB_PG_NETWORK: stamp.project + '-network',
-      POSTGRES_HOST_PORT: '15432', AGENTDB_API_HOST_PORT: '18080', AGENTDB_API_PROBE_HOST_PORT: '18081',
+      POSTGRES_HOST_PORT: '15432', AGENTDB_API_HOST_PORT: '18180', AGENTDB_API_PROBE_HOST_PORT: '18081',
       AGENTDB_COORDINATOR_PROBE_HOST_PORT: '18083', AGENTDB_API_METRICS_HOST_PORT: '18084', AGENTDB_COORDINATOR_METRICS_HOST_PORT: '18085',
       AGENTDB_TEST_IDENTITY_TOKENS: admin + ':agentdb.local:platform-admin,' + client + ':agentdb.local:commerce-client',
       LOCAL_COMMERCE_ADMIN_TOKEN: admin, LOCAL_COMMERCE_CLIENT_TOKEN: client, LOCAL_COMMERCE_LOOP_KEY: randomBytes(32).toString('hex'),
@@ -43,7 +43,21 @@ async function main() {
     save('stack.json', stamp);
   }
   if (stamp.source !== source) throw new Error('This stack is bound to a different AgentDb source checkout.');
-  const env = readEnvFile(envPath);
+  let env = readEnvFile(envPath);
+  if (['start', 'deploy'].includes(command)) {
+    let text = readFileSync(envPath, 'utf8');
+    for (const [name, subject] of [['READONLY', 'commerce-reader'], ['SCHEDULER', 'commerce-scheduler']]) {
+      const key = 'LOCAL_COMMERCE_' + name + '_TOKEN';
+      if (!env[key]) {
+        const token = randomBytes(32).toString('hex');
+        text = text.replace(/^AGENTDB_TEST_IDENTITY_TOKENS=(.*)$/m, (_, tokens) =>
+          'AGENTDB_TEST_IDENTITY_TOKENS=' + tokens + ',' + token + ':agentdb.local:' + subject);
+        text += '\n' + key + '=' + token + '\n';
+      }
+    }
+    writeFileSync(envPath, text, {mode: 0o600});
+    env = readEnvFile(envPath);
+  }
   const processEnv = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^(AGENTDB_|POSTGRES_|MINIO_|COMPOSE_)/i.test(k)));
   const compose = async (tail, stdin) => runCommand(dockerBin(processEnv), ['compose', '-p', stamp.project, '--env-file', envPath, '-f', standaloneFile, '-f', join(state, 'persistent.yaml'), ...tail], { cwd: composeDir, env: processEnv, ...(stdin ? {stdin} : {}), timeoutMs: 600000 });
   const apiUrl = 'http://127.0.0.1:' + env.AGENTDB_API_HOST_PORT;
@@ -84,7 +98,11 @@ async function main() {
     await admin('/tenants/'+tenant.tenantId+'/activate',{expectedVersion:tenant.version},'tenant-activate');
     const principal = async(subject,kind) => (await admin('/principals/resolve',{issuer:'agentdb.local',subject,kind,displayName:subject},'principal-'+subject)).principalId;
     const operator = await principal('commerce-client','user');
+    const reader = await principal('commerce-reader','user');
+    const scheduler = await principal('commerce-scheduler','service');
     const worker = await principal('commerce-worker','service');
+    await admin('/memberships',{tenantId:tenant.tenantId,principalId:reader,role:'viewer'},'reader-membership');
+    await admin('/memberships',{tenantId:tenant.tenantId,principalId:scheduler,role:'member'},'scheduler-membership');
     await admin('/memberships',{tenantId:tenant.tenantId,principalId:operator,role:'tenant_admin'},'operator-membership');
     const publisher = await admin('/publishers',{slug:'commerce',displayName:'Agentic Commerce'},'publisher');
     const routes = {};
@@ -119,7 +137,7 @@ async function main() {
       }
     }
     for(const moduleKey of ['cogit-messaging','cogit-finance-catalog','cogit-finance-deals']) {
-      await post('/v1/modules/'+encodeURIComponent(moduleKey)+'/settings',{expectedRevision:0,values:{operator_principal_id:operator,escrow_installation_id:routes['cogit-finance'].installationId}},'settings-'+moduleKey,false);
+      await post('/v1/modules/'+encodeURIComponent(moduleKey)+'/settings',{expectedRevision:0,values:{operator_principal_id:operator,operator_readonly_principal_id:reader,escrow_installation_id:routes['cogit-finance'].installationId}},'settings-'+moduleKey,false);
     }
     // Deterministic agents never call a model, but the runtime still pins a local
     // accounting version on admitted work. No external provider is configured.
@@ -127,7 +145,7 @@ async function main() {
     await compose(['exec','-T','postgres','psql','-X','-v','ON_ERROR_STOP=1','-U','postgres','-d','agentdb'],
       "SET ROLE agentdb_owner; INSERT INTO core.model_price_versions(price_version,currency,rates,content_sha256,reviewed_by) VALUES ('"+price+"','USD','{\"runtime:disabled\":{\"inputPerMillion\":\"1\",\"outputPerMillion\":\"1\"}}'::jsonb,decode(repeat('00',32),'hex'),'local-commerce') ON CONFLICT DO NOTHING;\n");
     for (const [name,route] of Object.entries(routes)) await post('/v1/agent-settings',{installationId:route.installationId,settingsKey:'model-spend',schemaKey:'model.spend.v1',expectedVersion:0,values:{currency:'USD',priceVersion:price,maxRunCost:'0.01'}},'spend-'+name,false);
-    save('routes.json',{apiUrl,tenantId:tenant.tenantId,operatorPrincipalId:operator,routes});
+    save('routes.json',{apiUrl,tenantId:tenant.tenantId,operatorPrincipalId:operator,readerPrincipalId:reader,schedulerPrincipalId:scheduler,routes});
     console.log(JSON.stringify({apiUrl,tenantId:tenant.tenantId,agents:Object.keys(routes),modules:Object.keys(plan.modules)}));
   } else {
     throw new Error('Usage: node scripts/agentdb_stack.mjs start|status|stop|restart|deploy [--agentdb-root PATH] [--plan FILE]');

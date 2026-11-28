@@ -81,8 +81,24 @@ def tick(request: TickInput, invocation: OperationInvocation) -> TickOutput:
     return TickOutput.model_validate(result)
 
 
+def resolve_dispute(
+    request: HandleMessageInput, invocation: OperationInvocation
+) -> HandleMessageOutput:
+    """Operator submits a signed ruling; the configured ruling DID is checked by E."""
+    if request.envelope.get("type_key") != "finance.ruling":
+        return HandleMessageOutput(status="rejected", reason="unexpected_type")
+    return handle_message(request, invocation)
+
+
 def escrow_action_bindings() -> list[ActionBinding[Any, Any]]:
     return [
+        bind_action(
+            operation(resolve_dispute),
+            name="resolve_dispute",
+            description="Resolve a dispute with the operator's signed ruling.",
+            risk="write",
+            idempotency="inherent",
+        ),
         bind_action(
             operation(handle_message),
             name="handle_message",

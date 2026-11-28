@@ -88,8 +88,8 @@ class AgentDbClient:
             "POST",
             path,
             {
-                "moduleVersion": "1.0.0",
-                "exportVersion": "1.0.0",
+                "moduleVersion": "1.1.0",
+                "exportVersion": "1.1.0",
                 "contractId": f"{module}.{export}.v1",
                 "input": encode_args(args),
             },
@@ -109,6 +109,9 @@ class PersistentScheduler:
         self.pending = (
             json.loads(journal.read_text(encoding="utf-8")) if journal.exists() else {}
         )
+        self.failures_path = journal.with_name("scheduler-failures.json")
+        self.failures = (json.loads(self.failures_path.read_text(encoding="utf-8"))
+                         if self.failures_path.exists() else {})
 
     def save(self):
         self.journal.parent.mkdir(parents=True, exist_ok=True)
@@ -142,20 +145,32 @@ class PersistentScheduler:
     def poll(self):
         with self.lock:
             for slot, current in list(self.pending.items()):
-                run_id = self.schedule(
-                    slot, current["role"], current["command"], current["payload"]
-                )
-                state = self.client.run(run_id).get("lifecycle")
+                try:
+                    run_id = self.schedule(
+                        slot, current["role"], current["command"], current["payload"]
+                    )
+                    state = self.client.run(run_id).get("lifecycle")
+                except (httpx.HTTPError, OSError, ValueError):
+                    log.exception("Unable to poll %s; retaining its admission key", slot)
+                    continue
                 if state in self.TERMINAL:
                     if state not in {"completed", "succeeded"}:
-                        raise RuntimeError(
-                            f"AgentDb job {current['role']}.{current['command']} ended {state}: {run_id}"
-                        )
+                        self.failures[run_id] = {**current, "slot": slot, "state": state}
+                        tmp = self.failures_path.with_suffix(".tmp")
+                        tmp.write_text(json.dumps(self.failures, indent=2) + "\n", encoding="utf-8")
+                        tmp.replace(self.failures_path)  # preserve evidence before releasing the slot
+                        log.error("AgentDb job %s ended %s: %s", slot, state, run_id)
                     del self.pending[slot]
                     self.save()
             for role in ROLES:
-                self.schedule(f"inbox:{role}", role, "drain_inbox")
-            self.schedule("escrow:tick", "cogit-finance", "tick")
+                try:
+                    self.schedule(f"inbox:{role}", role, "drain_inbox")
+                except (httpx.HTTPError, OSError):
+                    log.exception("Inbox admission unavailable for %s", role)
+            try:
+                self.schedule("escrow:tick", "cogit-finance", "tick")
+            except (httpx.HTTPError, OSError):
+                log.exception("Escrow tick admission unavailable")
 
 
 class AgentDbEngine:
@@ -165,6 +180,7 @@ class AgentDbEngine:
         routes,
         state_dir: Path,
         *,
+        reader,
         bank_url="http://127.0.0.1:8080",
         interval=2,
     ):
@@ -176,7 +192,8 @@ class AgentDbEngine:
         )
         state_dir.mkdir(parents=True, exist_ok=True)
         self.bank = SimBankClient.from_url(bank_url)
-        self.source = ModuleSource(client, self.bank)
+        self.reader = reader
+        self.source = ModuleSource(self.reader, self.bank)
         self.scheduler = PersistentScheduler(
             client, routes, state_dir / "scheduler.json"
         )
@@ -239,6 +256,7 @@ class AgentDbEngine:
             "scenario": "happy",
             "state": None,
             "error": self.error,
+            "failed_runs": list(self.scheduler.failures.values()),
             "supported_scenarios": ["happy"],
         }
         if latest:
@@ -266,6 +284,8 @@ class AgentDbEngine:
         if self.worker:
             self.worker.join(timeout=25)
         self.client.close()
+        if self.reader is not self.client:
+            self.reader.close()
 
 
 def create_agentdb_app(engine):
@@ -301,7 +321,7 @@ def create_agentdb_app(engine):
         if not deliveries:
             raise HTTPException(404, "No delivery exists for this deal")
         artifact = max(deliveries, key=lambda row: row["attempt"])["artifact_id"]
-        result = engine.client.http.get(f"/v1/artifacts/{uuid.UUID(artifact)}/bytes")
+        result = engine.reader.http.get(f"/v1/artifacts/{uuid.UUID(artifact)}/bytes")
         result.raise_for_status()
         return Response(
             result.content,
