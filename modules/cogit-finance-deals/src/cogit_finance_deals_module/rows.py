@@ -11,7 +11,7 @@ import re
 import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeGuard
 
 from cogit_finance_seams import ModuleError
 
@@ -32,19 +32,19 @@ def invalid(message: str) -> ModuleError:
     return ModuleError("invalid_argument", message)
 
 
-def is_text(value: Any) -> bool:
+def is_text(value: Any) -> TypeGuard[str]:
     return isinstance(value, str) and value != ""
 
 
-def is_integer(value: Any) -> bool:
+def is_integer(value: Any) -> TypeGuard[int]:
     return type(value) is int
 
 
-def is_natural(value: Any) -> bool:
+def is_natural(value: Any) -> TypeGuard[int]:
     return type(value) is int and value >= 0
 
 
-def is_positive(value: Any) -> bool:
+def is_positive(value: Any) -> TypeGuard[int]:
     return type(value) is int and value >= 1
 
 
@@ -154,7 +154,15 @@ CREDITS = Table(
         "received_at": (is_text, REQUIRED),
         "disposition": (one_of("funded", "returned"), REQUIRED),
     },
-    ("bank_event_id", "deal_id", "reference", "amount_minor", "from_iban", "received_at", "disposition"),
+    (
+        "bank_event_id",
+        "deal_id",
+        "reference",
+        "amount_minor",
+        "from_iban",
+        "received_at",
+        "disposition",
+    ),
 )
 
 POSTINGS = Table(
@@ -169,7 +177,7 @@ POSTINGS = Table(
 )
 
 
-def clean(table: Table, item: Any, deal_id: str, where: str) -> tuple[str, dict]:
+def clean(table: Table, item: Any, deal_id: str | None, where: str) -> tuple[str, dict]:
     """Validate one row argument. Returns its key and the fields it names."""
     if not isinstance(item, dict):
         raise invalid(f"{where} must be an object")
@@ -196,7 +204,13 @@ def clean(table: Table, item: Any, deal_id: str, where: str) -> tuple[str, dict]
 
 
 def insert(
-    db: sqlite3.Connection, table: Table, deal_id: str, key: str, given: dict, where: str, stamps: dict | None = None
+    db: sqlite3.Connection,
+    table: Table,
+    deal_id: str | None,
+    key: str,
+    given: dict,
+    where: str,
+    stamps: dict | None = None,
 ) -> None:
     """Insert a new row; ``sqlite3.IntegrityError`` is left to the caller to name."""
     values: dict = {table.key: key, "deal_id": deal_id}
@@ -209,27 +223,44 @@ def insert(
         values[column] = value
     values.update(stamps or {})
     marks = ", ".join("?" for _ in values)
-    db.execute(f"INSERT INTO {table.name} ({', '.join(values)}) VALUES ({marks})", list(values.values()))
+    db.execute(
+        f"INSERT INTO {table.name} ({', '.join(values)}) VALUES ({marks})",
+        list(values.values()),
+    )
 
 
-def upsert(db: sqlite3.Connection, table: Table, deal_id: str, item: Any, where: str) -> None:
+def upsert(
+    db: sqlite3.Connection, table: Table, deal_id: str, item: Any, where: str
+) -> None:
     """Insert the row, or change the fields the argument names on the existing row."""
     key, given = clean(table, item, deal_id, where)
-    existing = db.execute(f"SELECT deal_id FROM {table.name} WHERE {table.key} = ?", (key,)).fetchone()
+    existing = db.execute(
+        f"SELECT deal_id FROM {table.name} WHERE {table.key} = ?", (key,)
+    ).fetchone()
     if existing is None:
         insert(db, table, deal_id, key, given, where)
         return
     if existing["deal_id"] != deal_id:
         raise invalid(f"{where}: {key} belongs to another deal")
     changes = {
-        column: value for column, value in given.items() if value is not None or table.fields[column][1] is NULLABLE
+        column: value
+        for column, value in given.items()
+        if value is not None or table.fields[column][1] is NULLABLE
     }
     if changes:
         assignments = ", ".join(f"{column} = ?" for column in changes)
-        db.execute(f"UPDATE {table.name} SET {assignments} WHERE {table.key} = ?", [*changes.values(), key])
+        db.execute(
+            f"UPDATE {table.name} SET {assignments} WHERE {table.key} = ?",
+            [*changes.values(), key],
+        )
 
 
-def select(db: sqlite3.Connection, table: Table, where: str, params: tuple, order_by: str) -> list[dict]:
+def select(
+    db: sqlite3.Connection, table: Table, where: str, params: tuple, order_by: str
+) -> list[dict]:
     columns = ", ".join(f"t.{column}" for column in table.columns)
-    rows = db.execute(f"SELECT {columns} FROM {table.name} t WHERE {where} ORDER BY {order_by}", params).fetchall()
+    rows = db.execute(
+        f"SELECT {columns} FROM {table.name} t WHERE {where} ORDER BY {order_by}",
+        params,
+    ).fetchall()
     return [dict(row) for row in rows]

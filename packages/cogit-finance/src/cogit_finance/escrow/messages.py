@@ -50,6 +50,7 @@ class Outgoing:
     recipient_did: str
     body: Body
     causation_id: str | None
+    type_version: int = TYPE_VERSION
 
 
 def later(moment: datetime, seconds: int) -> str:

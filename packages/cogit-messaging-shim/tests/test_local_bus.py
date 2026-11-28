@@ -77,7 +77,7 @@ def test_register_type_reports_conflicts_and_uses_the_configured_escrow_installa
 def test_register_finance_types_registers_every_frozen_schema():
     if not (CONTRACTS / "messages").is_dir():
         pytest.skip("contracts/messages is not part of this checkout")
-    expected = len(list((CONTRACTS / "messages").glob("finance.*.v1.json")))
+    expected = len(list((CONTRACTS / "messages").glob("finance.*.v*.json")))
     assert expected >= 14
     bus = LocalBus()
     assert bus.register_finance_types(CONTRACTS) == expected

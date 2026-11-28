@@ -64,7 +64,7 @@ def test_tick_resends_an_outbox_entry_that_was_not_sent() -> None:
     assert [row["status"] for row in world.modules.outbox.values()] == ["pending"]
     result = world.run_tick()
     assert result == {
-        "types_registered": 14,
+        "types_registered": 21,
         "credits_seen": 0,
         "deals_funded": 0,
         "outbox_sent": 1,
@@ -100,4 +100,18 @@ def test_only_the_exact_price_with_the_deal_reference_funds_a_deal() -> None:
     assert world.state(DEAL) == "FUNDED"
     again = credit(50000, f"ESCROW-{DEAL}", "twice")
     assert (again["credits_seen"], again["deals_funded"]) == (4, 0)
-    assert len(world.read(DEAL)["credits"]) == 1
+    assert [c["disposition"] for c in world.read(DEAL)["credits"]] == [
+        "returned",
+        "funded",
+        "returned",
+    ]
+    assert world.bank.balances[escrow_iban] == 50000
+    assert world.bank.balances["DE00EXAMPLE0000000010"] == 950000
+    intents = list(world.modules.intents.values())
+    assert len(intents) == 3
+    assert all(
+        i["kind"] == "return_unmatched" and i["status"] == "confirmed" for i in intents
+    )
+    before = dict(world.bank.balances)
+    world.run_tick()
+    assert world.bank.balances == before

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from .canonical import canonical_bytes
 from .keys import AgentKey, verify_signature
@@ -88,6 +88,19 @@ def build_envelope(
     }
     envelope["signature"] = _b64u(key.sign(signing_bytes(envelope)))
     return envelope
+
+
+def freshness_error(envelope: dict, now: datetime) -> str | None:
+    """Admission freshness, separate from archival signature verification."""
+    try:
+        created = parse_ts(envelope["created_at"])
+    except (KeyError, TypeError, ValueError):
+        return "invalid_timestamp"
+    if created < now - timedelta(hours=24):
+        return "message_expired"
+    if created > now + timedelta(minutes=2):
+        return "message_from_future"
+    return None
 
 
 def verify_envelope(envelope: object) -> bool:
