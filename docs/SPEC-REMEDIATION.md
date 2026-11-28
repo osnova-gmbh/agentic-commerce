@@ -60,8 +60,8 @@ node scripts/check_agentdb_modules.mjs
 - Native tests cover the exact 17-event happy path, broken delivery/stale verdict,
   refunds, unavailable evaluators, unknown credits, participant authorization and
   payout failures before submission, after bank commit, and before ledger write.
-- `.github/workflows/commerce.yml` adds these source-level checks and mandatory
-  PostgreSQL tests. The workflow has not been executed on GitHub.
+- `.github/workflows/commerce.yml` adds source-level checks and mandatory
+  PostgreSQL tests. Consult the publication PR for its actual GitHub check status.
 
 ## Still required — not full SPEC compliance
 
@@ -78,7 +78,23 @@ node scripts/check_agentdb_modules.mjs
    helper still assumes first-time settings (`expectedRevision: 0`); do not use it
    blindly on an already configured tenant. Do not reset volumes to bypass this.
 
-The domain/reference fixes are committed separately. Native runtime, deployment,
-authorization integration and CI edits that overlap or depend on pre-existing
-uncommitted work remain in the working tree for integration; they are not a
-published release. No push, PR or merge was performed.
+## Publication follow-up (2026-11-28)
+
+The original domain/reference commits (`f88e8dc`, `6f92c8a`) were merged with
+published `origin/main` (`568dfbd`) on `fix/spec-recovery-handover`. Only the
+remediation's runtime, deployment, authorization, action/manifest and CI changes
+were copied from the dirty original checkout; unrelated edits remain there.
+
+The isolated publication tree passed **507 Python tests** (including finance
+contract/typed-action/manifest checks and actual PostgreSQL execution), **18 Node
+dashboard tests**, scoped Pyright and escrow Ruff. Eleven project wheels built;
+four worker cohorts were prepared without installation or deployment. Module-kit
+validated all three 1.1.0 bundles. Shared seams **0.2.1** and messaging shim
+**0.2.2** were rebuilt and pinned in all four agents, with source/hash/lock parity
+tests. Migration files are forced to LF in Git attributes so Windows checkout
+cannot invalidate their hashes; published 1.0.0 SQL blobs are unchanged.
+
+These are publication checks, not the missing live acceptance above. See
+[root init.md](../init.md) for next steps, local-state precautions and how to
+resolve the publication PR and checks. The original 500-test result above was
+for a broader dirty working tree, not this isolated branch.
