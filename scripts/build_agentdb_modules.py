@@ -10,12 +10,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from agentdb_sql import native_sql
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 EXPORTS = {
     "cogit-finance-catalog": {
         "queries": [
@@ -28,8 +29,8 @@ EXPORTS = {
         "commands": ["company.upsert", "evaluator.upsert", "catalog.publish"],
     },
     "cogit-finance-deals": {
-        "queries": ["outbox.pending", "deal.read", "deal.list", "ledger.balances"],
-        "commands": ["deal.commit", "outbox.mark_sent", "intent.update"],
+        "queries": ["outbox.pending", "deal.read", "deal.list", "ledger.balances", "credit.read", "intents.unresolved"],
+        "commands": ["deal.commit", "outbox.mark_sent", "intent.update", "credit.return"],
     },
     "cogit-messaging": {
         "queries": ["identity.resolve", "conversation.read"],
@@ -65,20 +66,13 @@ def build(root: Path = ROOT) -> dict:
     for module, groups in EXPORTS.items():
         directory = root / "modules" / module / "agentdb"
         (directory / "migrations").mkdir(parents=True, exist_ok=True)
-        (directory / "migrations" / "000001__native.sql").write_text(
-            native_sql(module), encoding="utf-8", newline="\n"
-        )
-        migrations = []
-        for path in sorted((directory / "migrations").glob("*.sql")):
-            migrations.append(
-                {
-                    "id": path.stem,
-                    "path": path.relative_to(directory).as_posix(),
-                    "sha256": digest(path.read_bytes()),
-                }
-            )
-        if not migrations:
-            raise ValueError(f"No native SQL migrations for {module}")
+        # Never rewrite the published 1.0.0 migrations. Copy their immutable
+        # bytes when building into a scratch root; append the recovery upgrade.
+        for filename in ("000001__native.sql", "000099__exports.sql"):
+            path = directory / "migrations" / filename
+            original = ROOT / "modules" / module / "agentdb/migrations" / filename
+            if not path.exists():
+                path.write_bytes(original.read_bytes())
         exports = []
         prefix = PREFIXES[module]
         for kind, names in groups.items():
@@ -131,27 +125,27 @@ END $$;
 ALTER FUNCTION {{{{tenantSchema}}}}.{function}(jsonb,jsonb) OWNER TO agentdb_owner;
 REVOKE ALL ON FUNCTION {{{{tenantSchema}}}}.{function}(jsonb,jsonb) FROM PUBLIC;
 """)
-        wrapper_path = directory / "migrations" / "000099__exports.sql"
-        wrapper_path.write_text("\n".join(wrappers), encoding="utf-8", newline="\n")
-        migrations = [item for item in migrations if item["id"] != wrapper_path.stem]
-        migrations.append(
-            {
-                "id": wrapper_path.stem,
-                "path": "migrations/" + wrapper_path.name,
-                "sha256": digest(wrapper_path.read_bytes()),
-            }
-        )
+        upgrade = re.sub(r"CREATE TABLE .*?\n\);", "", native_sql(module), flags=re.S)
+        upgrade = re.sub(r"CREATE (UNIQUE )?INDEX ", r"CREATE \1INDEX IF NOT EXISTS ", upgrade)
+        upgrade = (upgrade + "\n" + "\n".join(wrappers)).replace("CREATE FUNCTION ", "CREATE OR REPLACE FUNCTION ")
+        (directory / "migrations/000100__spec_recovery.sql").write_text(upgrade, encoding="utf-8", newline="\n")
+        migrations = [
+            {"id": path.stem, "path": path.relative_to(directory).as_posix(), "sha256": digest(path.read_bytes())}
+            for path in sorted((directory / "migrations").glob("*.sql"))
+        ]
         settings = {
             "type": "object",
             "properties": {
                 "escrow_installation_id": {"type": "string", "maxLength": 128},
                 "operator_principal_id": {"type": "string", "maxLength": 128},
+                "operator_readonly_principal_id": {"type": "string", "maxLength": 128},
             },
             "additionalProperties": False,
         }
         defaults = {
             "escrow_installation_id": "cogit-finance",
             "operator_principal_id": "",
+            "operator_readonly_principal_id": "",
         }
         if module == "cogit-messaging":
             settings["properties"].update(
@@ -166,7 +160,7 @@ REVOKE ALL ON FUNCTION {{{{tenantSchema}}}}.{function}(jsonb,jsonb) FROM PUBLIC;
             "moduleKey": module,
             "version": VERSION,
             "platform": {"minSchema": 179, "maxSchema": 216},
-            "upgradeFrom": [],
+            "upgradeFrom": ["1.0.0"],
             "retention": "preserve",
             "migrations": migrations,
             "files": [],

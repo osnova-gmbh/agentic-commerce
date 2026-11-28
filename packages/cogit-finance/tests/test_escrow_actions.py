@@ -57,7 +57,7 @@ def hosted(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> World:
 
 def test_the_happy_path_runs_through_the_bound_actions(hosted: World) -> None:
     assert hosted.run_tick() == {
-        "types_registered": 14,
+        "types_registered": 21,
         "credits_seen": 0,
         "deals_funded": 0,
         "outbox_sent": 0,

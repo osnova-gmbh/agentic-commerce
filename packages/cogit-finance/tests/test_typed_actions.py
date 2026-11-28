@@ -461,6 +461,7 @@ def test_configured_agent_exposes_final_action_and_tool_inventories() -> None:
         "persist_reference_request",
         "handle_message",
         "tick",
+        "resolve_dispute",
     }
     assert {binding.descriptor.name for binding in agent.tool_bindings()} == {
         "lookup_record",

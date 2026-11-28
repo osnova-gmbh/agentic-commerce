@@ -13,7 +13,8 @@
         "name": {"type": "string", "minLength": 1},
         "legal_name": {"type": "string", "minLength": 1},
         "address": {"type": "string", "minLength": 1},
-        "contact": {"type": "string", "minLength": 1}
+        "contact": {"type": "string", "minLength": 1},
+        "ruling_did": {"type": "string", "minLength": 8, "description": "Authorized operator signing DID; absent means rulings fail closed."}
       }
     },
     "escrow": {

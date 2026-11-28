@@ -25,7 +25,7 @@ def world(tmp_path: Path, request: pytest.FixtureRequest):
 
 
 def start_deal(world: DemoWorld) -> str:
-    assert world.tick()["types_registered"] == 14
+    assert world.tick()["types_registered"] == 21
     assert world.act(SELLER, "publish_catalog") == {"count": 2}
     purchase = world.act(BUYER, "start_purchase")
     assert purchase["status"] == "requested", purchase

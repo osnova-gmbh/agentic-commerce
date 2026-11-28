@@ -1,12 +1,14 @@
 {
   "formatVersion": 1,
   "moduleKey": "cogit-finance-deals",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "platform": {
     "minSchema": 179,
     "maxSchema": 216
   },
-  "upgradeFrom": [],
+  "upgradeFrom": [
+    "1.0.0"
+  ],
   "retention": "preserve",
   "migrations": [
     {
@@ -18,6 +20,11 @@
       "id": "000099__exports",
       "path": "migrations/000099__exports.sql",
       "sha256": "13a0c6dcf486d2da296540bfa1fa4fa68040ffe55e048f5ac17bff12431397e6"
+    },
+    {
+      "id": "000100__spec_recovery",
+      "path": "migrations/000100__spec_recovery.sql",
+      "sha256": "779564ab059554c5c32bd1c5793ceb4e093b94e485941917828a7a3972ae1ecc"
     }
   ],
   "files": [],
@@ -25,7 +32,7 @@
     {
       "key": "outbox.pending",
       "kind": "query",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-deals.outbox.pending.v1",
       "functionName": "ac_deals_outbox_pending",
       "inputSchema": {
@@ -65,7 +72,7 @@
     {
       "key": "deal.read",
       "kind": "query",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-deals.deal.read.v1",
       "functionName": "ac_deals_deal_read",
       "inputSchema": {
@@ -105,7 +112,7 @@
     {
       "key": "deal.list",
       "kind": "query",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-deals.deal.list.v1",
       "functionName": "ac_deals_deal_list",
       "inputSchema": {
@@ -145,7 +152,7 @@
     {
       "key": "ledger.balances",
       "kind": "query",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-deals.ledger.balances.v1",
       "functionName": "ac_deals_ledger_balances",
       "inputSchema": {
@@ -183,9 +190,89 @@
       "requiredPolicies": []
     },
     {
+      "key": "credit.read",
+      "kind": "query",
+      "version": "1.1.0",
+      "contractId": "cogit-finance-deals.credit.read.v1",
+      "functionName": "ac_deals_credit_read",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_deals.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "intents.unresolved",
+      "kind": "query",
+      "version": "1.1.0",
+      "contractId": "cogit-finance-deals.intents.unresolved.v1",
+      "functionName": "ac_deals_intents_unresolved",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_deals.read",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
       "key": "deal.commit",
       "kind": "command",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-deals.deal.commit.v1",
       "functionName": "ac_deals_deal_commit",
       "inputSchema": {
@@ -225,7 +312,7 @@
     {
       "key": "outbox.mark_sent",
       "kind": "command",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-deals.outbox.mark_sent.v1",
       "functionName": "ac_deals_outbox_mark_sent",
       "inputSchema": {
@@ -265,9 +352,49 @@
     {
       "key": "intent.update",
       "kind": "command",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "contractId": "cogit-finance-deals.intent.update.v1",
       "functionName": "ac_deals_intent_update",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 65536
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "callerKinds": [
+        "tenant_client",
+        "fenced_worker"
+      ],
+      "capability": "ac_deals.write",
+      "policyScope": "tenant_module",
+      "requiredPolicies": []
+    },
+    {
+      "key": "credit.return",
+      "kind": "command",
+      "version": "1.1.0",
+      "contractId": "cogit-finance-deals.credit.return.v1",
+      "functionName": "ac_deals_credit_return",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -315,13 +442,18 @@
         "operator_principal_id": {
           "type": "string",
           "maxLength": 128
+        },
+        "operator_readonly_principal_id": {
+          "type": "string",
+          "maxLength": 128
         }
       },
       "additionalProperties": false
     },
     "defaults": {
       "escrow_installation_id": "cogit-finance",
-      "operator_principal_id": ""
+      "operator_principal_id": "",
+      "operator_readonly_principal_id": ""
     }
   },
   "policies": [],

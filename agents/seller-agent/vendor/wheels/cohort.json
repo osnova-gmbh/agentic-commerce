@@ -26,7 +26,7 @@
     "cogit_tool_shell-0.1.2-py3-none-any.whl": "a71cca62c9042eab74dd17b2f367ff2d89ebbde7af0558530d3cfe8657c844a4",
     "cogit_tool_browser-0.1.2-py3-none-any.whl": "92b5bf62c193d56437d586ff3de183cff0d60e0bc5117e0e2865f239fea9c4d1",
     "cogit_runtime-0.3.31-py3-none-any.whl": "5d81546f43a910a78860ff5c6bdb244ca00c338c3ebb5ccc1827034b8bd3fb7b",
-    "cogit_finance_seams-0.2.0-py3-none-any.whl": "c33948ee2e5f2efecddc835090c0137e7052dcee2fc08b70835ba594180b841d",
-    "cogit_messaging_shim-0.2.1-py3-none-any.whl": "45a74a9de9870e3b22bd54cd25aacb5688f234313d8c6d172fe2a2f616ba7568"
+    "cogit_finance_seams-0.2.1-py3-none-any.whl": "91165cad0598f22e5fadd54bb86455eae32dfead6d69a057b64cfb0cfc55c95e",
+    "cogit_messaging_shim-0.2.2-py3-none-any.whl": "4b558b3246fd4f41e5ed26a2dd39c4518e163785d66980ca60980fa3aee42b68"
   }
 }

@@ -1,6 +1,6 @@
 [project]
 name = "cogit-messaging-shim"
-version = "0.2.1"
+version = "0.2.2"
 description = "In-repo stand-in for the SDK messaging seam: signed envelopes, send() and the delivery loop."
 requires-python = ">=3.10"
 dependencies = ["cryptography>=42", "cogit-finance-seams"]

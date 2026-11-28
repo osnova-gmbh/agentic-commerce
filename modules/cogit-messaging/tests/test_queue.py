@@ -7,7 +7,8 @@ def test_send_stores_the_envelope_verbatim_and_queues_it(bench):
         "message_id": envelope["message_id"],
         "status": "queued",
     }
-    assert bench.query("carol-agent", "conversation.read", {"conversation_id": "conv-1"})["messages"] == [
+    assert code_of(bench.query, "carol-agent", "conversation.read", {"conversation_id": "conv-1"}) == "forbidden"
+    assert bench.query("bob-agent", "conversation.read", {"conversation_id": "conv-1"})["messages"] == [
         {
             "message_id": envelope["message_id"],
             "type_key": "test.note",
@@ -43,7 +44,8 @@ def test_send_refuses_a_did_of_another_installation(bench):
         code_of(bench.command, "alice-agent", "message.send", {"envelope": bench.envelope()}, "operator")
         == "not_your_did"
     )
-    assert bench.query("alice-agent", "conversation.read", {"conversation_id": "conv-1"}) == {"messages": []}
+    assert code_of(bench.query, "alice-agent", "conversation.read", {"conversation_id": "conv-1"}) == "forbidden"
+    assert bench.query("operator", "conversation.read", {"conversation_id": "conv-1"}) == {"messages": []}
 
 
 def test_send_refuses_unknown_recipient_unknown_type_and_invalid_body(bench):

@@ -36,6 +36,16 @@ def decide(policy: str, outcomes: Sequence[str | None]) -> str | None:
         if passed:
             return APPROVE
         return REJECT if failed == total else None
+    if policy.startswith("quorum "):
+        try:
+            needed = int(policy.removeprefix("quorum "))
+        except ValueError as exc:
+            raise ValueError(f"invalid quorum: {policy}") from exc
+        if not 1 <= needed <= total:
+            raise ValueError(f"invalid quorum: {policy} for {total} evaluators")
+        if passed >= needed:
+            return APPROVE
+        return REJECT if total - failed < needed else None
     raise ValueError(f"unsupported policy: {policy}")
 
 

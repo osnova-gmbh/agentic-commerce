@@ -4,6 +4,10 @@ Exploration and implementation planning for independently owned buyer and seller
 
 ## Current status
 
+Start the next engineering session with [init.md](init.md). The SPEC recovery and
+native integration are tested locally, but per-message native admission, live
+four-worker crash acceptance and safe existing-tenant upgrades remain open.
+
 This repository contains a runnable local escrow demo alongside research, implementation plans and machine-specific WSL setup notes. The demo runs the buyer, seller, evaluator and escrow cores with signed messages, SQLite reference modules and a simulated bank. No end-to-end native Affinidi DID authentication exchange has been executed.
 
 ## Run a transaction demo

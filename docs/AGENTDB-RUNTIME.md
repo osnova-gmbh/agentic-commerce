@@ -9,6 +9,13 @@ The AgentDb path is implemented separately from the running local simulation.
 Building its packages is not proof of a healthy deployment. Native SQL execution
 and restart acceptance require the live checks below. All funds are simulated.
 
+**Current limitation:** the 1.1.0 recovery changes have source-level and native
+PostgreSQL coverage, not complete four-worker crash/restart acceptance. Inbox
+messages still share a drain run. The deployment helper still submits
+`expectedRevision: 0` for module settings: do not rerun deployment blindly on an
+already configured tenant or reset volumes to make it succeed. See [the next-agent
+handover](../init.md) for the ordered completion work.
+
 ## Start
 
 Use Python 3.11 or newer, Node 22, the Cogit CLI and a working Docker Desktop

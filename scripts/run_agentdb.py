@@ -121,7 +121,7 @@ def serve(port, bank_url):
     shutdown = threading.Event()
     monitor = None
     client = AgentDbClient(
-        saved["apiUrl"], secrets["LOCAL_COMMERCE_CLIENT_TOKEN"], saved["tenantId"]
+        saved["apiUrl"], secrets["LOCAL_COMMERCE_SCHEDULER_TOKEN"], saved["tenantId"]
     )
     engine = None
     try:
@@ -208,7 +208,8 @@ def serve(port, bank_url):
             run_until_complete(
                 client, role, command, routes, f"setup:{seed_digest}:{role}:{command}"
             )
-        engine = AgentDbEngine(client, routes, STATE, bank_url=bank_url)
+        reader = AgentDbClient(saved["apiUrl"], secrets["LOCAL_COMMERCE_READONLY_TOKEN"], saved["tenantId"])
+        engine = AgentDbEngine(client, routes, STATE, bank_url=bank_url, reader=reader)
         engine.start_scheduler()
         app = create_agentdb_app(engine)
 

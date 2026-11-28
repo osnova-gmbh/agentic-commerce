@@ -675,54 +675,54 @@ database_packages:
     export_version: 1.0.0
     contract_id: cogit.buyer-agent.resolutions.list.v1
 - module_key: cogit-messaging
-  version: 1.0.0
-  artifact_sha256: c5c0aece64f6aa85586301c3a30b6ee4dc79781133cecfb05430ca36941d0ebe
+  version: 1.1.0
+  artifact_sha256: 4d67465cb616c8e2d5bb59775940419da598eb38a20404f1f10f3084ee422e4a
   exports:
   - kind: query
     key: identity.resolve
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.identity.resolve.v1
   - kind: query
     key: conversation.read
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.conversation.read.v1
   - kind: command
     key: message.send
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.message.send.v1
   - kind: command
     key: message.claim
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.message.claim.v1
   - kind: command
     key: message.ack
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.message.ack.v1
   - kind: command
     key: message.release
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-messaging.message.release.v1
 - module_key: cogit-finance-catalog
-  version: 1.0.0
-  artifact_sha256: b96f92491c7b1abecae61d615e1d02dd39f1a7cd2fe2862a3a95189b6eb99db6
+  version: 1.1.0
+  artifact_sha256: 76e25b481138407584ba93f8623814a690d41770efbf24a6cc16e3309eeb2457
   exports:
   - kind: query
     key: company.read
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.company.read.v1
   - kind: query
     key: companies.list
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.companies.list.v1
   - kind: query
     key: sellers.list
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.sellers.list.v1
   - kind: query
     key: catalog.read
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.catalog.read.v1
   - kind: query
     key: evaluators.list
-    export_version: 1.0.0
+    export_version: 1.1.0
     contract_id: cogit-finance-catalog.evaluators.list.v1

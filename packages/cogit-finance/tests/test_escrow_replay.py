@@ -113,6 +113,7 @@ def test_broken_run_is_rejected_redelivered_and_settled(world: World) -> None:
     assert reject["reasons"] == ["required-files@1: missing file: summary.json"]
     assert reject["rework_deadline"] == deal["deal"]["terms"]["delivery_deadline"]
     assert approve == {
+        "decided_at": "2026-11-27T10:00:21Z",
         "delivery_id": f"{BROKEN_DEAL}:d2",
         "outcome": "approve",
         "attempts_left": 0,

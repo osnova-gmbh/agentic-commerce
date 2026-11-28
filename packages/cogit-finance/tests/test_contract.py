@@ -60,6 +60,7 @@ def test_manifest_and_code_bindings_have_exact_parity() -> None:
         "persist_reference_request",
         "handle_message",
         "tick",
+        "resolve_dispute",
     }
     assert action_bindings["apply_resolution"].descriptor.requires_approval is True
     assert action_bindings["lookup_record"].descriptor.idempotency == "inherent"

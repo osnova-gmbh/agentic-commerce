@@ -14,6 +14,7 @@ from cogit_agent_sdk import OperationInvocation, bind_action, operation
 from pydantic import BaseModel, Field
 
 from .cogit_host import HandleModules
+from .local import utcnow
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ def inbox_binding(handler: Callable[..., Any], input_type: type[BaseModel]):
         request: DrainInput, invocation: OperationInvocation
     ) -> DrainOutput:
         from cogit_messaging_shim import verify_envelope
+        from cogit_messaging_shim.envelope import freshness_error
 
         modules = HandleModules(invocation.handle)
         request_key = invocation.idempotency_key
@@ -66,7 +68,10 @@ def inbox_binding(handler: Callable[..., Any], input_type: type[BaseModel]):
             ):
                 continue
             outcome, reason = "rejected", "bad_signature"
-            if verify_envelope(envelope):
+            valid = verify_envelope(envelope)
+            if valid:
+                reason = freshness_error(envelope, utcnow())
+            if valid and reason is None:
                 try:
                     # Nested step names distinguish messages inside this bounded run.
                     with invocation.handle.step("action", f"message:{mid}"):

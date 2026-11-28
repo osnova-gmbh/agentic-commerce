@@ -1,0 +1,105 @@
+{
+  "description": "seller -> E. Price, deadline and acceptance spec for one request.",
+  "type": "object",
+  "properties": {
+    "price_minor": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9000000000000
+    },
+    "currency": {
+      "type": "string",
+      "enum": [
+        "EUR"
+      ]
+    },
+    "delivery_deadline": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "description": "UTC timestamp, YYYY-MM-DDTHH:MM:SSZ"
+    },
+    "valid_until": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "description": "UTC timestamp, YYYY-MM-DDTHH:MM:SSZ"
+    },
+    "acceptance": {
+      "type": "object",
+      "properties": {
+        "evaluators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evaluator_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "params": {
+                "type": "object",
+                "description": "Free-form JSON object"
+              }
+            },
+            "required": [
+              "evaluator_id",
+              "version",
+              "params"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 16
+        },
+        "policy": {
+          "type": "string",
+          "enum": [
+            "all",
+            "any",
+            "quorum 1",
+            "quorum 2",
+            "quorum 3",
+            "quorum 4",
+            "quorum 5",
+            "quorum 6",
+            "quorum 7",
+            "quorum 8",
+            "quorum 9",
+            "quorum 10",
+            "quorum 11",
+            "quorum 12",
+            "quorum 13",
+            "quorum 14",
+            "quorum 15",
+            "quorum 16"
+          ]
+        },
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      },
+      "required": [
+        "evaluators",
+        "policy",
+        "max_attempts"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "price_minor",
+    "currency",
+    "delivery_deadline",
+    "valid_until",
+    "acceptance"
+  ],
+  "additionalProperties": false
+}

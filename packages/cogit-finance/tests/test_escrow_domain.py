@@ -47,12 +47,7 @@ def test_the_table_holds_every_spec_row() -> None:
     assert {row.target for row in t.TRANSITIONS} <= set(t.STATES)
     demo = [row for row in t.TRANSITIONS if row.in_demo]
     assert {row.target for row in demo} == set(t.DEMO_STATES)
-    assert t.MESSAGE_TRIGGERS - t.DEMO_MESSAGE_TRIGGERS == {
-        "decline",
-        "cancel",
-        "dispute",
-        "ruling",
-    }
+    assert t.MESSAGE_TRIGGERS == t.DEMO_MESSAGE_TRIGGERS
 
 
 def test_the_happy_path_is_a_walk_through_the_table() -> None:
@@ -90,10 +85,10 @@ def test_the_happy_path_is_a_walk_through_the_table() -> None:
         (t.FUNDED, "quote", t.ILLEGAL_IN_STATE),
         (t.SETTLED, "delivery", t.ILLEGAL_IN_STATE),
         (t.REJECTED, "delivery", None),
-        (t.REQUESTED, "decline", t.NOT_IN_DEMO),
-        (t.FUNDED, "cancel", t.NOT_IN_DEMO),
-        (t.REJECTED, "dispute", t.NOT_IN_DEMO),
-        (t.DISPUTED, "ruling", t.NOT_IN_DEMO),
+        (t.REQUESTED, "decline", None),
+        (t.FUNDED, "cancel", t.ILLEGAL_IN_STATE),
+        (t.REJECTED, "dispute", None),
+        (t.DISPUTED, "ruling", None),
     ],
 )
 def test_a_message_is_allowed_only_where_the_table_says(
@@ -102,10 +97,12 @@ def test_a_message_is_allowed_only_where_the_table_says(
     assert t.refuse_message(state, trigger) == reason
 
 
-def test_out_of_scope_transitions_are_never_legal_for_e() -> None:
-    assert not t.is_legal(t.REJECTED, "dispute", t.DISPUTED)
-    assert not t.is_legal(t.FUNDED, "delivery_deadline", t.REFUNDING)
-    assert not t.is_legal(t.REFUNDED, "receipt", t.REFUNDED)
+def test_required_recovery_transitions_are_legal() -> None:
+    assert t.is_legal(t.REJECTED, "dispute", t.DISPUTED)
+    assert t.is_legal(t.FUNDED, "delivery_deadline", t.REFUNDING)
+    assert t.is_legal(t.REFUNDED, "receipt", t.REFUNDED)
+    assert not t.is_legal(t.APPROVED, "dispute", t.DISPUTED)
+    assert not t.is_legal(t.RELEASING, "ruling", t.REFUNDING)
 
 
 def test_policy_decides_as_soon_as_the_outcome_is_certain() -> None:
@@ -212,8 +209,10 @@ def test_schema_check_covers_the_assertion_dialect() -> None:
 
 def test_packaged_contracts_and_config_equal_the_frozen_originals() -> None:
     schemas = settings.load_message_schemas(settings.PACKAGED_CONTRACTS_DIR)
-    assert len(schemas) == 14
-    assert all(key.startswith("finance.") and version == 1 for key, version in schemas)
+    assert len(schemas) == 21
+    assert all(
+        key.startswith("finance.") and version in (1, 2) for key, version in schemas
+    )
     originals = REPO / "contracts" / "messages"
     if not originals.is_dir():
         pytest.skip("not inside the monorepo")

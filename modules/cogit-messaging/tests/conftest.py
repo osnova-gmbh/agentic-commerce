@@ -52,7 +52,7 @@ class Bench:
         return port.module_command(MODULE_NAME, export, args or {}, idempotency_key=f"test:{self._keys}")
 
     def query(self, installation_id: str, export: str, args: dict | None = None) -> dict:
-        return self.host.port(installation_id).module_query(MODULE_NAME, export, args or {})
+        return self.host.port(installation_id, "operator_ro" if installation_id == "operator" else "installation").module_query(MODULE_NAME, export, args or {})
 
     def register(self, installation_id: str, did: str, org_id: str = "org", role: str = "buyer") -> dict:
         args = {"did": did, "installation_id": installation_id, "org_id": org_id, "role": role}

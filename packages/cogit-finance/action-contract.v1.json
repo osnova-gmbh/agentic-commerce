@@ -420,6 +420,62 @@
       "metadata": null
     },
     {
+      "name": "resolve_dispute",
+      "description": "Resolve a dispute with the operator's signed ruling.",
+      "input_schema": {
+        "additionalProperties": false,
+        "description": "One signed message envelope, as the delivery loop claimed it.",
+        "properties": {
+          "envelope": {
+            "additionalProperties": true,
+            "title": "Envelope",
+            "type": "object"
+          }
+        },
+        "required": [
+          "envelope"
+        ],
+        "title": "HandleMessageInput",
+        "type": "object"
+      },
+      "output_schema": {
+        "additionalProperties": false,
+        "description": "A rejected message carries the reason; the loop maps the status to the ack.",
+        "properties": {
+          "status": {
+            "enum": [
+              "processed",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "HandleMessageOutput",
+        "type": "object"
+      },
+      "risk": "write",
+      "requires_approval": false,
+      "idempotency": "inherent",
+      "required_capabilities": [],
+      "metadata": null
+    },
+    {
       "name": "tick",
       "description": "Register the finance.* message types, fund deals from new bank credits and re-send the pending outbox.",
       "input_schema": {

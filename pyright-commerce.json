@@ -1,0 +1,21 @@
+{
+  "include": [
+    "packages/cogit-finance/src/cogit_finance/escrow",
+    "modules/cogit-finance-deals/src",
+    "modules/cogit-messaging/src",
+    "packages/cogit-messaging-shim/src/cogit_messaging_shim/envelope.py",
+    "packages/cogit-messaging-shim/src/cogit_messaging_shim/loop.py",
+    "packages/cogit-finance-seams/src/cogit_finance_seams/inbox.py",
+    "apps/dashboard/src/dashboard/agentdb.py"
+  ],
+  "extraPaths": [
+    "packages/cogit-finance/src",
+    "packages/cogit-finance-seams/src",
+    "packages/cogit-messaging-shim/src",
+    "modules/cogit-finance-deals/src",
+    "modules/cogit-messaging/src",
+    "apps/dashboard/src"
+  ],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic"
+}
