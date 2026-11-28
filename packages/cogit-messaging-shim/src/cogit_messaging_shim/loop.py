@@ -8,10 +8,12 @@ under the same key, so the host returns the run that already exists.
 from __future__ import annotations
 
 import uuid
+from collections.abc import Callable
+from datetime import datetime
 
-from cogit_finance_seams import ModulePort, WorkPort
+from cogit_finance_seams import ModulePort, WorkPort, utcnow
 
-from .envelope import verify_envelope
+from .envelope import freshness_error, verify_envelope
 from .seams import MESSAGING_MODULE
 
 
@@ -27,7 +29,9 @@ class DeliveryLoop:
         action: str = "handle_message",
         limit: int = 10,
         release_delay_s: int = 1,
+        clock: Callable[[], datetime] = utcnow,
     ) -> None:
+        self.clock = clock
         self.installation_id = installation_id
         self.action = action
         self.limit = limit
@@ -48,6 +52,10 @@ class DeliveryLoop:
         message_id, envelope = message["message_id"], message["envelope"]
         if not verify_envelope(envelope):
             self._ack(message_id, "rejected", reason="bad_signature")
+            return
+        reason = freshness_error(envelope, self.clock())
+        if reason:
+            self._ack(message_id, "rejected", reason=reason)
             return
         try:
             run_id = self._work.admit(

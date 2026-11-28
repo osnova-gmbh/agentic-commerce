@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from cogit_messaging_shim import AgentKey
 from escrow_data import BUYER_IBAN, ESCROW_IBAN, FILES, HAPPY_DEAL, PRICE
@@ -156,7 +158,7 @@ def test_payment_crash_matrix_looks_up_before_resubmission(
         w.bank, "lookup", lambda key: (lookups.append(key), lookup(key))[1]
     )
 
-    def transfer(**kwargs):
+    def transfer(**kwargs: Any) -> dict[str, Any]:
         if kwargs["idempotency_key"] == f"{DEAL}:payout":
             monkeypatch.setattr(w.bank, "transfer", original)
             if point == "before_submit":
