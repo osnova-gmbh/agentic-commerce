@@ -275,9 +275,13 @@ def test_commands_are_forbidden_for_everyone_but_the_escrow_installation(host, c
             with pytest.raises(ModuleError) as error:
                 caller.module_command(MODULE, export, args, idempotency_key=f"{export}-x")
             assert error.value.code == "forbidden"
-        # Queries are open in the demo.
-        assert caller.module_query(MODULE, "deal.read", {"deal_id": "deal-1"})["deal"]["head_seq"] == 1
-        assert len(caller.module_query(MODULE, "deal.list")["deals"]) == 1
+        if caller.caller.principal == "operator":
+            assert caller.module_query(MODULE, "deal.read", {"deal_id": "deal-1"})["deal"]["head_seq"] == 1
+        else:
+            # An installation name is not an authoritative participant binding.
+            with pytest.raises(ModuleError, match="forbidden"):
+                caller.module_query(MODULE, "deal.read", {"deal_id": "deal-1"})
+            assert caller.module_query(MODULE, "deal.list")["deals"] == []
     assert deals.counts() == before
     assert deals.read()["intents"][0]["status"] == "prepared"
     assert len(deals.query("outbox.pending")["entries"]) == 1
@@ -290,4 +294,5 @@ def test_the_escrow_installation_is_a_module_setting(clock):
     host.install(DealsModule(), {"escrow_installation_id": "escrow-2"})
     assert Deals(host, clock, "escrow-2").commit("service_request", "REQUESTED")["seq"] == 1
     default = Deals(host, clock, "cogit-finance")
-    assert default.fails("deal.commit", default.commit_args("quote", "QUOTED")) == "forbidden"
+    args = Deals(host, clock, "escrow-2").commit_args("quote", "QUOTED")
+    assert default.fails("deal.commit", args) == "forbidden"

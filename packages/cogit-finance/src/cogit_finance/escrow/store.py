@@ -12,7 +12,7 @@ from cogit_finance_seams import ModuleError, ModulePort
 from cogit_messaging_shim import AgentKey, build_envelope, event_hash, to_ts
 
 from cogit_finance.escrow import ids, transitions
-from cogit_finance.escrow.messages import TYPE_VERSION, Outgoing
+from cogit_finance.escrow.messages import Outgoing
 from cogit_finance.escrow.view import DealView
 
 log = logging.getLogger(__name__)
@@ -92,7 +92,7 @@ class DealStore:
     ) -> DealView:
         if not transitions.is_legal(view.state, event_type, state_after):
             raise EscrowError(
-                f"not a demo transition: {view.state} -{event_type}-> {state_after}"
+                f"illegal transition: {view.state} -{event_type}-> {state_after}"
             )
         seq = view.head_seq + 1
         event: Row = {
@@ -137,7 +137,7 @@ class DealStore:
             self.key,
             self.key.did,
             item.type_key,
-            TYPE_VERSION,
+            item.type_version,
             item.recipient_did,
             deal_id,
             item.body,

@@ -21,7 +21,7 @@ from cogit_finance.escrow.view import DealView
 
 Row = dict[str, Any]
 Step = Callable[[EscrowContext, DealView], DealView]
-MAX_STEPS = 12
+MAX_STEPS = 32  # up to 16 evaluator retries plus lifecycle follow-ups
 
 
 def advance(ctx: EscrowContext, view: DealView) -> DealView:
@@ -34,7 +34,10 @@ def advance(ctx: EscrowContext, view: DealView) -> DealView:
         step = next_step(view)
         if step is None:
             return view
-        view = step(ctx, view)
+        advanced = step(ctx, view)
+        if advanced.head_seq == view.head_seq:
+            return advanced
+        view = advanced
     raise EscrowError(f"deal {view.deal_id} does not come to rest")
 
 
@@ -45,8 +48,10 @@ def next_step(view: DealView) -> Step | None:
             return propose_terms
         return countersign if guards.both_accepted(view) else None
     if state == t.EVALUATING:
-        return decide if _outcome(view) else None
-    if state == t.SETTLED:
+        from cogit_finance.escrow.recovery import evaluation_timer
+
+        return decide if _outcome(view) else evaluation_timer
+    if state in (t.SETTLED, t.REFUNDED):
         return None if view.last_event("receipt") else payout.send_receipt
     return _ALWAYS.get(state)
 
@@ -79,9 +84,10 @@ def propose_terms(ctx: EscrowContext, view: DealView) -> DealView:
     digest = terms_hash(terms)
     body = messages.terms_proposed(terms, digest)
     cause = quote["message_id"]
+    version = 2 if terms["acceptance"]["policy"].startswith("quorum ") else 1
     outbox = [
-        Outgoing(messages.TERMS_PROPOSED, terms["buyer_did"], body, cause),
-        Outgoing(messages.TERMS_PROPOSED, terms["seller_did"], body, cause),
+        Outgoing(messages.TERMS_PROPOSED, terms["buyer_did"], body, cause, version),
+        Outgoing(messages.TERMS_PROPOSED, terms["seller_did"], body, cause, version),
     ]
     return ctx.store.record_own(
         view,
@@ -259,7 +265,7 @@ def decide(ctx: EscrowContext, view: DealView) -> DealView:
         view,
         "decision",
         t.APPROVED if approved else t.REJECTED,
-        body,
+        {**body, "decided_at": messages.later(ctx.clock(), 0)},
         outbox=_parties(
             view, messages.DECISION, body, str(verdict["source_message_id"])
         ),
@@ -272,4 +278,5 @@ _ALWAYS: dict[str, Step] = {
     t.DELIVERED: request_evaluation,
     t.APPROVED: payout.submit_payout,
     t.RELEASING: payout.release,
+    t.REFUNDING: payout.release,
 }

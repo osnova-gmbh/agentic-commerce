@@ -9,10 +9,12 @@ the transition table.
 from __future__ import annotations
 
 import hashlib
+from datetime import datetime
 from typing import Any
 
 from cogit_messaging_shim import parse_ts
 
+from cogit_finance.escrow import policy
 from cogit_finance.escrow import reasons as r
 from cogit_finance.escrow.transitions import EVALUATING, FUNDING_REQUESTED
 from cogit_finance.escrow.view import DealView
@@ -135,6 +137,10 @@ def quote(
     if not _timestamps(body["delivery_deadline"], body["valid_until"]):
         return r.INVALID_BODY
     acceptance = body["acceptance"]
+    try:
+        policy.decide(acceptance["policy"], [None] * len(acceptance["evaluators"]))
+    except ValueError:
+        return r.INVALID_BODY
     if acceptance["max_attempts"] > config["escrow"]["max_delivery_attempts"]:
         return r.TOO_MANY_ATTEMPTS
     return evaluators(
@@ -179,15 +185,25 @@ def funding(view: DealView, credit: Row) -> str | None:
     return None
 
 
-def delivery(view: DealView, envelope: Row, stored: bytes | None) -> str | None:
+def delivery(
+    view: DealView, envelope: Row, stored: bytes | None, now: datetime | None = None
+) -> str | None:
     """Rows 11 and 17. ``stored`` holds the artifact's bytes, None when missing."""
     terms = view.terms
     if envelope["sender_did"] != terms["seller_did"]:
         return r.UNEXPECTED_SENDER
+    if view.next_attempt > terms["acceptance"]["max_attempts"]:
+        return r.NO_ATTEMPTS_LEFT
+    moment = now or parse_ts(envelope["created_at"])
+    if moment >= parse_ts(terms["delivery_deadline"]):
+        return "delivery_deadline_passed"
+    if view.state == "REJECTED":
+        decision = view.last_event("decision")
+        deadline = decision["body"]["rework_deadline"] if decision else None
+        if not deadline or moment >= parse_ts(deadline):
+            return "rework_deadline_passed"
     body = envelope["body"]
     expected = view.next_attempt
-    if expected > terms["acceptance"]["max_attempts"]:
-        return r.NO_ATTEMPTS_LEFT
     if body["attempt"] != expected:
         return r.UNEXPECTED_ATTEMPT
     if stored is None:

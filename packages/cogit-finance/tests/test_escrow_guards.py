@@ -160,12 +160,12 @@ def test_request_guards() -> None:
     refused(world, world.request("deal-1"), "invalid_deal_id", before)
 
 
-def test_messages_outside_the_demo_are_rejected_with_a_reason() -> None:
+def test_malformed_and_unknown_messages_are_rejected_with_a_reason() -> None:
     world = World()
     world.request(DEAL)
     before = frozen(world)
     for name in ("decline", "cancel", "dispute", "ruling"):
-        refused(world, world.send(world.buyer, name, DEAL, {}), "not_in_demo", before)
+        refused(world, world.send(world.buyer, name, DEAL, {}), "invalid_body", before)
     own = world.send(world.buyer, "receipt", DEAL, {})
     refused(world, own, "unexpected_type", before)
     refused(world, world.send(world.buyer, "hello", DEAL, {}), "unknown_type", before)
@@ -246,7 +246,7 @@ def test_verdict_correlation() -> None:
     refused(world, answer(evaluator_id="deadline"), "evaluator_mismatch", before)
     unknown = answer(evaluation_request_id=f"{DEAL}:d1:taste@1")
     refused(world, unknown, "unknown_evaluation_request", before)
-    refused(world, answer(outcome="error"), "not_in_demo", before)
+    # Error recovery is covered by test_escrow_lifecycle.
 
     assert answer()["status"] == "processed"
     recorded = frozen(world)

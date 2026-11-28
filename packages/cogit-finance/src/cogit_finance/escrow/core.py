@@ -14,10 +14,19 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
-from cogit_finance_seams import ArtifactPort, BankPort, ModuleError, ModulePort, utcnow
+import httpx
+from cogit_finance_seams import (
+    ArtifactPort,
+    BankError,
+    BankPort,
+    ModuleError,
+    ModulePort,
+    utcnow,
+)
 from cogit_messaging_shim import ENVELOPE_FIELDS, AgentKey, verify_envelope
+from cogit_messaging_shim.envelope import freshness_error
 
-from cogit_finance.escrow import followups, guards, ids, inbound, settings
+from cogit_finance.escrow import followups, funding, ids, inbound, recovery, settings
 from cogit_finance.escrow import reasons as r
 from cogit_finance.escrow import transitions as t
 from cogit_finance.escrow.messages import OWN_TYPES
@@ -27,6 +36,7 @@ from cogit_finance.escrow.store import (
     DealStore,
     Directory,
     EscrowContext,
+    EscrowError,
 )
 
 log = logging.getLogger(__name__)
@@ -80,6 +90,8 @@ class EscrowCore:
 
     def _handle(self, envelope: Any) -> None:
         trigger = self._admit(envelope)
+        if trigger == "cancel":
+            funding.collect(self.ctx)  # do not cancel over a credit already at the bank
         view = self.store.read(envelope["conversation_id"])
         # Finish what an earlier run left open, so the guard sees a deal at rest.
         view = followups.advance(self.ctx, view)
@@ -100,6 +112,9 @@ class EscrowCore:
             raise r.Rejected(r.INVALID_ENVELOPE)
         if not verify_envelope(envelope):
             raise r.Rejected(r.BAD_SIGNATURE)
+        stale = freshness_error(envelope, self.ctx.clock())
+        if stale:
+            raise r.Rejected(stale)
         if envelope["recipient_did"] != self.key.did:
             raise r.Rejected(r.WRONG_RECIPIENT)
         type_key = envelope["type_key"]
@@ -108,8 +123,6 @@ class EscrowCore:
             raise r.Rejected(r.UNEXPECTED_TYPE)
         if trigger == type_key or trigger not in t.MESSAGE_TRIGGERS:
             raise r.Rejected(r.UNKNOWN_TYPE)
-        if trigger not in t.DEMO_MESSAGE_TRIGGERS:
-            raise r.Rejected(r.NOT_IN_DEMO)
         schema = self.schemas.get((type_key, envelope["type_version"]))
         if schema is None:
             raise r.Rejected(r.UNKNOWN_TYPE)
@@ -131,10 +144,19 @@ class EscrowCore:
         types_registered = self.register_types()
         self.store.flush_pending()
         deals = self.store.list_deals()
-        credits_seen, deals_funded = self._fund(deals)
+        credits_seen, deals_funded = 0, 0
+        try:
+            credits_seen, deals_funded = funding.collect(self.ctx)
+            funding.reconcile_returns(self.ctx)
+        except (BankError, httpx.HTTPError, OSError) as error:
+            log.warning("bank unavailable; durable timers still run: %s", error)
         for row in deals:
-            if row["state"] in t.TRANSIENT:
-                followups.advance(self.ctx, self.store.read(row["deal_id"]))
+            try:
+                view = followups.advance(self.ctx, self.store.read(row["deal_id"]))
+                view = recovery.timer(self.ctx, view)
+                followups.advance(self.ctx, view)
+            except (ModuleError, EscrowError, OSError) as error:
+                log.warning("deal %s will retry: %s", row["deal_id"], error)
         return {
             "types_registered": types_registered,
             "credits_seen": credits_seen,
@@ -163,28 +185,3 @@ class EscrowCore:
                 continue
             registered += 1
         return registered
-
-    def _fund(self, deals: list[Row]) -> tuple[int, int]:
-        """Turn matching credits on the escrow IBAN into ``funding_received``."""
-        seen = self.ctx.bank.credits(self.config["rail"]["escrow_iban"], "0")
-        waiting = {
-            row["deal_id"] for row in deals if row["state"] == t.FUNDING_REQUESTED
-        }
-        funded = 0
-        for credit in seen:
-            deal_id = ids.deal_id_from_reference(credit.get("reference"))
-            if deal_id is None or deal_id not in waiting:
-                continue  # other credits are ignored in the demo
-            view = self.store.read(deal_id)
-            if guards.funding(view, credit) is not None:
-                continue
-            try:
-                followups.fund(self.ctx, view, credit)
-            except ModuleError as error:
-                if error.code != "duplicate_credit":
-                    raise
-                log.warning("credit %s is already recorded", credit.get("event_id"))
-                continue
-            waiting.discard(deal_id)
-            funded += 1
-        return len(seen), funded

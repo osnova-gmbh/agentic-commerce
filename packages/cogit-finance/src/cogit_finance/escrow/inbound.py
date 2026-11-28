@@ -7,9 +7,9 @@ from collections.abc import Callable
 from typing import Any
 
 from cogit_finance_seams import ModuleError
-from cogit_messaging_shim import to_ts
+from cogit_messaging_shim import parse_ts, to_ts
 
-from cogit_finance.escrow import guards, ids, messages, policy
+from cogit_finance.escrow import guards, ids, lifecycle, messages, policy
 from cogit_finance.escrow import reasons as r
 from cogit_finance.escrow import transitions as t
 from cogit_finance.escrow.messages import RELAY, Outgoing
@@ -50,6 +50,8 @@ def record(ctx: EscrowContext, view: DealView, trigger: str, envelope: Row) -> D
     if trigger == "verdict" and guards.stale_verdict(view, envelope["body"]):
         raise r.Rejected(r.STALE_VERDICT)
     _require(t.refuse_message(view.state, trigger))
+    if trigger in ("cancel", "decline", "dispute", "ruling"):
+        return lifecycle.record(ctx, view, envelope)
     return _RECORDERS[trigger](ctx, view, envelope)
 
 
@@ -88,6 +90,12 @@ def _service_request(ctx: EscrowContext, view: DealView, envelope: Row) -> DealV
 
 def _quote(ctx: EscrowContext, view: DealView, envelope: Row) -> DealView:
     body = envelope["body"]
+    due = messages.later(
+        parse_ts(view.request["created_at"]),
+        ctx.config["escrow"]["timers"]["quote_ttl_s"],
+    )
+    if ctx.clock() >= parse_ts(due):
+        raise r.Rejected("request_expired")
     registry = ctx.directory.evaluators()
     named = [
         (e["evaluator_id"], e["version"]) for e in body["acceptance"]["evaluators"]
@@ -110,6 +118,8 @@ def _quote(ctx: EscrowContext, view: DealView, envelope: Row) -> DealView:
 
 
 def _accept_terms(ctx: EscrowContext, view: DealView, envelope: Row) -> DealView:
+    if ctx.clock() >= parse_ts(view.message_of("quote")["body"]["valid_until"]):
+        raise r.Rejected("quote_expired")
     _require(guards.accept_terms(view, envelope))
     return ctx.store.record_message(view, envelope, t.QUOTED)
 
@@ -127,7 +137,11 @@ def _stored(ctx: EscrowContext, artifact_id: str) -> bytes | None:
 def _delivery(ctx: EscrowContext, view: DealView, envelope: Row) -> DealView:
     body = envelope["body"]
     artifact = body["artifact"]
-    _require(guards.delivery(view, envelope, _stored(ctx, artifact["artifact_id"])))
+    _require(
+        guards.delivery(
+            view, envelope, _stored(ctx, artifact["artifact_id"]), ctx.clock()
+        )
+    )
     row = {
         "delivery_id": ids.delivery_id(view.deal_id, body["attempt"]),
         "attempt": body["attempt"],
@@ -156,9 +170,26 @@ def _verdict(ctx: EscrowContext, view: DealView, envelope: Row) -> DealView:
         return view  # the same judgement again: a no-op
     if kind == policy.CONFLICT:
         raise r.Rejected(r.CONFLICTING_VERDICT)
-    if body["outcome"] == policy.ERROR:
-        # An error verdict leads to a re-request and then a dispute; neither is built.
-        raise r.Rejected(r.NOT_IN_DEMO)
+    if evaluation["resends"]:
+        retry = view.last_event("evaluation_retried")
+        # Only a reply to the retry may satisfy it; delayed first responses cannot
+        # consume the single recovery attempt or escalate the deal.
+        matching = [
+            e
+            for e in view.events_of("evaluation_retried")
+            if e["body"]["evaluation_request_id"] == body["evaluation_request_id"]
+        ]
+        retry = matching[-1] if matching else retry
+        if retry is not None:
+            expected = ids.own_message_id(
+                view.deal_id,
+                retry["seq"],
+                messages.EVALUATION_REQUEST,
+                evaluation["evaluator_did"],
+                0,
+            )
+            if envelope.get("causation_id") != expected:
+                raise r.Rejected(r.STALE_VERDICT)
     row = {name: evaluation.get(name) for name in EVALUATION_FIELDS}
     row["verdict_message_id"] = envelope["message_id"]
     row["outcome"] = body["outcome"]

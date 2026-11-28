@@ -257,7 +257,7 @@ class FakeModules:
             self.credits[row["bank_event_id"]] = {**row, "deal_id": deal_id}
         self._post(deal_id, args.get("postings", []), now)
 
-    def _post(self, deal_id: str, postings: list[Row], now: str) -> None:
+    def _post(self, deal_id: str | None, postings: list[Row], now: str) -> None:
         for row in postings:
             assert row["account"] in ACCOUNTS
             key = (row["source_id"], row["account"])
@@ -278,6 +278,29 @@ class FakeModules:
             intent["bank_ref"] = args["bank_ref"]
         self._post(intent["deal_id"], args.get("postings") or [], self.now())
         return {}
+
+    def _cogit_finance_deals__credit_return(self, args: Row) -> Row:
+        credit, intent = args["credit"], args["intent"]
+        if credit["bank_event_id"] in self.credits:
+            return {}
+        self.credits[credit["bank_event_id"]] = {**credit, "deal_id": None}
+        self.intents[intent["intent_id"]] = {
+            **intent,
+            "deal_id": None,
+            "bank_ref": None,
+        }
+        self._post(None, [args["posting"]], self.now())
+        return {}
+
+    def _cogit_finance_deals__credit_read(self, args: Row) -> Row:
+        return {"credit": self.credits.get(args["bank_event_id"])}
+
+    def _cogit_finance_deals__intents_unresolved(self, args: Row) -> Row:
+        return {
+            "intents": [
+                row for row in self.intents.values() if row["status"] in ACTIVE_INTENT
+            ]
+        }
 
     # cogit-finance-deals: queries ----------------------------------------------
 

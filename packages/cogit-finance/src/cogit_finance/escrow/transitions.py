@@ -1,10 +1,4 @@
-"""SPEC §5.2 as data: every transition of a deal, with the demo's cut line.
-
-``TRANSITIONS`` is the whole table. A row of the SPEC that names several source
-states, or that E carries out as several events, appears as several entries with
-the same ``row`` number. Entries with ``in_demo`` false are known but not built:
-their messages are refused with ``not_in_demo`` and E never records their events.
-"""
+"""SPEC §5.2 as data, including recovery, refunds and operator rulings."""
 
 from __future__ import annotations
 
@@ -45,21 +39,9 @@ STATES = (
     DISPUTED,
     *TERMINAL,
 )
-DEMO_STATES = (
-    REQUESTED,
-    QUOTED,
-    ACCEPTED,
-    FUNDING_REQUESTED,
-    FUNDED,
-    DELIVERED,
-    EVALUATING,
-    APPROVED,
-    REJECTED,
-    RELEASING,
-    SETTLED,
-)
+DEMO_STATES = STATES
 # A deal never rests in these: E moves on at once. Finding one means a run died.
-TRANSIENT = (ACCEPTED, DELIVERED, APPROVED, RELEASING)
+TRANSIENT = (ACCEPTED, DELIVERED, APPROVED, RELEASING, REFUNDING)
 
 ILLEGAL_IN_STATE = "illegal_in_state"
 NOT_IN_DEMO = "not_in_demo"
@@ -74,7 +56,7 @@ class Transition:
     actors: tuple[str, ...]
     guard: str
     target: str
-    in_demo: bool
+    in_demo: bool = True
 
 
 # Guard column of the SPEC table, by row.
@@ -118,12 +100,11 @@ def _rows(
     kind: str,
     actors: str,
     target: str | None = None,
-    demo: bool = True,
 ) -> list[Transition]:
     """One entry per source state; ``target`` None means the state is unchanged."""
     who = tuple(actors.split("|"))
     return [
-        Transition(row, src, trigger, kind, who, GUARDS[row], target or src, demo)
+        Transition(row, src, trigger, kind, who, GUARDS[row], target or src)
         for src in sources
     ]
 
@@ -132,32 +113,35 @@ TRANSITIONS: tuple[Transition, ...] = (
     *_rows(1, (NONE,), "service_request", MSG, "buyer", REQUESTED),
     *_rows(2, (REQUESTED,), "quote", MSG, "seller", QUOTED),
     *_rows(2, (QUOTED,), "terms_proposed", ESC, E),
-    *_rows(3, (REQUESTED, QUOTED), "decline", MSG, "buyer|seller", DECLINED, False),
-    *_rows(4, (REQUESTED,), "quote_ttl", TIMER, E, EXPIRED, False),
-    *_rows(5, (QUOTED,), "valid_until", TIMER, E, EXPIRED, False),
+    *_rows(3, (REQUESTED, QUOTED), "decline", MSG, "buyer|seller", DECLINED),
+    *_rows(4, (REQUESTED,), "quote_ttl", TIMER, E, EXPIRED),
+    *_rows(5, (QUOTED,), "valid_until", TIMER, E, EXPIRED),
     *_rows(6, (QUOTED,), "accept_terms", MSG, "buyer|seller"),
     *_rows(7, (QUOTED,), "terms_countersigned", ESC, E, ACCEPTED),
     *_rows(7, (ACCEPTED,), "payment_request", ESC, E, FUNDING_REQUESTED),
-    *_rows(8, _OPEN, "cancel", MSG, "buyer", CANCELLED, False),
+    *_rows(8, _OPEN, "cancel", MSG, "buyer", CANCELLED),
     *_rows(9, (FUNDING_REQUESTED,), "funding_received", BANK, E, FUNDED),
-    *_rows(10, (FUNDING_REQUESTED,), "funding_due_by", TIMER, E, CANCELLED, False),
+    *_rows(10, (FUNDING_REQUESTED,), "funding_due_by", TIMER, E, CANCELLED),
     *_rows(11, (FUNDED,), "delivery", MSG, "seller", DELIVERED),
-    *_rows(12, (FUNDED,), "delivery_deadline", TIMER, E, REFUNDING, False),
+    *_rows(12, (FUNDED,), "delivery_deadline", TIMER, E, REFUNDING),
     *_rows(13, (DELIVERED,), "evaluation_requested", ESC, E, EVALUATING),
     *_rows(14, (EVALUATING,), "verdict", MSG, "evaluator"),
     *_rows(14, (EVALUATING,), "decision", ESC, E, APPROVED),
     *_rows(14, (EVALUATING,), "decision", ESC, E, REJECTED),
-    *_rows(15, (EVALUATING,), "evaluator_unavailable", TIMER, E, DISPUTED, False),
+    *_rows(15, (EVALUATING,), "evaluation_retried", TIMER, E),
+    *_rows(15, (EVALUATING,), "evaluator_unavailable", TIMER, E, DISPUTED),
     *_rows(16, (APPROVED,), "payout_submitted", ESC, E, RELEASING),
     *_rows(17, (REJECTED,), "delivery", MSG, "seller", DELIVERED),
-    *_rows(18, (REJECTED,), "dispute", MSG, "buyer|seller", DISPUTED, False),
-    *_rows(19, (REJECTED,), "rework_exhausted", TIMER, E, REFUNDING, False),
-    *_rows(20, (DISPUTED,), "ruling", MSG, "operator", RELEASING, False),
-    *_rows(20, (DISPUTED,), "ruling", MSG, "operator", REFUNDING, False),
+    *_rows(18, (REJECTED,), "dispute", MSG, "buyer|seller", DISPUTED),
+    *_rows(19, (REJECTED,), "rework_exhausted", TIMER, E, REFUNDING),
+    *_rows(20, (DISPUTED,), "ruling", MSG, "operator", RELEASING),
+    *_rows(20, (DISPUTED,), "ruling", MSG, "operator", REFUNDING),
     *_rows(21, (RELEASING,), "payout_confirmed", BANK, E, SETTLED),
-    *_rows(22, (REFUNDING,), "refund_confirmed", BANK, E, REFUNDED, False),
+    *_rows(22, (REFUNDING,), "refund_confirmed", BANK, E, REFUNDED),
     *_rows(23, (SETTLED,), "receipt", ESC, E),
-    *_rows(23, (REFUNDED,), "receipt", ESC, E, None, False),
+    *_rows(23, (REFUNDED,), "receipt", ESC, E),
+    # Accounting events do not change lifecycle state (SPEC §10.2).
+    *_rows(9, STATES, "credit_returned", BANK, E),
 )
 
 MESSAGE_TRIGGERS = frozenset(t.trigger for t in TRANSITIONS if t.kind == "message")
@@ -182,5 +166,5 @@ def refuse_message(state: str, trigger: str) -> str | None:
 
 
 def is_legal(state: str, trigger: str, target: str) -> bool:
-    """True when the demo's part of the table has exactly this transition."""
+    """True when the table has exactly this transition."""
     return any(t.in_demo and t.target == target for t in find(state, trigger))

@@ -9,6 +9,7 @@ Run: python scripts/gen_message_schemas.py
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[1] / "contracts" / "messages"
@@ -105,6 +106,12 @@ MESSAGES: dict[str, tuple[str, dict]] = {
         "buyer -> E. Opens a deal; conversation_id is the new deal_id.",
         obj(seller_org_id=ID, offer_id=ID, inputs=FREE, max_price_minor=MONEY, currency=CURRENCY),
     ),
+    "decline": ("buyer or seller -> E. Decline the proposed deal.", obj(reason=text(1, 500))),
+    "cancel": ("buyer -> E. Cancel an unfunded deal.", obj(reason=text(1, 500))),
+    "dispute": ("buyer or seller -> E. Contest a rejection.", obj(reason=text(1, 500))),
+    "ruling": ("operator -> E. Resolve a disputed deal.", obj(outcome=enum("release", "refund"), reason=text(1, 500))),
+    "refund_confirmed": ("E -> buyer, seller. The bank confirmed the refund.",
+                         obj(amount_minor=MONEY, currency=CURRENCY, bank_ref=ID)),
     "quote": (
         "seller -> E. Price, deadline and acceptance spec for one request.",
         obj(price_minor=integer(1, 9_000_000_000_000), currency=CURRENCY, delivery_deadline=TS, valid_until=TS, acceptance=ACCEPTANCE),
@@ -191,7 +198,15 @@ def main() -> None:
         document = {"description": description, **schema}
         path = OUT / f"finance.{name}.v1.json"
         path.write_text(json.dumps(document, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"wrote {len(MESSAGES)} schemas to {OUT}")
+    # V1 is immutable. Quorum extends acceptance in new quote/terms versions.
+    for name in ("quote", "terms_proposed"):
+        description, original = MESSAGES[name]
+        schema = deepcopy(original)
+        props = schema["properties"] if name == "quote" else schema["properties"]["terms"]["properties"]
+        props["acceptance"]["properties"]["policy"] = enum("all", "any", *(f"quorum {k}" for k in range(1, 17)))
+        (OUT / f"finance.{name}.v2.json").write_text(
+            json.dumps({"description": description, **schema}, indent=2) + "\n", encoding="utf-8")
+    print(f"wrote {len(MESSAGES) + 2} schemas to {OUT}")
 
 
 if __name__ == "__main__":

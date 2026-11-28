@@ -1,0 +1,23 @@
+{
+  "description": "operator -> E. Resolve a disputed deal.",
+  "type": "object",
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "release",
+        "refund"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    }
+  },
+  "required": [
+    "outcome",
+    "reason"
+  ],
+  "additionalProperties": false
+}
